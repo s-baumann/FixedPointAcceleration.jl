@@ -1,13 +1,12 @@
-
-
-func(x) = sqrt(x)
-Inputs = ones(7,1)*16
-Inputs = hcat(Inputs, ones(7,1)*4)
-Outputs = hcat(ones(7,1)*4, ones(7,1)*2)
-Algorithm = :Simple
-ConvergenceMetric(Resids::Array{Float64, 1}) = maximum(abs.(Resids))
-ConvergenceMetricThreshold = 1e-10
-MaxIter = 1e3
+func(x) = [0.5*sqrt(abs(x[1] + x[2])), 1.5*x[1] + 0.5*x[2]]
+Inputs = Array{Float64, 2}(undef,2,1)
+Inputs[:,1] = [1.1,2.2]
+Outputs = Array{Float64,2}(undef,size(Inputs)[1],0)
+Algorithm = :Aitken
+supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids))
+ConvergenceMetric = supnorm
+ConvergenceMetricThreshold = 0.000000001
+MaxIter = 1000
 MaxM = 10
 ExtrapolationPeriod = 7
 Dampening = 1.0
@@ -16,10 +15,4 @@ ReportingSigFig = 5
 ConditionNumberThreshold = 1e3
 Plot = :NoPlot
 ConvergenceFigLags = 5
-ChangePerIteratexaxis = []
-
-#function aa( Inputs::Array{Float64, 2}, Outputs::Array{Float64, 2} )
-#Inputs[:,1] + Outputs
-#end
-#aa(Inputs, Outputs)
-x = [-1.0,0.0,1.0]
+ChangePerIteratexaxis = Array{Float64,1}(undef,0)

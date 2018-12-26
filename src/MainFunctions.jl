@@ -1,5 +1,5 @@
 """
-    CreateSafeFunctionExecutor(Func::Function)
+    create_safe_function_executor(Func::Function)
 This function creates a function that executes the function for which a fixed point is sought. It is a helper function that is not exported.
 ### Takes
  * Func - The function input to fixed_point
@@ -11,7 +11,7 @@ A NamedTuple containing:
 * message - A message describing the error or lack thereof.
 ### Examples
 Func(x) = sqrt(x)
-FunctionExecutor = CreateSafeFunctionExecutor(Func)
+FunctionExecutor = create_safe_function_executor(Func)
 FunctionExecutor([-1.0,0.0,1.0])
 FunctionExecutor([Missing(),0.0,1.0])
 FunctionExecutor([7.0,0.0,1.0])
@@ -23,30 +23,7 @@ FunctionExecutor(1.0)
 FunctionExecutor(NaN)
 FunctionExecutor(Inf)
 """
-function CreateSafeFunctionExecutor(Func::Function, Elementwise::Bool)
-  if Elementwise
-    function CheckResultAndReturn(x)
-        tf_result = Array
-        try
-            tf_result =  Func.(x)
-        catch
-            return (AbortFunction = true, Input = x, Message = :ErrorExecutingFunction)
-        end
-        if ismissing((sum(isnan.(tf_result)) > 0))
-            returnDict = (AbortFunction = true, Input = x, Output = tf_result, Message = :MissingsDetected)
-        elseif (sum(isnan.(tf_result)) > 0)
-            returnDict = (AbortFunction = true, Input = x, Output = tf_result, Message = :NAsDetected)
-        elseif (sum(isinf.(tf_result)) > 0)
-            returnDict = (AbortFunction = true, Input = x, Output = tf_result, Message = :InfsDetected)
-        elseif (length(tf_result) != length(x))
-            returnDict = (AbortFunction = true, Input = x, Output = tf_result, Message = :LengthOfOutputNotSameAsInput)
-        else
-            returnDict = (AbortFunction = false, Input = x, Output = tf_result, Message = :NoErrors)
-        end
-        return returnDict
-    end
-    return CheckResultAndReturn
-  else
+function create_safe_function_executor(Func::Function)
     function CheckResultAndReturn_not_elementwise(x)
         tf_result = Array
         try
@@ -68,7 +45,6 @@ function CreateSafeFunctionExecutor(Func::Function, Elementwise::Bool)
         return returnDict
     end
     return CheckResultAndReturn_not_elementwise
-  end
 end
 
 supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids))
@@ -110,7 +86,7 @@ A function for finding the fixed point of another function
  #'
  #' # For this next one the ConvergenceMetricThreshold is negative so the algorithm
  #' # will keep running until MaxIter is met.
- #' C = fixed_point(Func, Inputs; Algorithm = :Simple, MaxIter = 4, ConvergenceMetricThreshold = -1)
+ #' C = fixed_point(Func, Inputs; Algorithm = :Simple, MaxIter = 4, ConvergenceMetricThreshold = -1.0)
  #' # But we can continue solving for this fixed point but now switching to the Newton Algorithm.
  #' D = fixed_point(Func, C[:Inputs], C[:Outputs]; Algorithm = :Newton)
  #'
@@ -119,22 +95,20 @@ A function for finding the fixed point of another function
  #' E = fixed_point(Func, Inputs; Algorithm = :Anderson)
  #' F = fixed_point(Func, Inputs; Algorithm = :Anderson, MaxM = 4, ReportingSigFig = 13)
 """
-function fixed_point(func::Function, Inputs::Array{Float64, 1}; Outputs::Array{Float64,1} = Array{Float64,1}(undef,size(Inputs)[1],0),
-                    Algorithm::Symbol = :Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1e3,
-                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int16 = 5,
-                    ConditionNumberThreshold::Int = 1e3, Plot::Symbol = :NoPlot, ConvergenceFigLags::Int = 5, ChangePerIteratexaxis::Array{Float64} = [])
+function fixed_point(func::Function, Inputs::Array{Float64, 1};
+                    Algorithm::Symbol = :Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000,
+                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::Symbol = :ReplaceInvalids,
+                    ConditionNumberThreshold::Float64 = 1e3, Plot::Symbol = :NoPlot, ConvergenceFigLags::Int = 5, ChangePerIteratexaxis::Array{Float64,1} = Array{Float64,1}(undef,0))
     Inputs2 = Array{Float64, 2}(undef,size(Inputs)[1],1)
     Inputs2[:,1] = Inputs
-    Outputs2 = Array{Float64, 2}(undef,size(Outputs2)[1],1)
-    Outputs2[:,1] = Outputs
-    return fixed_point(func, Inputs2; Outputs = Outputs2, Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
+    return fixed_point(func, Inputs2; Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
                        MaxIter = MaxIter, MaxM = MaxM, ExtrapolationPeriod = ExtrapolationPeriod, Dampening = Dampening, PrintReports = PrintReports, ReportingSigFig = ReportingSigFig,
                        ConditionNumberThreshold = ConditionNumberThreshold, Plot = Plot, ConvergenceFigLags = ConvergenceFigLags, ChangePerIteratexaxis = ChangePerIteratexaxis)
 end
 function fixed_point(func::Function, Inputs::Float64;
-                    Algorithm::Symbol = :Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1e3,
-                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int16 = 5,
-                    ConditionNumberThreshold::Int = 1e3, Plot::Symbol = :NoPlot, ConvergenceFigLags::Int = 5, ChangePerIteratexaxis::Array{Float64} = [])
+                    Algorithm::Symbol = :Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000,
+                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::Symbol = :ReplaceInvalids,
+                    ConditionNumberThreshold::Float64 = 1e3, Plot::Symbol = :NoPlot, ConvergenceFigLags::Int = 5, ChangePerIteratexaxis::Array{Float64,1} = Array{Float64,1}(undef,0))
     Inputs2 = Array{Float64, 2}(undef,1,1)
     Inputs2[1,1] = Inputs
     return fixed_point(func, Inputs2; Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
@@ -142,9 +116,9 @@ function fixed_point(func::Function, Inputs::Float64;
                        ConditionNumberThreshold = ConditionNumberThreshold, Plot = Plot, ConvergenceFigLags = ConvergenceFigLags, ChangePerIteratexaxis = ChangePerIteratexaxis)
 end
 function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{Float64,2} = Array{Float64,2}(undef,size(Inputs)[1],0),
-                    Algorithm::Symbol = :Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1e3,
-                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int16 = 5,
-                    ConditionNumberThreshold::Int = 1e3, Plot::Symbol = :NoPlot, ConvergenceFigLags::Int = 5, ChangePerIteratexaxis::Array{Float64} = [])
+                    Algorithm::Symbol = :Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000,
+                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::Symbol = :ReplaceInvalids,
+                    ConditionNumberThreshold::Float64 = 1e3, Plot::Symbol = :NoPlot, ConvergenceFigLags::Int = 5, ChangePerIteratexaxis::Array{Float64,1} = Array{Float64,1}(undef,0))
     # This code first tests if the input point is a fixed point. Then if it is not a while loop runs to try to find a fixed point.
     if (ConditionNumberThreshold < 1) error("ConditionNumberThreshold must be at least 1.")  end
     SimpleStartIndex = size(Outputs)[2]
@@ -163,18 +137,17 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
         end
     end
     # Create safe function Executor
-    Elementwise = false
-    if (Algorithm in Set([:Aitken, :Newton, :SEA])) Elementwise = true end
-    SafeFunction = CreateSafeFunctionExecutor(func, Elementwise)
+    SafeFunction = create_safe_function_executor(func)
 
     LengthOfArray = size(Inputs)[1]
     # Do an initial run if no runs have been done:
     if (isempty(Outputs))
         ExecutedFunction = SafeFunction(Inputs)
         if (ExecutedFunction[:AbortFunction])
-            return (Inputs = Inputs, Outputs = Outputs,Input = ExecutedFunction[:Input], Output = ExecutedFunction[:Output], Convergence = NaN, fixed_point = NaN, Finish = ExecutedFunction[:Message])
+            return FixedPointResults(Inputs, Outputs, :InvalidOutputOfIteration; FailedEvaluation_ = ExecutedFunction)
+            #return (Inputs = Inputs, Outputs = Outputs,Input = ExecutedFunction[:Input], Output = ExecutedFunction[:Output], Convergence = NaN, fixed_point = NaN, Finish = ExecutedFunction[:Message])
         end
-        Outputs = ExecutedFunction[:Output]
+        Outputs = hcat(Outputs, ExecutedFunction[:Output])
     else
         # This ensures that MaxIter refers to max iter excluding any previous passed in results
         MaxIter = MaxIter + size(Outputs)[2]
@@ -190,7 +163,8 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
         if (PrintReports)
             println("The last column of Inputs matrix is already a fixed point under input convergence metric and convergence threshold")
         end
-        return (Inputs = Inputs, Outputs = Outputs, Input = NaN, Output = NaN, Convergence = ConvergenceVector, fixed_point = Outputs[:,iter], Finish = :AlreadyFixedPoint)
+        return FixedPointResults(Inputs, Outputs, :AlreadyFixedPoint ; ConvergenceVector_  = vec(ConvergenceVector))
+        #return (Inputs = Inputs, Outputs = Outputs, Input = NaN, Output = NaN, Convergence = ConvergenceVector, fixed_point = Outputs[:,iter], Finish = :AlreadyFixedPoint)
     end
     # Printing a report for initial convergence
     Convergence = ConvergenceVector[iter]
@@ -206,18 +180,16 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
 
     while (Convergence > ConvergenceMetricThreshold) & (iter <= MaxIter)
         # Generating new input and output.
-        NewInputFunctionReturn = fixed_point_new_input(Inputs, Outputs, Algorithm, MaxM, SimpleStartIndex, ExtrapolationPeriod, Dampening, ConditionNumberThreshold, PrintReports)
-        abort, message, NewInputVector = NewInputFunctionReturn[:AbortFunction], NewInputFunctionReturn[:Message], NewInputFunctionReturn[:NewVector]
-        if (abort)
-            return (Inputs = Inputs, Outputs = Outputs, Input = missing, Output = missing, Convergence = ConvergenceVector, FixedPoint = Outputs[:,iter], Finish = message)
-        end
+        NewInputFunctionReturn = fixed_point_new_input(Inputs, Outputs, Algorithm; MaxM = MaxM, SimpleStartIndex = SimpleStartIndex, ExtrapolationPeriod = ExtrapolationPeriod,
+                                             Dampening = Dampening, ConditionNumberThreshold = ConditionNumberThreshold, PrintReports = PrintReports, ReplaceInvalids = ReplaceInvalids)
         if (Algorithm != :Anderson) & PrintReports
             print(lpad("",49))
         end
 
-        ExecutedFunction = SafeFunction(NewInputVector)
+        ExecutedFunction = SafeFunction(NewInputFunctionReturn)
         if (ExecutedFunction[:AbortFunction])
-            return (Inputs = Inputs, Outputs = Outputs,Input = ExecutedFunction[:Input], Output = ExecutedFunction[:Output], Convergence = NaN, FixedPoint = NaN, Finish = ExecutedFunction[:Message])
+            return FixedPointResults(Inputs, Outputs, :InvalidOutputOfIteration; ConvergenceVector_  = vec(ConvergenceVector), FailedEvaluation_ = ExecutedFunction)
+            #return (Inputs = Inputs, Outputs = Outputs,Input = ExecutedFunction[:Input], Output = ExecutedFunction[:Output], Convergence = NaN, FixedPoint = NaN, Finish = ExecutedFunction[:Message])
         end
         Inputs  = hcat(Inputs, ExecutedFunction[:Input])
         Outputs = hcat(Outputs, ExecutedFunction[:Output])
@@ -234,7 +206,8 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
     fp = Outputs[:,size(Outputs)[2]]
     Finish = :ReachedMaxIter
     if (Convergence < ConvergenceMetricThreshold) Finish = :ReachedConvergenceThreshold end
-    return (Inputs = Inputs, Outputs = Outputs, Convergence = ConvergenceVector, FixedPoint = fp, Finish = Finish)
+    return FixedPointResults(Inputs, Outputs, Finish; ConvergenceVector_  = vec(ConvergenceVector))
+    #return (Inputs = Inputs, Outputs = Outputs, Convergence = ConvergenceVector, FixedPoint = fp, Finish = Finish)
 end
 
 
@@ -266,10 +239,13 @@ NewGuessVEA = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :VEA)
 NewGuessMPE = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :MPE)
 NewGuessAitken = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :Aitken)
 """
-function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,2}, Algorithm::Symbol = :Anderson, MaxM::Int = 10, SimpleStartIndex::Int = 1, ExtrapolationPeriod::Int = 1, Dampening::Float64 = 1, ConditionNumberThreshold::Float64 = 1e3, PrintReports::Bool = false)
+function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,2}, Algorithm::Symbol = :Anderson; MaxM::Int = 10,
+                               SimpleStartIndex::Int = 1, ExtrapolationPeriod::Int = 1, Dampening::Float64 = 1,
+                               ConditionNumberThreshold::Float64 = 1000, PrintReports::Bool = false, ReplaceInvalids::Symbol = :ReplaceElements)
     CompletedIters = size(Outputs)[2]
+    proposed_input = Outputs[:,CompletedIters]
     if Algorithm == :Simple
-        return Outputs[:,CompletedIters]
+         proposed_input = Outputs[:,CompletedIters]
     elseif Algorithm == :Anderson
         if (CompletedIters < 1.5)
             if (PrintReports) println(lpad(" ", 32), "  Using",  lpad(0, 3)," lags. ") end
@@ -285,45 +261,45 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
         DeltaResids     = Resid[:,2:(M+1)]   .- Resid[:,1:M]
         LastResid       = Resid[:,M+1]
         LastOutput      = Outputs[:,M+1]
-        while (sum(isnan(Coeffs))>0.5)
+        Coeffs          = repeat([NaN], VectorLength)
+        while (sum(isnan.(Coeffs))>0.5)
             ConditionNumber = cond(DeltaResids)
             if (ConditionNumber > ConditionNumberThreshold)
                 M = M-1
                 DeltaOutputs= DeltaOutputs[:, 2:(M+1)]
                 DeltaResids = DeltaResids[ :, 2:(M+1)]
                 continue
-             end
-             Fit = fit(LinearModel,  hcat(DeltaResids), LastResid)
-             Coeffs = lm1.pp.beta0
-             if (sum(isnna(Coeffs))>0.5)
-                 M = M-1
-                 if (M < 1.5)
-                      # This happens occasionally in test cases where the iteration is very close to a fixed point.
-                      if (PrintReports) println(lpad(" ", 32), "  Using",  lpad(0, 3)," lags. ") end
-                      return LastOutput
-                  end
-                  DeltaOutputs = DeltaOutputs[:, 2:(M+1)]
-                  DeltaResids  = DeltaResids[ :, 2:(M+1)]
-              end
+            end
+            Fit = fit(LinearModel,  hcat(DeltaResids), LastResid)
+            Coeffs = Fit.pp.beta0
+            if (sum(isnan.(Coeffs))>0.5)
+                M = M-1
+                if (M < 1.5)
+                    # This happens occasionally in test cases where the iteration is very close to a fixed point.
+                    if (PrintReports) println(lpad(" ", 32), "  Using",  lpad(0, 3)," lags. ") end
+                    return LastOutput
+                end
+                DeltaOutputs = DeltaOutputs[:, 2:(M+1)]
+                DeltaResids  = DeltaResids[ :, 2:(M+1)]
+            end
         end
         if (PrintReports) println("Condition number is ", lpad(ConditionNumber, 5),". Used:",  lpad(M+1, 3)," lags. ") end
-        NewGuess        = LastOutput - Dampening .* Coeffs  .* transpose(DeltaOutputs)
-        return NewGuess
+        proposed_input = LastOutput .- (Dampening .* vec(DeltaOutputs * Coeffs))
     elseif Algorithm == :Aitken
         if ((CompletedIters + SimpleStartIndex) % 3) == 0
             # If we are in 3rd, 6th, 9th, 12th iterate from when we started Acceleration then we want to do a jumped Iterate,
             # First we extract the guess that started this run of 3 iterates (x), the Function applied to it (fx) and the function applied to that (ffx)
             x = Inputs[: ,(CompletedIters -1)]
-            fx = Outputs[ :,(CompletedIters -1)]
+            fx = Outputs[:,(CompletedIters -1)]
             ffx = Outputs[:,CompletedIters]
             # Now using the appropriate formula to make a new guess. Note that if a vector is input here it is used elementwise.
             NewGuess = x .- ((fx .- x).^2 ./ (ffx .- 2 .* fx .+ x))
             # Now there is the chance that the demoninator is zero which results in an NaN. This will ussually mean x = fx - ffx and a fixed point has been found. So we will return the same number.
-            NewGuess[isnan(NewGuess)] = ffx[isnan(NewGuess)]
-            return Dampening .* NewGuess .+ (1-Dampening) .* Outputs[:,CompletedIters]
+            NewGuess[isnan.(NewGuess)] = ffx[isnan.(NewGuess)]
+            proposed_input = Dampening .* NewGuess .+ (1-Dampening) .* Outputs[:,CompletedIters]
         else
-              # We just do a simple iterate. We do an attempt with the latest iterate.
-              return Outputs[:,CompletedIters]
+            # We just do a simple iterate. We do an attempt with the latest iterate.
+            proposed_input = Outputs[:,CompletedIters]
         end
     elseif Algorithm == :Newton
         if (((CompletedIters + SimpleStartIndex) % 2 == 1) & (CompletedIters > 1))
@@ -340,31 +316,43 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
             derivative = (gxk.-gxk1)./(xk .- xk1)
             NewGuess   = xk .- (gxk./derivative)
             # Numerical imprecision can cause a negative denominator. To handle this possibility we replace by the output vector.
-            NewGuess[isnan(NewGuess)] = fxk[isnan(NewGuess)]
-            return Dampening .* NewGuess .+ (1-Dampening) .* Outputs[:,CompletedIters]
+            NewGuess[isnan.(NewGuess)] = fxk[isnan.(NewGuess)]
+            proposed_input = Dampening .* NewGuess .+ (1-Dampening) .* Outputs[:,CompletedIters]
         else
             # We just do a simple iterate.
-            return Outputs[:,CompletedIters]
+            proposed_input = Outputs[:,CompletedIters]
         end
     elseif (Algorithm == :MPE) | (Algorithm == :RRE)
         SimpleIteratesMatrix = put_together_without_jumps(Inputs, Outputs)
         if (size(SimpleIteratesMatrix)[2] % ExtrapolationPeriod == 0)
             NewGuess = PolynomialExtrapolation(SimpleIteratesMatrix,Algorithm)
-            return Dampening .* NewGuess .+ (1-Dampening) .* Outputs[:,CompletedIters]
+            proposed_input = Dampening .* NewGuess .+ (1-Dampening) .* Outputs[:,CompletedIters]
         else
             # We just do a simple iterate.
-            return Outputs[:,CompletedIters]
+            proposed_input = Outputs[:,CompletedIters]
         end
     elseif (Algorithm == :VEA) | (Algorithm == :SEA)
         SimpleIteratesMatrix = put_together_without_jumps(Inputs, Outputs)
         if (size(SimpleIteratesMatrix)[2] % ExtrapolationPeriod == 0)
             NewGuess = EpsilonExtrapolation(SimpleIteratesMatrix, Algorithm)
-            return Dampening .* NewGuess .+ (1-Dampening) .* Outputs[:,CompletedIters]
+            proposed_input = Dampening .* NewGuess .+ (1-Dampening) .* Outputs[:,CompletedIters]
         else
             # We just do a simple iterate.
-            return Outputs[:,CompletedIters]
+            proposed_input = Outputs[:,CompletedIters]
         end
     end
+    # Now the replacement strategies
+    dodgy_entries = isnan.(proposed_input) .| ismissing.(proposed_input) .| isinf.(proposed_input)
+    if sum(dodgy_entries) == 0
+        return proposed_input
+    else
+        if ReplaceInvalids == :ReplaceElements
+            proposed_input[dodgy_entries] = Outputs[dodgy_entries,CompletedIters]
+        elseif ReplaceInvalids == :ReplaceVector
+            proposed_input = Outputs[:,CompletedIters]
+        end
+    end
+    return proposed_input
 end
 
 """
@@ -375,7 +363,7 @@ This function performs Minimal Polynomial extrapolation (MPE) or Reduced Rank Ex
 ### Returns
  * A vector containing the extrapolated vector.
 """
-function PolynomialExtrapolation(Iterates::Array{Float64,2}; Algorithm::Symbol)
+function PolynomialExtrapolation(Iterates::Array{Float64,2}, Algorithm::Symbol)
     if (!(Algorithm in [:MPE, :RRE])) error("Invalid Algorithm input. PolynomialExtrapolation function can only take Algorithm as MPE or RRE.") end
     if (Algorithm == :MPE)
         TotalColumnsOfIterates = size(Iterates)[2]
@@ -414,19 +402,22 @@ function EpsilonExtrapolation(Iterates::Array{Float64,2}, Algorithm::Symbol)
     if (size(Iterates)[2] == 1) return Iterates end
     if (size(Iterates)[2] % 2 == 0) Iterates = Iterates[:,2:size(Iterates)[2]] end
     if (!(Algorithm in [:VEA, :SEA])) error("Invalid Algorithm input. EpsilonExtrapolation function can only take Algorithm as VEA or SEA") end
-    Matrix = Iterates
-    RowsOfMatrix    = size(Matrix)[1]
-    TotalColumnsOfMatrix = size(Matrix)[2]
-    PreviousMatrix = zeros(RowsOfMatrix*(TotalColumnsOfMatrix-1))
-    for MatrixColumns in reverse(2:TotalColumnsOfMatrix)
-        NewMatrix = PreviousMatrix + EpsilonExtrapolationVectorOfInverses(Matrix[:,2:MatrixColumns] .- Matrix[:,1:(MatrixColumns-1)], Algorithm = Algorithm)
-        PreviousMatrix = Matrix[:,2:(MatrixColumns-1)]
-        Matrix = NewMatrix
+    Mat = Iterates
+    RowsOfMatrix    = size(Mat)[1]
+    TotalColumnsOfMatrix = size(Mat)[2]
+    PreviousMatrix = zeros(RowsOfMatrix,(TotalColumnsOfMatrix-1))
+    for MatrixColumn in reverse(2:TotalColumnsOfMatrix)
+        DiffMatrix = Mat[:,2:MatrixColumn] .- Mat[:,1:(MatrixColumn-1)]
+        NewMatrix = PreviousMatrix + EpsilonExtrapolationVectorOfInverses(DiffMatrix, Algorithm)
+        PreviousMatrix = Mat[:,2:(MatrixColumn-1)]
+        Mat = NewMatrix
     end
-
-    # The function can get NAs from the inversion (ie if differenceMatrix contains a zero for SEA then there is division by zero). To avert this we try with 2 less columns.
-    if (any(isnan(Matrix)) | any(ismissing(Matrix))) Matrix = EpsilonExtrapolation(Iterates[:,3:size(Iterates)[2]],Algorithm)     end
-  return Matrix
+    # The function can get NAs from the inversion (ie if differenceMatrix contains a zero
+    # for SEA then there is division by zero). To avert this we try with 2 less columns.
+    if (any(isnan.(Mat)) | any(ismissing.(Mat)))
+        Mat = EpsilonExtrapolation(Iterates[:,3:size(Iterates)[2]],Algorithm)
+    end
+    return Mat
 end
 
 """
@@ -441,7 +432,12 @@ function EpsilonExtrapolationVectorOfInverses(DifferenceMatrix, Algorithm)
     if (size(DifferenceMatrix)[1] == 1) | (Algorithm == :SEA)
         return 1 ./ DifferenceMatrix
     else
-        return mapslices(pinv, DifferenceMatrix, dims = [2])
+        invs = transpose(pinv(DifferenceMatrix[:,1]))
+        if size(DifferenceMatrix)[2] < 2 return invs end
+        for i in 2:size(DifferenceMatrix)[2]
+            invs = hcat(invs, transpose(pinv(DifferenceMatrix[:,i])))
+        end
+        return invs
     end
 end
 

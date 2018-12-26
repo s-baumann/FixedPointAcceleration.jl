@@ -1,19 +1,10 @@
-using FixedPointAcceleration
-
-Function(x) = sqrt(x)
-Inputs = ones(7,1)*16
-Inputs = hcat(Inputs, ones(7,1)*4)
-Outputs = hcat(ones(7,1)*4, ones(7,1)*2)
-Algorithm = ("Anderson")
-ConvergenceMetric(Resids::Array{Float64}) = maximum(abs.(Resids))
-ConvergenceMetricThreshold = 1e-10
-MaxIter = 1e3
-MaxM = 10
-ExtrapolationPeriod = 7
-Dampening = 1.0
-PrintReports = false
-ReportingSigFig = 5
-ConditionNumberThreshold = 1e3
-Plot = ("NoPlot", "ConvergenceFig", "ChangePerIterate")
-ConvergenceFigLags = 5
-ChangePerIteratexaxis = []
+func(x) = [0.5*sqrt(abs(x[1] + x[2])), 1.5*x[1] + 0.5*x[2]]
+Inputs = [1.1,2.2]
+fp_simple   = fixed_point(func, Inputs; Algorithm = :Simple)
+fp_anderson = fixed_point(func, Inputs; Algorithm = :Anderson)
+fp_aitken   = fixed_point(func, Inputs; Algorithm = :Aitken)
+fp_newton   = fixed_point(func, Inputs; Algorithm = :Newton)
+fp_VEA      = fixed_point(func, Inputs; Algorithm = :VEA)
+fp_SEA      = fixed_point(func, Inputs; Algorithm = :SEA)
+fp_MPE      = fixed_point(func, Inputs; Algorithm = :MPE)
+fp_RRE      = fixed_point(func, Inputs; Algorithm = :RRE)

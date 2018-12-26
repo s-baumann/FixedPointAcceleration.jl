@@ -1,9 +1,8 @@
-using FixedPoint
+using FixedPointAcceleration
 using Base.Test
 
 # Run tests
-
-tic()
+println("Test putting together iterates with jumps")
+@time @test include("TestPuttingInputsAndOutputsTogether.jl")
 println("Test simple vector function")
-@time @test include("SecondDerivativeTest.jl")
-toc()
+@time @test include("SimpleVectorFunction.jl")

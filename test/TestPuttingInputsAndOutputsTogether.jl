@@ -12,7 +12,7 @@ Inputs = hcat(Inputs, Outputs[:,(4-1)])
 result = func.(Inputs[:,4])
 Outputs = hcat(Outputs, result)
 
-Iterates = PutTogetherIteratesWithoutJumps(Inputs, Outputs)
+Iterates = put_together_without_jumps(Inputs, Outputs)
 Iterates == hcat(Inputs, Outputs[:,size(Outputs)[2]])
 
 NewGuess = [5.4, 5.5, 2.3, 3.4, 1.2, 0.56, 9.0]
@@ -23,5 +23,5 @@ Inputs = hcat(Inputs,  Outputs[:,(6-1)])
 result = func.(Inputs[:,6])
 Outputs = hcat(Outputs, result)
 
-Iterates = PutTogetherIteratesWithoutJumps(Inputs, Outputs)
+Iterates = put_together_without_jumps(Inputs, Outputs)
 Iterates == hcat(NewGuess, func.(NewGuess), func.(func.(NewGuess)))
