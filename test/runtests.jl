@@ -1,5 +1,5 @@
 using FixedPointAcceleration
-using Base.Test
+using Test
 
 # Run tests
 println("Test putting together iterates with jumps")

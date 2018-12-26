@@ -33,3 +33,15 @@ end
            SEA = 7
            VEA = 8
 end
+
+@enum InvalidReplacement begin
+    NoAction = 1
+    ReplaceElements = 2
+    ReplaceVector = 3
+end
+
+@enum FixedPointAccelerationPlots begin
+    NoPlot = 0
+    ConvergenceFig = 1
+    ChangePerIterate = 2
+end

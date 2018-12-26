@@ -58,7 +58,7 @@ A function for finding the fixed point of another function
  *  f - This is the function for which a fixed point is sought. This function must take and return a vector of the same size dimension.
  *  Inputs - This can be either a 1D-vector of values that is an initial guess for a fixed point or it can be an N x A matrix of previous inputs for which corresponding outputs are available. In this case N is the dimensionality of the fixed point vector you are seeking (Hence each column is a matrix that is input to f) and A is the number of previous Inputs/Outputs that are being provided to the fixed point. Where a matrix is input, a corresponding outputs must be provided or the last column of the outputs matrix is taken as a startpoint guess and the rest of the inputs and output matrices are discarded.
  *  Outputs - This is a matrix of the Function values for each column of the input. It must be provided so that column k of the outputs matrix is equal to Function(Column k of inputs matrix).
- *  Algorithm - This is the fixed point Algorithm to be used. It can be :Anderson", "Simple", "Aitken", "Newton", "MPE", "RRE", "VEA" or "SEA". See vignette and references to see explanations of these Algorithms.
+ *  Algorithm - This is the fixed point Algorithm to be used. It can be Anderson, Simple, Aitken, Newton, MPE, RRE, VEA or SEA. See vignette and references to see explanations of these Algorithms.
  *  ConvergenceMetric This is a function that takes in a vector of residuals from one iterate of the function (defined as f(x) - x for vector x and function f) and returns a scalar. This scalar should be low when convergence is close to being achieved. By default this is the maximum residual by absolute value (the sup norm in the space of residuals).
  *   ConvergenceMetricThreshold This is the threshold for terminating the algorithm. The algorithm will terminate when the scalar that ConvergenceMetric returns is less than ConvergenceMetricThreshold. This can be set to a negative number in which case the algorithm will run until MaxIter is hit or an error occurs (Note that an error is likely in trying to use any Algorithm other than "Simple" when a fixed point is already found).
  *  MaxIter - This is the maximum number of iterates that will be undertaken.
@@ -81,23 +81,23 @@ A function for finding the fixed point of another function
  #' # For the simplest possible example we can seek the fixed point of the cos function with a scalar.
  #' Inputs = 0.3
  #' Func(x) = cos(x)
- #' A = fixed_point(Func, Inputs; Algorithm = :Aitken, Dampening = 0.5)
- #' B = fixed_point(Func, Inputs; Algorithm = :Anderson, Dampening = 1.0)
+ #' A = fixed_point(Func, Inputs; Algorithm = Aitken, Dampening = 0.5)
+ #' B = fixed_point(Func, Inputs; Algorithm = Anderson, Dampening = 1.0)
  #'
  #' # For this next one the ConvergenceMetricThreshold is negative so the algorithm
  #' # will keep running until MaxIter is met.
- #' C = fixed_point(Func, Inputs; Algorithm = :Simple, MaxIter = 4, ConvergenceMetricThreshold = -1.0)
+ #' C = fixed_point(Func, Inputs; Algorithm = Simple, MaxIter = 4, ConvergenceMetricThreshold = -1.0)
  #' # But we can continue solving for this fixed point but now switching to the Newton Algorithm.
- #' D = fixed_point(Func, C[:Inputs], C[:Outputs]; Algorithm = :Newton)
+ #' D = fixed_point(Func, C[:Inputs], C[:Outputs]; Algorithm = Newton)
  #'
  #' # We can also find a 4 dimensional fixed point vector of this function.
  #' Inputs = [0.3, 98, 0, pi]
- #' E = fixed_point(Func, Inputs; Algorithm = :Anderson)
- #' F = fixed_point(Func, Inputs; Algorithm = :Anderson, MaxM = 4, ReportingSigFig = 13)
+ #' E = fixed_point(Func, Inputs; Algorithm = Anderson)
+ #' F = fixed_point(Func, Inputs; Algorithm = Anderson, MaxM = 4, ReportingSigFig = 13)
 """
 function fixed_point(func::Function, Inputs::Array{Float64, 1};
-                    Algorithm::Symbol = :Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000,
-                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::Symbol = :ReplaceInvalids,
+                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000,
+                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = ReplaceElements,
                     ConditionNumberThreshold::Float64 = 1e3, Plot::Symbol = :NoPlot, ConvergenceFigLags::Int = 5, ChangePerIteratexaxis::Array{Float64,1} = Array{Float64,1}(undef,0))
     Inputs2 = Array{Float64, 2}(undef,size(Inputs)[1],1)
     Inputs2[:,1] = Inputs
@@ -106,8 +106,8 @@ function fixed_point(func::Function, Inputs::Array{Float64, 1};
                        ConditionNumberThreshold = ConditionNumberThreshold, Plot = Plot, ConvergenceFigLags = ConvergenceFigLags, ChangePerIteratexaxis = ChangePerIteratexaxis)
 end
 function fixed_point(func::Function, Inputs::Float64;
-                    Algorithm::Symbol = :Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000,
-                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::Symbol = :ReplaceInvalids,
+                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000,
+                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = ReplaceElements,
                     ConditionNumberThreshold::Float64 = 1e3, Plot::Symbol = :NoPlot, ConvergenceFigLags::Int = 5, ChangePerIteratexaxis::Array{Float64,1} = Array{Float64,1}(undef,0))
     Inputs2 = Array{Float64, 2}(undef,1,1)
     Inputs2[1,1] = Inputs
@@ -116,15 +116,15 @@ function fixed_point(func::Function, Inputs::Float64;
                        ConditionNumberThreshold = ConditionNumberThreshold, Plot = Plot, ConvergenceFigLags = ConvergenceFigLags, ChangePerIteratexaxis = ChangePerIteratexaxis)
 end
 function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{Float64,2} = Array{Float64,2}(undef,size(Inputs)[1],0),
-                    Algorithm::Symbol = :Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000,
-                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::Symbol = :ReplaceInvalids,
+                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000,
+                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = ReplaceElements,
                     ConditionNumberThreshold::Float64 = 1e3, Plot::Symbol = :NoPlot, ConvergenceFigLags::Int = 5, ChangePerIteratexaxis::Array{Float64,1} = Array{Float64,1}(undef,0))
     # This code first tests if the input point is a fixed point. Then if it is not a while loop runs to try to find a fixed point.
     if (ConditionNumberThreshold < 1) error("ConditionNumberThreshold must be at least 1.")  end
     SimpleStartIndex = size(Outputs)[2]
     if (isempty(Outputs))
         if (size(Inputs)[2] > 1.5)
-            @warn("If you do not give outputs to the function then you can only give one vector of inputs (in a 2d array) to the fixed_pointFunction. So for a function that takes an N sizeensional array you should input a Array{Float64}(N,1) array.  As you have input an array of size Array{Float64}(N,k) with k > 1 we have discarded everything but the last column to turn it into a Array{Float64}(N,1) array.\n")
+            @warn("If you do not give outputs to the function then you can only give one vector of inputs (in a 2d array) to the fixed_pointFunction. So for a function that takes an N dimensional array you should input a Array{Float64}(N,1) array.  As you have input an array of size Array{Float64}(N,k) with k > 1 we have discarded everything but the last column to turn it into a Array{Float64}(N,1) array.\n")
             Inputs = Inputs[:,size(Inputs)[2]]
         end
     else
@@ -182,7 +182,7 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
         # Generating new input and output.
         NewInputFunctionReturn = fixed_point_new_input(Inputs, Outputs, Algorithm; MaxM = MaxM, SimpleStartIndex = SimpleStartIndex, ExtrapolationPeriod = ExtrapolationPeriod,
                                              Dampening = Dampening, ConditionNumberThreshold = ConditionNumberThreshold, PrintReports = PrintReports, ReplaceInvalids = ReplaceInvalids)
-        if (Algorithm != :Anderson) & PrintReports
+        if (Algorithm != Anderson) & PrintReports
             print(lpad("",49))
         end
 
@@ -220,7 +220,7 @@ end
 """
 This function takes the previous inputs and outputs from the fixed_point function and determines what vector to try next in seeking a fixed point.
 ### Takes
- *  Inputs - This is an N x A matrix of previous inputs for which corresponding outputs are available. In this case N is the sizeensionality of the fixed point vector that is being sought (Hence each column is a matrix that is input to the "Function") and A is the number of previous Inputs/Outputs that are being provided to the fixed point.
+ *  Inputs - This is an N x A matrix of previous inputs for which corresponding outputs are available. In this case N is the dimensionality of the fixed point vector that is being sought (Hence each column is a matrix that is input to the "Function") and A is the number of previous Inputs/Outputs that are being provided to the fixed point.
 * Outputs - This is a matrix of Function values for the each column of the "Inputs" matrix.
 * Algorithm - This is the fixed point Algorithm to be used. It can be "Anderson", "Simple", "Aitken", "Newton", "MPE", "RRE", "VEA", "SEA".
 * MaxM - This is the number of saved iterates that are used in the Anderson algorithm. This has no role if another Algorithm is used.
@@ -233,20 +233,20 @@ This function takes the previous inputs and outputs from the fixed_point functio
  * A nicely formatted string version of the input number for printing to the console.
 ### Examples
 FPFunction = function(x){c(0.5*sqrt(abs(x[1] + x[2])), 1.5*x[1] + 0.5*x[2])}
-A = fixed_point( Function = FPFunction, Inputs = [0.3,900], MaxIter = 6, Algorithm = :Simple)
-NewGuessAnderson = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :Anderson)
-NewGuessVEA = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :VEA)
-NewGuessMPE = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :MPE)
-NewGuessAitken = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :Aitken)
+A = fixed_point( Function = FPFunction, Inputs = [0.3,900], MaxIter = 6, Algorithm = Simple)
+NewGuessAnderson = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = Anderson)
+NewGuessVEA = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = VEA)
+NewGuessMPE = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = MPE)
+NewGuessAitken = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = Aitken)
 """
-function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,2}, Algorithm::Symbol = :Anderson; MaxM::Int = 10,
+function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,2}, Algorithm::FixedPointAccelerationAlgorithm = Anderson; MaxM::Int = 10,
                                SimpleStartIndex::Int = 1, ExtrapolationPeriod::Int = 1, Dampening::Float64 = 1,
-                               ConditionNumberThreshold::Float64 = 1000, PrintReports::Bool = false, ReplaceInvalids::Symbol = :ReplaceElements)
+                               ConditionNumberThreshold::Float64 = 1000, PrintReports::Bool = false, ReplaceInvalids::InvalidReplacement = ReplaceElements)
     CompletedIters = size(Outputs)[2]
     proposed_input = Outputs[:,CompletedIters]
-    if Algorithm == :Simple
+    if Algorithm == Simple
          proposed_input = Outputs[:,CompletedIters]
-    elseif Algorithm == :Anderson
+    elseif Algorithm == Anderson
         if (CompletedIters < 1.5)
             if (PrintReports) println(lpad(" ", 32), "  Using",  lpad(0, 3)," lags. ") end
             return Outputs[:,CompletedIters]
@@ -285,7 +285,7 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
         end
         if (PrintReports) println("Condition number is ", lpad(ConditionNumber, 5),". Used:",  lpad(M+1, 3)," lags. ") end
         proposed_input = LastOutput .- (Dampening .* vec(DeltaOutputs * Coeffs))
-    elseif Algorithm == :Aitken
+    elseif Algorithm == Aitken
         if ((CompletedIters + SimpleStartIndex) % 3) == 0
             # If we are in 3rd, 6th, 9th, 12th iterate from when we started Acceleration then we want to do a jumped Iterate,
             # First we extract the guess that started this run of 3 iterates (x), the Function applied to it (fx) and the function applied to that (ffx)
@@ -301,7 +301,7 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
             # We just do a simple iterate. We do an attempt with the latest iterate.
             proposed_input = Outputs[:,CompletedIters]
         end
-    elseif Algorithm == :Newton
+    elseif Algorithm == Newton
         if (((CompletedIters + SimpleStartIndex) % 2 == 1) & (CompletedIters > 1))
             # If we are in 3rd, 6th, 9th, 12th iterate from when we started Newton Acceleration then we want to do a Newton Iterate,
             # First we extract the guess that started this run of 3 iterates (x), the Function applied to it (fx) and the function applied to that (ffx)
@@ -322,7 +322,7 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
             # We just do a simple iterate.
             proposed_input = Outputs[:,CompletedIters]
         end
-    elseif (Algorithm == :MPE) | (Algorithm == :RRE)
+    elseif (Algorithm == MPE) | (Algorithm == RRE)
         SimpleIteratesMatrix = put_together_without_jumps(Inputs, Outputs)
         if (size(SimpleIteratesMatrix)[2] % ExtrapolationPeriod == 0)
             NewGuess = PolynomialExtrapolation(SimpleIteratesMatrix,Algorithm)
@@ -331,7 +331,7 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
             # We just do a simple iterate.
             proposed_input = Outputs[:,CompletedIters]
         end
-    elseif (Algorithm == :VEA) | (Algorithm == :SEA)
+    elseif (Algorithm == VEA) | (Algorithm == SEA)
         SimpleIteratesMatrix = put_together_without_jumps(Inputs, Outputs)
         if (size(SimpleIteratesMatrix)[2] % ExtrapolationPeriod == 0)
             NewGuess = EpsilonExtrapolation(SimpleIteratesMatrix, Algorithm)
@@ -346,9 +346,9 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
     if sum(dodgy_entries) == 0
         return proposed_input
     else
-        if ReplaceInvalids == :ReplaceElements
+        if ReplaceInvalids == ReplaceElements
             proposed_input[dodgy_entries] = Outputs[dodgy_entries,CompletedIters]
-        elseif ReplaceInvalids == :ReplaceVector
+        elseif ReplaceInvalids == ReplaceVector
             proposed_input = Outputs[:,CompletedIters]
         end
     end
@@ -363,9 +363,8 @@ This function performs Minimal Polynomial extrapolation (MPE) or Reduced Rank Ex
 ### Returns
  * A vector containing the extrapolated vector.
 """
-function PolynomialExtrapolation(Iterates::Array{Float64,2}, Algorithm::Symbol)
-    if (!(Algorithm in [:MPE, :RRE])) error("Invalid Algorithm input. PolynomialExtrapolation function can only take Algorithm as MPE or RRE.") end
-    if (Algorithm == :MPE)
+function PolynomialExtrapolation(Iterates::Array{Float64,2}, Algorithm::FixedPointAccelerationAlgorithm)
+    if (Algorithm == MPE)
         TotalColumnsOfIterates = size(Iterates)[2]
         OldDifferences         = Iterates[:,2:(TotalColumnsOfIterates-1)] .- Iterates[:,1:(TotalColumnsOfIterates-2)]
         LastDifference         = Iterates[:,TotalColumnsOfIterates]       .- Iterates[:,(TotalColumnsOfIterates-1)]
@@ -375,8 +374,7 @@ function PolynomialExtrapolation(Iterates::Array{Float64,2}, Algorithm::Symbol)
         sumVec                 = sum(cVector)
         s                      = (Iterates[:,2:TotalColumnsOfIterates] * cVector) ./ sumVec
         return s
-    end
-    if (Algorithm == :RRE)
+    elseif (Algorithm == RRE)
         TotalColumnsOfIterates = size(Iterates)[2]
         FirstColumn          = Iterates[:,1]
         Differences          = Iterates[:,2:(TotalColumnsOfIterates)]      .- Iterates[:,1:(TotalColumnsOfIterates-1)]
@@ -386,6 +384,8 @@ function PolynomialExtrapolation(Iterates::Array{Float64,2}, Algorithm::Symbol)
         InverseSecondDifferences = pinv(SecondDifferences)
         s = FirstColumn .- ((Differences * InverseSecondDifferences) * FirstDifference)
         return s
+    else
+        error("Invalid Algorithm input. PolynomialExtrapolation function can only take Algorithm as MPE or RRE.")
     end
 end
 
@@ -397,11 +397,11 @@ This is a helper function for EpsilonExtrapolation
 ### Returns
  *  A vector with the extrapolated vector.
 """
-function EpsilonExtrapolation(Iterates::Array{Float64,2}, Algorithm::Symbol)
+function EpsilonExtrapolation(Iterates::Array{Float64,2}, Algorithm::FixedPointAccelerationAlgorithm)
     # The function cannot do anything to a one column input so will return input unchanged.
     if (size(Iterates)[2] == 1) return Iterates end
     if (size(Iterates)[2] % 2 == 0) Iterates = Iterates[:,2:size(Iterates)[2]] end
-    if (!(Algorithm in [:VEA, :SEA])) error("Invalid Algorithm input. EpsilonExtrapolation function can only take Algorithm as VEA or SEA") end
+    if (!(Algorithm in [VEA, SEA])) error("Invalid Algorithm input. EpsilonExtrapolation function can only take Algorithm as VEA or SEA") end
     Mat = Iterates
     RowsOfMatrix    = size(Mat)[1]
     TotalColumnsOfMatrix = size(Mat)[2]
@@ -424,12 +424,12 @@ end
 This is a helper function for EpsilonExtrapolation
 ### Takes
  * DifferenceMatrix - The matrix of the differences in elements to be inverted.
- * Algorithm - :SEA or :VEA.
+ * Algorithm - SEA or VEA.
 ### Returns
  * A vector of the result of inverting each (column) vector in a mmatrix.
 """
-function EpsilonExtrapolationVectorOfInverses(DifferenceMatrix, Algorithm)
-    if (size(DifferenceMatrix)[1] == 1) | (Algorithm == :SEA)
+function EpsilonExtrapolationVectorOfInverses(DifferenceMatrix::Array{Float64,2}, Algorithm::FixedPointAccelerationAlgorithm)
+    if (size(DifferenceMatrix)[1] == 1) | (Algorithm == SEA)
         return 1 ./ DifferenceMatrix
     else
         invs = transpose(pinv(DifferenceMatrix[:,1]))
@@ -444,7 +444,7 @@ end
 """
 This function takes the previous inputs and outputs and assembles a matrix with both excluding jumps.
 ### Takes
- * Inputs - This is an N x A matrix of previous inputs for which corresponding outputs are available. In this case N is the sizeensionality of the fixed point vector that is being sought (and each column is a matrix that is input to the "Function") and A is the number of previous Inputs/Outputs that are being provided to the fixed point.
+ * Inputs - This is an N x A matrix of previous inputs for which corresponding outputs are available. In this case N is the dimensionality of the fixed point vector that is being sought (and each column is a matrix that is input to the "Function") and A is the number of previous Inputs/Outputs that are being provided to the fixed point.
  * Outputs This is a matrix of "Function" values for each column of the "Inputs" matrix.
  * AgreementThreshold A parameter for determining when a column in Inputs and a column in Outputs match. They are deemed to match if the sum of the absolute values of the difference in the columns is less than AgreementThreshold.
 ### Returns
