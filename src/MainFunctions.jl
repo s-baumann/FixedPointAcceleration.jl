@@ -47,10 +47,10 @@ function create_safe_function_executor(Func::Function)
     return CheckResultAndReturn_not_elementwise
 end
 
-supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids))
+minnorm(Resids::Array{Float64, 1}) = minimum(abs.(Resids))
 l1norm(Resids::Array{Float64, 1}) = sum( abs.(Resids))
 l2norm(Resids::Array{Float64, 1}) = sum( (Resids) .^2 )
-
+supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids))
 
 """
 A function for finding the fixed point of another function

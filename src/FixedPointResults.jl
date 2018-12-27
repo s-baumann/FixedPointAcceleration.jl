@@ -45,3 +45,10 @@ end
     ConvergenceFig = 1
     ChangePerIterate = 2
 end
+
+@enum FP_Norms begin
+    minnorm = 0
+    l1norm = 1
+    l2norm = 2
+    supnorm = 3
+end

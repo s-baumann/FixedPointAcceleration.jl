@@ -15,43 +15,51 @@ A function for plotting the change in each vector per iterate.
 ### Returns
  * This function returns nothing. It just shows a plot in the console.
 ### Examples
-Inputs = seq(1,10)
-Function = function(x){ cos(x) }
-A = FixedPoint(Function, Inputs, Algorithm = "Anderson")
-ChangePerIterate(A$Inputs, A$Outputs, A$Convergence)
+Inputs = collect(1.0:10.0)
+Func(x) = cos(x)
+A = FixedPoint(Func, Inputs; Algorithm = Anderson)
+ChangePerIterate(A.Inputs_, A.Outputs_, A.ConvergenceVector_)
  # Any now to have it play one frame every half a second starting from the nineth iterate
-ChangePerIterate(A$Inputs, A$Outputs, A$Convergence, secondhold = 0.5, FromIterate = 9)
+ChangePerIterate(A.Inputs_, A.Outputs_, A.ConvergenceVector_, secondhold = 0.5, FromIterate = 9)
 """
-function ChangePerIterate(Inputs, Outputs, ConvergenceVector = c(), ConvergenceSigFig = 5, ShowInputs = TRUE, ShowOutputs = TRUE, ShowPrevious  = TRUE, xaxis = c(), secondhold = 0, FromIterate = 1, ToIterate = c()){
+function ChangePerIterate(Inputs::Array{Float64,2}, Outputs::Array{Float64,2};
+                          ConvergenceVector::Array{Float64,1} = Array{Float64,1}(undef,0),
+                          ConvergenceSigFig::Int = 5, ShowInputs::Bool = true, ShowOutputs::Bool = true,
+                          ShowPrevious::Bool  = true, xaxis::Array{Float64,1} = Array{Float64,1}(undef,0),
+                          secondhold::Int = 0, FromIterate::Int = 1, ToIterate::Int = size(Inputs)[2])
+    if (ShowInputs == false) & (ShowOutputs == false) error("It is not possible to use this function without showing inputs or outputs (as nothing will be drawn). Set ShowInputs and/or ShowOutputs to TRUE.") end
+    ylab = "Outputs (in blue)."
+    if (ShowInputs) ylab = "Inputs (in red)." end
+    if ShowInputs & ShowOutputs ylab = "Inputs (in red), Outputs (in blue)." end
+    if (isempty(xaxis)) xaxis = 1:size(Inputs)[1] end
+    if ToIterate < FromIterate error("ToIterate must be greater than FromIterate") end
 
-  if (ShowInputs + ShowOutputs < 0.5){stop("It is not possible to use this function without showing inputs or outputs (as nothing will be drawn). Set ShowInputs and/or ShowOutputs to TRUE.")}
-  if (ShowInputs){ylab = "Inputs (in red)."}
-  if (ShowOutputs){ylab = "Outputs (in blue)."}
-  if (all(ShowInputs, ShowOutputs)){ylab = "Inputs (in red), Outputs (in blue)."}
+    ytop = max(Inputs[:, FromIterate:ToIterate]...,Outputs[:, FromIterate:ToIterate]...)
+    ybot = min(Inputs[:, FromIterate:ToIterate]...,Outputs[:, FromIterate:ToIterate]...)
 
-  if (is.null(xaxis)){xaxis = 1:size(Inputs)[1]}
-  if (is.null(ToIterate)){ToIterate = size(Inputs)[2]}
+    for (i in FromIterate:ToIterate)
+      if (is.null(ConvergenceVector)) Title = paste0("Fixed Point Convergence. Iterate:", i, ".")} else {Title = paste0("Fixed Point Convergence. Iterate:", i, ". Convergence: ", NicePrint(ConvergenceVector[i],ConvergenceSigFig)) end
+      if (ShowPrevious)
+          graphics::plot(c(min(xaxis), max(xaxis)), c(ytop, ybot), type = "p", col = 0, xlab = "", ylab = ylab, main = Title, sub = "The previous iterate is represented by the open circles.")
+      else
+          graphics::plot(c(min(xaxis), max(xaxis)), c(ytop, ybot), type = "p", col = 0, xlab = "", ylab = ylab, main = Title)
+      end
+      if (ShowInputs)
+          graphics::points(xaxis, Inputs[,i], type = "p", pch = 19, col = "red")
+      end
+      if (ShowOutputs)
+          graphics::points(xaxis, Outputs[,i], type = "p", pch = 19, col = "blue")
+      end
+      if (all(i>1, ShowPrevious))
+          if (ShowInputs) graphics::points(xaxis, Inputs[,i-1], type = "p", col = "red") end
+          if (ShowOutputs) graphics::points(xaxis, Outputs[,i-1], type = "p", col = "blue") end
+      end
 
-  ytop = max(Inputs[ , FromIterate:ToIterate],Outputs[, FromIterate:ToIterate])
-  ybot = min(Inputs[ , FromIterate:ToIterate],Outputs[, FromIterate:ToIterate])
-
-  for (i in FromIterate:ToIterate){
-    if (is.null(ConvergenceVector)) { Title = paste0("Fixed Point Convergence. Iterate:", i, ".")} else {Title = paste0("Fixed Point Convergence. Iterate:", i, ". Convergence: ", NicePrint(ConvergenceVector[i],ConvergenceSigFig))}
-
-    if (ShowPrevious){graphics::plot(c(min(xaxis), max(xaxis)), c(ytop, ybot), type = "p", col = 0, xlab = "", ylab = ylab, main = Title, sub = "The previous iterate is represented by the open circles.")
-    } else {graphics::plot(c(min(xaxis), max(xaxis)), c(ytop, ybot), type = "p", col = 0, xlab = "", ylab = ylab, main = Title)}
-    if (ShowInputs){graphics::points(xaxis, Inputs[,i], type = "p", pch = 19, col = "red")}
-    if (ShowOutputs){graphics::points(xaxis, Outputs[,i], type = "p", pch = 19, col = "blue")}
-    if (all(i>1, ShowPrevious)){
-      if (ShowInputs){graphics::points(xaxis, Inputs[,i-1], type = "p", col = "red")}
-      if (ShowOutputs){graphics::points(xaxis, Outputs[,i-1], type = "p", col = "blue")}
-    }
-
-    if (secondhold > -0.5 & secondhold <= 1e-10){
-      readline(prompt=paste0("Iterate:", i, ".     Press [enter] to see next frame"))
-    }
-    if (secondhold > 1e-10){Sys.sleep(secondhold)}
-  }
+      if (secondhold > -0.5 & secondhold <= 1e-10)
+          readline(prompt=paste0("Iterate:", i, ".     Press [enter] to see next frame"))
+      end
+      if (secondhold > 1e-10) Sys.sleep(secondhold) end
+    end
 end
 
 
@@ -95,16 +103,17 @@ A function for plotting the convergence change over a series of iterates. On the
 ### Returns
  * This function returns nothing. It just shows a plot in the console.
 ### Examples
-Inputs = seq(1,10)
-Function = function(x){ cos(x) }
-A = FixedPoint(Function, Inputs, Algorithm = "Anderson")
-ConvergenceFig(A$Inputs, A$Outputs)
+Inputs = collect(1.0:10.0)
+Func(x) = cos(x)
+A = FixedPoint(Function, Inputs; Algorithm = Anderson)
+ConvergenceFig(A.Inputs_, A.Outputs_)
  # And now to only show a median norm:
-Differences = A$Inputs - A$Outputs
+Differences = A.Inputs_ .- A.Outputs_
 Convergence = apply(Differences,2,function(x){median(abs(x))})
-ConvergenceFig(A$Inputs, A$Outputs, Convergence, LinesToDraw = "Input_Convergence")
+ConvergenceFig(A.Inputs_, A.Outputs_, Convergence, LinesToDraw = "Input_Convergence")
 """
-function ConvergenceFig(Inputs, Outputs, Input_Convergence = c(), LinesToDraw = c("Sup_Norm", "Euclidean_Norm","Sum_Of_Absolute_Value_Of_Residuals", "Smallest_Residual"), LogScale = TRUE, FromIterate = 1, ToIterate = c()){
+function ConvergenceFig(Inputs::Array{Float64,2}, Outputs::Array{Float64,2}; Input_Convergence::Array{Float64,1} = Array{Float64,1}(undef,0),
+                        LinesToDraw = c("Sup_Norm", "Euclidean_Norm","Sum_Of_Absolute_Value_Of_Residuals", "Smallest_Residual"), LogScale = TRUE, FromIterate = 1, ToIterate = c()){
   if (!is.null(Input_Convergence)){
     if (sum(size(Inputs) != size(Outputs)) > 0.5 | size(Inputs)[2] != length(Input_Convergence)) {
       stop("The matrix of outputs and the matrix of inputs do not have the same shape. They must also have the same width as the length of the ConvergenceVector. As there are some differences in this case nothing can be drawn.")}
