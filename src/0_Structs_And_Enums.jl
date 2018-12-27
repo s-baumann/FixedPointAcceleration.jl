@@ -62,7 +62,7 @@ struct FixedPointResults
     Outputs_::Array{Float64,2}
     function FixedPointResults(Inputs_::Array{Float64,2}, Outputs_::Array{Float64,2}, TerminationCondition_::TerminationCondition;
                                ConvergenceVector_::Union{Missing,Array{Float64,1}} = missing,
-                               FailedEvaluation_::Union{Missing,NamedTuple} = missing)
+                               FailedEvaluation_::Union{Missing,FunctionEvaluationResult} = missing)
         Iterations_ = size(Inputs_)[2]
         FixedPoint_ = missing
         Convergence_ = missing
