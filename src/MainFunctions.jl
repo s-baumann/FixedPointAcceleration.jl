@@ -4,11 +4,10 @@ This function creates a function that executes the function for which a fixed po
 ### Takes
  * Func - The function input to fixed_point
 ### Returns
-A NamedTuple containing:
-* AbortFunction - A Boolean for whether to abort fixed_point iterations
-* Input - The input
-* Output - The output of the FunctionExecutor
-* message - A message describing the error or lack thereof.
+A FunctionEvaluationResult containing the following fields:
+* Input_ - The input
+* Output_ - The output of the FunctionExecutor. May be missing if function could not complete without error.
+* Error_ - A enum of type FP_FunctionEvaluationError representing what error occured.
 ### Examples
 Func(x) = sqrt(x)
 FunctionExecutor = create_safe_function_executor(Func)
@@ -29,28 +28,22 @@ function create_safe_function_executor(Func::Function)
         try
             tf_result =  Func(x)
         catch
-            return (AbortFunction = true, Input = x, Message = :ErrorExecutingFunction)
+            return FunctionEvaluationResult(x, missing, ErrorExecutingFunction)
         end
         if ismissing((sum(isnan.(tf_result)) > 0))
-            returnDict = (AbortFunction = true, Input = x, Output = tf_result, Message = :MissingsDetected)
+            return FunctionEvaluationResult(x, tf_result, MissingsDetected)
         elseif (sum(isnan.(tf_result)) > 0)
-            returnDict = (AbortFunction = true, Input = x, Output = tf_result, Message = :NAsDetected)
+            return FunctionEvaluationResult(x, tf_result, NAsDetected)
         elseif (sum(isinf.(tf_result)) > 0)
-            returnDict = (AbortFunction = true, Input = x, Output = tf_result, Message = :InfsDetected)
+            return FunctionEvaluationResult(x, tf_result, InfsDetected)
         elseif (length(tf_result) != length(x))
-            returnDict = (AbortFunction = true, Input = x, Output = tf_result, Message = :LengthOfOutputNotSameAsInput)
+            return FunctionEvaluationResult(x, tf_result, LengthOfOutputNotSameAsInput)
         else
-            returnDict = (AbortFunction = false, Input = x, Output = tf_result, Message = :NoErrors)
+            return FunctionEvaluationResult(x, tf_result, NoError)
         end
-        return returnDict
     end
     return CheckResultAndReturn_not_elementwise
 end
-
-minnorm(Resids::Array{Float64, 1}) = minimum(abs.(Resids))
-l1norm(Resids::Array{Float64, 1}) = sum( abs.(Resids))
-l2norm(Resids::Array{Float64, 1}) = sum( (Resids) .^2 )
-supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids))
 
 """
 A function for finding the fixed point of another function
@@ -94,9 +87,9 @@ A function for finding the fixed point of another function
  #' F = fixed_point(Func, Inputs; Algorithm = Anderson, MaxM = 4, ReportingSigFig = 13)
 """
 function fixed_point(func::Function, Inputs::Array{Float64, 1};
-                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000,
-                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = NoAction,
-                    ConditionNumberThreshold::Float64 = 1e3)
+                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
+                    ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
+                    PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
     Inputs2 = Array{Float64, 2}(undef,size(Inputs)[1],1)
     Inputs2[:,1] = Inputs
     return fixed_point(func, Inputs2; Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
@@ -104,9 +97,9 @@ function fixed_point(func::Function, Inputs::Array{Float64, 1};
                        ConditionNumberThreshold = ConditionNumberThreshold)
 end
 function fixed_point(func::Function, Inputs::Float64;
-                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000,
-                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = NoAction,
-                    ConditionNumberThreshold::Float64 = 1e3)
+                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
+                    ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
+                    PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
     Inputs2 = Array{Float64, 2}(undef,1,1)
     Inputs2[1,1] = Inputs
     return fixed_point(func, Inputs2; Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
@@ -114,9 +107,9 @@ function fixed_point(func::Function, Inputs::Float64;
                        ConditionNumberThreshold = ConditionNumberThreshold)
 end
 function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{Float64,2} = Array{Float64,2}(undef,size(Inputs)[1],0),
-                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000,
-                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = NoAction,
-                    ConditionNumberThreshold::Float64 = 1e3)
+                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
+                    ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
+                    PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
     # This code first tests if the input point is a fixed point. Then if it is not a while loop runs to try to find a fixed point.
     if (ConditionNumberThreshold < 1) error("ConditionNumberThreshold must be at least 1.")  end
     SimpleStartIndex = size(Outputs)[2]
@@ -141,10 +134,10 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
     # Do an initial run if no runs have been done:
     if (isempty(Outputs))
         ExecutedFunction = SafeFunction(Inputs)
-        if (ExecutedFunction[:AbortFunction])
+        if ExecutedFunction.Error_ != NoError
             return FixedPointResults(Inputs, Outputs, InvalidInputOrOutputOfIteration; FailedEvaluation_ = ExecutedFunction)
         end
-        Outputs = hcat(Outputs, ExecutedFunction[:Output])
+        Outputs = hcat(Outputs, ExecutedFunction.Output_)
     else
         # This ensures that MaxIter refers to max iter excluding any previous passed in results
         MaxIter = MaxIter + size(Outputs)[2]
@@ -178,12 +171,12 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
         end
 
         ExecutedFunction = SafeFunction(NewInputFunctionReturn)
-        if (ExecutedFunction[:AbortFunction])
+        if ExecutedFunction.Error_ != NoError
             return FixedPointResults(Inputs, Outputs, InvalidInputOrOutputOfIteration; ConvergenceVector_  = vec(ConvergenceVector), FailedEvaluation_ = ExecutedFunction)
         end
-        Inputs  = hcat(Inputs, ExecutedFunction[:Input])
-        Outputs = hcat(Outputs, ExecutedFunction[:Output])
-        Resid   = hcat(Resid, ExecutedFunction[:Output] .- ExecutedFunction[:Input])
+        Inputs  = hcat(Inputs, ExecutedFunction.Input_)
+        Outputs = hcat(Outputs, ExecutedFunction.Output_)
+        Resid   = hcat(Resid, ExecutedFunction.Output_ .- ExecutedFunction.Input_)
         # Checking and recording convergence
         ConvergenceVector =  hcat(ConvergenceVector, ConvergenceMetric(Resid[:,iter]))
         Convergence = ConvergenceVector[iter]
