@@ -57,7 +57,7 @@ struct FixedPointResults
     TerminationCondition_::TerminationCondition
     Iterations_::Int
     ConvergenceVector_::Union{Missing,Array{Float64,1}}
-    FailedEvaluation_::Union{Missing,NamedTuple}
+    FailedEvaluation_::Union{Missing,FunctionEvaluationResult}
     Inputs_::Array{Float64,2}
     Outputs_::Array{Float64,2}
     function FixedPointResults(Inputs_::Array{Float64,2}, Outputs_::Array{Float64,2}, TerminationCondition_::TerminationCondition;
