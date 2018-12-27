@@ -67,10 +67,8 @@ A function for finding the fixed point of another function
  *  Dampening - This is the dampening parameter. By default it is 1 which means no dampening takes place. It can also be less than 1 (indicating dampening) or more than 1 (indicating extrapolation).
  *  PrintReports - This is a boolean describing whether to print ongoing ConvergenceMetric values for each iterate.
  *  ReportingSigFig - This is the number of significant figures that will be used in printing the convergence values to the console (only if PrintReports is TRUE).
+ *  ReplaceInvalids -Sometimes an acceleration algorithm proposed a vector with an invalid coordinate (NaN, Inf or missing). This parameter can be set to ReplaceInvalids (to replace invalid coordinates by the simple iterate values), ReplaceVector (to replace entire vector with a simple iterate) or NoAction (where an imminent error will occur).
  *  ConditionNumberThreshold - This is a threshold for what condition number is acceptable for solving the least squares problem for the Anderson Algorithm. If the condition number is larger than this threshold then fewer previous iterates will be used in solving the problem. This has no effect unless the "Anderson" Algorithm is used.
- *  Plot - This determines whether a plot should be drawn for every iterate. It can be "NoPlot", "ConvergenceFig" or "ChangePerIterate". By default it is "NoPlot" and no plot is drawn. If it is "ConvergenceFig" then a plot is shown with iterates on the x axis and convergence (as defined by the ConvergenceMetric) is on the y axis. If it is "ChangePerIterate" then there is the index of the array value on the x axis and the value of the array value on the y axis. The previous iterate is also shown so the change per iterate can be visualised.
- *   ConvergenceFigLags - This only affects anything if Plot == "ConvergenceFig". This gives how many previous iterates should be shown on the x axis. By default it is 5. To see them all set it to a high number.
- *  ChangePerIteratexaxis - This only affects anything if Plot == "ChangePerIterate". Sometimes there is a more appropriate xaxis value to use than (the default) value index for this figure. For instance in the consumption smoothing problem in the vignette every value is a value function value at a given budget level. In this case the budget levels could be used for this xaxis.
 ### Returns
  * A list containing the fixed_point, the Inputs and corresponding Outputs, and convergence values (which are computed under the "ConvergenceMetric").
    The list will also include a "Finish" statement describing why it has finished. This is often going to be due to either MaxIter or ConvergenceMetricThreshold being
@@ -97,28 +95,28 @@ A function for finding the fixed point of another function
 """
 function fixed_point(func::Function, Inputs::Array{Float64, 1};
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000,
-                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = ReplaceElements,
-                    ConditionNumberThreshold::Float64 = 1e3, Plot::Symbol = :NoPlot, ConvergenceFigLags::Int = 5, ChangePerIteratexaxis::Array{Float64,1} = Array{Float64,1}(undef,0))
+                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = NoAction,
+                    ConditionNumberThreshold::Float64 = 1e3)
     Inputs2 = Array{Float64, 2}(undef,size(Inputs)[1],1)
     Inputs2[:,1] = Inputs
     return fixed_point(func, Inputs2; Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
                        MaxIter = MaxIter, MaxM = MaxM, ExtrapolationPeriod = ExtrapolationPeriod, Dampening = Dampening, PrintReports = PrintReports, ReportingSigFig = ReportingSigFig,
-                       ConditionNumberThreshold = ConditionNumberThreshold, Plot = Plot, ConvergenceFigLags = ConvergenceFigLags, ChangePerIteratexaxis = ChangePerIteratexaxis)
+                       ConditionNumberThreshold = ConditionNumberThreshold)
 end
 function fixed_point(func::Function, Inputs::Float64;
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000,
-                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = ReplaceElements,
-                    ConditionNumberThreshold::Float64 = 1e3, Plot::Symbol = :NoPlot, ConvergenceFigLags::Int = 5, ChangePerIteratexaxis::Array{Float64,1} = Array{Float64,1}(undef,0))
+                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = NoAction,
+                    ConditionNumberThreshold::Float64 = 1e3)
     Inputs2 = Array{Float64, 2}(undef,1,1)
     Inputs2[1,1] = Inputs
     return fixed_point(func, Inputs2; Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
                        MaxIter = MaxIter, MaxM = MaxM, ExtrapolationPeriod = ExtrapolationPeriod, Dampening = Dampening, PrintReports = PrintReports, ReportingSigFig = ReportingSigFig,
-                       ConditionNumberThreshold = ConditionNumberThreshold, Plot = Plot, ConvergenceFigLags = ConvergenceFigLags, ChangePerIteratexaxis = ChangePerIteratexaxis)
+                       ConditionNumberThreshold = ConditionNumberThreshold)
 end
 function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{Float64,2} = Array{Float64,2}(undef,size(Inputs)[1],0),
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm, ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000,
-                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = ReplaceElements,
-                    ConditionNumberThreshold::Float64 = 1e3, Plot::Symbol = :NoPlot, ConvergenceFigLags::Int = 5, ChangePerIteratexaxis::Array{Float64,1} = Array{Float64,1}(undef,0))
+                    MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0, PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = NoAction,
+                    ConditionNumberThreshold::Float64 = 1e3)
     # This code first tests if the input point is a fixed point. Then if it is not a while loop runs to try to find a fixed point.
     if (ConditionNumberThreshold < 1) error("ConditionNumberThreshold must be at least 1.")  end
     SimpleStartIndex = size(Outputs)[2]
@@ -144,8 +142,7 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
     if (isempty(Outputs))
         ExecutedFunction = SafeFunction(Inputs)
         if (ExecutedFunction[:AbortFunction])
-            return FixedPointResults(Inputs, Outputs, :InvalidOutputOfIteration; FailedEvaluation_ = ExecutedFunction)
-            #return (Inputs = Inputs, Outputs = Outputs,Input = ExecutedFunction[:Input], Output = ExecutedFunction[:Output], Convergence = NaN, fixed_point = NaN, Finish = ExecutedFunction[:Message])
+            return FixedPointResults(Inputs, Outputs, InvalidInputOrOutputOfIteration; FailedEvaluation_ = ExecutedFunction)
         end
         Outputs = hcat(Outputs, ExecutedFunction[:Output])
     else
@@ -163,18 +160,12 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
         if (PrintReports)
             println("The last column of Inputs matrix is already a fixed point under input convergence metric and convergence threshold")
         end
-        return FixedPointResults(Inputs, Outputs, :AlreadyFixedPoint ; ConvergenceVector_  = vec(ConvergenceVector))
-        #return (Inputs = Inputs, Outputs = Outputs, Input = NaN, Output = NaN, Convergence = ConvergenceVector, fixed_point = Outputs[:,iter], Finish = :AlreadyFixedPoint)
+        return FixedPointResults(Inputs, Outputs, AlreadyFixedPoint ; ConvergenceVector_  = vec(ConvergenceVector))
     end
     # Printing a report for initial convergence
     Convergence = ConvergenceVector[iter]
     if (PrintReports)
         println("                                                 Algorithm: ", lpad(Algorithm, 8)   , ". Iteration: ", lpad(iter, 5),". Convergence: ", lpad(round(Convergence, digits=5),8))
-    end
-    if Plot == :ConvergenceFig
-        ConvergenceFig(Inputs, Outputs,  Input_Convergence = ConvergenceVector, FromIterate = 1)
-    elseif Plot == :ChangePerIterate
-        ChangePerIterate(Inputs, Outputs, ConvergenceVector, FromIterate = size(Inputs)[2], ToIterate = size(Inputs)[2], xaxis = ChangePerIteratexaxis, secondhold = -1)
     end
     iter = iter + 1
 
@@ -188,8 +179,7 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
 
         ExecutedFunction = SafeFunction(NewInputFunctionReturn)
         if (ExecutedFunction[:AbortFunction])
-            return FixedPointResults(Inputs, Outputs, :InvalidOutputOfIteration; ConvergenceVector_  = vec(ConvergenceVector), FailedEvaluation_ = ExecutedFunction)
-            #return (Inputs = Inputs, Outputs = Outputs,Input = ExecutedFunction[:Input], Output = ExecutedFunction[:Output], Convergence = NaN, FixedPoint = NaN, Finish = ExecutedFunction[:Message])
+            return FixedPointResults(Inputs, Outputs, InvalidInputOrOutputOfIteration; ConvergenceVector_  = vec(ConvergenceVector), FailedEvaluation_ = ExecutedFunction)
         end
         Inputs  = hcat(Inputs, ExecutedFunction[:Input])
         Outputs = hcat(Outputs, ExecutedFunction[:Output])
@@ -199,15 +189,12 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
         Convergence = ConvergenceVector[iter]
         # Output of report and going to next iteration.
         if (PrintReports) println("Algorithm: ", lpad(Algorithm,8)   , ". Iteration: ", lpad(iter,5), ". Convergence: ", lpad(round(Convergence, digits=5),8)) end
-        if (Plot == :ConvergenceFig) ConvergenceFig(Inputs, Outputs,  Input_Convergence =  ConvergenceVector, FromIterate = max(1, size(Inputs)[2] - ConvergenceFigLags)) end
-        if (Plot == :ChangePerIterate) ChangePerIterate(Inputs, Outputs, ConvergenceVector, secondhold = -1, FromIterate = size(Inputs)[2], ToIterate = size(Inputs)[2], xaxis = ChangePerIteratexaxis) end
         iter  = iter + 1
     end
     fp = Outputs[:,size(Outputs)[2]]
-    Finish = :ReachedMaxIter
-    if (Convergence < ConvergenceMetricThreshold) Finish = :ReachedConvergenceThreshold end
+    Finish = ReachedMaxIter
+    if (Convergence < ConvergenceMetricThreshold) Finish = ReachedConvergenceThreshold end
     return FixedPointResults(Inputs, Outputs, Finish; ConvergenceVector_  = vec(ConvergenceVector))
-    #return (Inputs = Inputs, Outputs = Outputs, Convergence = ConvergenceVector, FixedPoint = fp, Finish = Finish)
 end
 
 
@@ -239,9 +226,9 @@ NewGuessVEA = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = VEA)
 NewGuessMPE = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = MPE)
 NewGuessAitken = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = Aitken)
 """
-function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,2}, Algorithm::FixedPointAccelerationAlgorithm = Anderson; MaxM::Int = 10,
-                               SimpleStartIndex::Int = 1, ExtrapolationPeriod::Int = 1, Dampening::Float64 = 1,
-                               ConditionNumberThreshold::Float64 = 1000, PrintReports::Bool = false, ReplaceInvalids::InvalidReplacement = ReplaceElements)
+function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,2}, Algorithm::FixedPointAccelerationAlgorithm = Anderson;
+                               MaxM::Int = 10, SimpleStartIndex::Int = 1, ExtrapolationPeriod::Int = 1, Dampening::Float64 = 1,
+                               ConditionNumberThreshold::Float64 = 1000, PrintReports::Bool = false, ReplaceInvalids::InvalidReplacement = NoAction)
     CompletedIters = size(Outputs)[2]
     proposed_input = Outputs[:,CompletedIters]
     if Algorithm == Simple
