@@ -86,6 +86,16 @@ A function for finding the fixed point of another function
  #' E = fixed_point(Func, Inputs; Algorithm = Anderson)
  #' F = fixed_point(Func, Inputs; Algorithm = Anderson, MaxM = 4, ReportingSigFig = 13)
 """
+function fixed_point(func::Function, previous_FixedPointResults::FixedPointResults;
+                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
+                    ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
+                    PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
+    Inputs = previous_FixedPointResults.Inputs_
+    Outputs = previous_FixedPointResults.Outputs_
+    return fixed_point(func, Inputs; Outputs = Outputs, Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
+                       MaxIter = MaxIter, MaxM = MaxM, ExtrapolationPeriod = ExtrapolationPeriod, Dampening = Dampening, PrintReports = PrintReports, ReportingSigFig = ReportingSigFig,
+                       ConditionNumberThreshold = ConditionNumberThreshold)
+end
 function fixed_point(func::Function, Inputs::Array{Float64, 1};
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
                     ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
@@ -153,7 +163,7 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
         if (PrintReports)
             println("The last column of Inputs matrix is already a fixed point under input convergence metric and convergence threshold")
         end
-        return FixedPointResults(Inputs, Outputs, AlreadyFixedPoint ; ConvergenceVector_  = vec(ConvergenceVector))
+        return FixedPointResults(Inputs, Outputs, ReachedConvergenceThreshold ; ConvergenceVector_  = vec(ConvergenceVector))
     end
     # Printing a report for initial convergence
     Convergence = ConvergenceVector[iter]

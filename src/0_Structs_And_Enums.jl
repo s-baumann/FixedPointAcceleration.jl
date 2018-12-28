@@ -27,7 +27,6 @@ end
 end
 
 @enum TerminationCondition begin
-    AlreadyFixedPoint = 0
     ReachedConvergenceThreshold = 1
     ReachedMaxIter = 2
     InvalidInputOrOutputOfIteration = 3
@@ -63,14 +62,14 @@ struct FixedPointResults
     function FixedPointResults(Inputs_::Array{Float64,2}, Outputs_::Array{Float64,2}, TerminationCondition_::TerminationCondition;
                                ConvergenceVector_::Union{Missing,Array{Float64,1}} = missing,
                                FailedEvaluation_::Union{Missing,FunctionEvaluationResult} = missing)
-        Iterations_ = size(Inputs_)[2]
+        Iterations_ = size(Outputs_)[2]
         FixedPoint_ = missing
         Convergence_ = missing
-        if !(isempty(Outputs_))
-            FixedPoint_ = Outputs_[:,Iterations_]
-        end
         if (!(ismissing(ConvergenceVector_))) && !(isempty(ConvergenceVector_))
             Convergence_ = ConvergenceVector_[Iterations_]
+        end
+        if TerminationCondition_ == ReachedConvergenceThreshold
+            FixedPoint_ = Outputs_[:,Iterations_]
         end
         return new(FixedPoint_, Convergence_, TerminationCondition_, Iterations_, ConvergenceVector_, FailedEvaluation_, Inputs_, Outputs_)
     end
