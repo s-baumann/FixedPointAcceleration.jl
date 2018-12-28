@@ -273,10 +273,7 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
             fx = Outputs[:,(CompletedIters -1)]
             ffx = Outputs[:,CompletedIters]
             # Now using the appropriate formula to make a new guess. Note that if a vector is input here it is used elementwise.
-            NewGuess = x .- ((fx .- x).^2 ./ (ffx .- 2 .* fx .+ x))
-            # Now there is the chance that the demoninator is zero which results in an NaN. This will ussually mean x = fx - ffx and a fixed point has been found. So we will return the same number.
-            NewGuess[isnan.(NewGuess)] = ffx[isnan.(NewGuess)]
-            proposed_input = Dampening .* NewGuess .+ (1-Dampening) .* Outputs[:,CompletedIters]
+            proposed_input = x .- ((fx .- x).^2 ./ (ffx .- 2 .* fx .+ x))
         else
             # We just do a simple iterate. We do an attempt with the latest iterate.
             proposed_input = Outputs[:,CompletedIters]
@@ -294,10 +291,7 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
             #ffx = Outputs[,CompletedIters ]
             # Now using the appropriate formula to make a new guess. Note that if a vector is input here it is used elementwise.
             derivative = (gxk.-gxk1)./(xk .- xk1)
-            NewGuess   = xk .- (gxk./derivative)
-            # Numerical imprecision can cause a negative denominator. To handle this possibility we replace by the output vector.
-            NewGuess[isnan.(NewGuess)] = fxk[isnan.(NewGuess)]
-            proposed_input = Dampening .* NewGuess .+ (1-Dampening) .* Outputs[:,CompletedIters]
+            proposed_input   = xk .- (gxk./derivative)
         else
             # We just do a simple iterate.
             proposed_input = Outputs[:,CompletedIters]
@@ -305,8 +299,7 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
     elseif (Algorithm == MPE) | (Algorithm == RRE)
         SimpleIteratesMatrix = put_together_without_jumps(Inputs, Outputs)
         if (size(SimpleIteratesMatrix)[2] % ExtrapolationPeriod == 0)
-            NewGuess = PolynomialExtrapolation(SimpleIteratesMatrix,Algorithm)
-            proposed_input = Dampening .* NewGuess .+ (1-Dampening) .* Outputs[:,CompletedIters]
+            proposed_input = PolynomialExtrapolation(SimpleIteratesMatrix,Algorithm)
         else
             # We just do a simple iterate.
             proposed_input = Outputs[:,CompletedIters]
@@ -314,8 +307,7 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
     elseif (Algorithm == VEA) | (Algorithm == SEA)
         SimpleIteratesMatrix = put_together_without_jumps(Inputs, Outputs)
         if (size(SimpleIteratesMatrix)[2] % ExtrapolationPeriod == 0)
-            NewGuess = EpsilonExtrapolation(SimpleIteratesMatrix, Algorithm)
-            proposed_input = Dampening .* NewGuess .+ (1-Dampening) .* Outputs[:,CompletedIters]
+            proposed_input = EpsilonExtrapolation(SimpleIteratesMatrix, Algorithm)
         else
             # We just do a simple iterate.
             proposed_input = Outputs[:,CompletedIters]
@@ -332,7 +324,7 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
             proposed_input = Outputs[:,CompletedIters]
         end
     end
-    return proposed_input
+    return (Dampening .* proposed_input) + (1-Dampening) .* Outputs[:,CompletedIters]
 end
 
 """
@@ -352,18 +344,16 @@ function PolynomialExtrapolation(Iterates::Array{Float64,2}, Algorithm::FixedPoi
         cVector                = -InverseOldDifferences * LastDifference
         cVector                = vcat(cVector,1)
         sumVec                 = sum(cVector)
-        s                      = (Iterates[:,2:TotalColumnsOfIterates] * cVector) ./ sumVec
-        return s
+        return (Iterates[:,2:TotalColumnsOfIterates] * cVector) ./ sumVec
     elseif (Algorithm == RRE)
-        TotalColumnsOfIterates = size(Iterates)[2]
-        FirstColumn          = Iterates[:,1]
-        Differences          = Iterates[:,2:(TotalColumnsOfIterates)]      .- Iterates[:,1:(TotalColumnsOfIterates-1)]
-        SecondDifferences    = Differences[:,2:(TotalColumnsOfIterates-1)] .- Differences[:,1:(TotalColumnsOfIterates-2)]
-        FirstDifference      = Differences[:,1]
-        Differences          = Differences[:,1:(TotalColumnsOfIterates-2)]
+        TotalColumnsOfIterates   = size(Iterates)[2]
+        FirstColumn              = Iterates[:,1]
+        Differences              = Iterates[:,2:(TotalColumnsOfIterates)]      - Iterates[:,1:(TotalColumnsOfIterates-1)]
+        SecondDifferences        = Differences[:,2:(TotalColumnsOfIterates-1)] - Differences[:,1:(TotalColumnsOfIterates-2)]
+        FirstDifference          = Differences[:,1]
+        Differences              = Differences[:,1:(TotalColumnsOfIterates-2)]
         InverseSecondDifferences = pinv(SecondDifferences)
-        s = FirstColumn .- ((Differences * InverseSecondDifferences) * FirstDifference)
-        return s
+        return FirstColumn - ((Differences * InverseSecondDifferences) * FirstDifference)
     else
         error("Invalid Algorithm input. PolynomialExtrapolation function can only take Algorithm as MPE or RRE.")
     end
@@ -437,7 +427,7 @@ function put_together_without_jumps(Inputs::Array{Float64,2}, Outputs::Array{Flo
   if (size_of_dims[2] == 1) return(hcat(Inputs, Outputs)) end
   Difference = (Inputs[:,2:(size_of_dims[2])] .- Outputs[:,1:(size_of_dims[2]-1)])
   Sum_Of_Differences = sum(Difference, dims = 1)[1,:]
-  Agreements = Sum_Of_Differences .< AgreementThreshold
+  Agreements = abs.(Sum_Of_Differences) .< AgreementThreshold
   if (all(Agreements))
       return hcat(Inputs[:,1:(size_of_dims[2])], Outputs[:, size_of_dims[2]])
   else
