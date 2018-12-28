@@ -1,5 +1,5 @@
 func(x) = [0.5*sqrt(abs(x[1] + x[2])), 1.5*x[1] + 0.5*x[2]]
-Inputs = [1.1,2.2]
+Inputs = [0.3,900.0]
 fp_simple   = fixed_point(func, Inputs; Algorithm = Simple)
 fp_simple.Convergence_ < 1e-10
 fp_anderson = fixed_point(func, Inputs; Algorithm = Anderson)

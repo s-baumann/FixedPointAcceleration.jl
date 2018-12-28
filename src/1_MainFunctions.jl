@@ -30,11 +30,11 @@ function create_safe_function_executor(Func::Function)
         catch
             return FunctionEvaluationResult(x, missing, ErrorExecutingFunction)
         end
-        if ismissing((sum(isnan.(tf_result)) > 0))
+        if sum(ismissing.(tf_result)) > 0
             return FunctionEvaluationResult(x, tf_result, MissingsDetected)
-        elseif (sum(isnan.(tf_result)) > 0)
+        elseif sum(isnan.(tf_result)) > 0
             return FunctionEvaluationResult(x, tf_result, NAsDetected)
-        elseif (sum(isinf.(tf_result)) > 0)
+        elseif sum(isinf.(tf_result)) > 0
             return FunctionEvaluationResult(x, tf_result, InfsDetected)
         elseif (length(tf_result) != length(x))
             return FunctionEvaluationResult(x, tf_result, LengthOfOutputNotSameAsInput)
@@ -143,7 +143,7 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
     LengthOfArray = size(Inputs)[1]
     # Do an initial run if no runs have been done:
     if (isempty(Outputs))
-        ExecutedFunction = SafeFunction(Inputs)
+        ExecutedFunction = SafeFunction(Inputs[:,1])
         if ExecutedFunction.Error_ != NoError
             return FixedPointResults(Inputs, Outputs, InvalidInputOrOutputOfIteration; FailedEvaluation_ = ExecutedFunction)
         end

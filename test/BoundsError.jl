@@ -15,12 +15,42 @@ fp = fixed_point(simple_vector_function, fp; Algorithm = Anderson)
 fp.TerminationCondition_ == ReachedConvergenceThreshold
 
 # Testing Output of Nan
-#function funcfunc(x::Array{Float64,1})
-#    if abs(x[1] - 4.0) < 1e-12
-#        return [NaN,NaN]
-#    end
-#    return sqrt.(x)
-#end
-#Inputs = [4.0,1.0]
-#fp = fixed_point(funcfunc, Inputs; Algorithm = Anderson)
-#fp.FailedEvaluation_.Error_
+function funcfunc(x::Array{Float64,1})
+    if abs(x[1] - 4.0) < 1e-12
+        return Array{Float64,1}([NaN,4.0])
+    end
+    return sqrt.(x)
+end
+Inputs = [4.0,1.0]
+fp = fixed_point(funcfunc, Inputs; Algorithm = Anderson)
+fp.FailedEvaluation_.Error_ == NAsDetected
+# Testing Output of Missing
+function funcfunc(x::Array{Float64,1})
+    if abs(x[1] - 4.0) < 1e-12
+        return Array{Float64,1}([missing,4.0])
+    end
+    return sqrt.(x)
+end
+Inputs = [4.0,1.0]
+fp = fixed_point(funcfunc, Inputs; Algorithm = Anderson)
+fp.FailedEvaluation_.Error_ == MissingsDetected
+# Testing Output of Inf
+function funcfunc(x::Array{Float64,1})
+    if abs(x[1] - 4.0) < 1e-12
+        return Array{Float64,1}([Inf,4.0])
+    end
+    return sqrt.(x)
+end
+Inputs = [4.0,1.0]
+fp = fixed_point(funcfunc, Inputs; Algorithm = Anderson)
+fp.FailedEvaluation_.Error_ == InfsDetected
+# Testing Output of wrong size
+function funcfunc(x::Array{Float64,1})
+    if abs(x[1] - 4.0) < 1e-12
+        return Array{Float64,1}([5.0,4.0, 4.0])
+    end
+    return sqrt.(x)
+end
+Inputs = [4.0,1.0]
+fp = fixed_point(funcfunc, Inputs; Algorithm = Anderson)
+fp.FailedEvaluation_.Error_ == LengthOfOutputNotSameAsInput
