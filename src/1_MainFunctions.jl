@@ -94,7 +94,7 @@ function fixed_point(func::Function, previous_FixedPointResults::FixedPointResul
     Outputs = previous_FixedPointResults.Outputs_
     return fixed_point(func, Inputs; Outputs = Outputs, Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
                        MaxIter = MaxIter, MaxM = MaxM, ExtrapolationPeriod = ExtrapolationPeriod, Dampening = Dampening, PrintReports = PrintReports, ReportingSigFig = ReportingSigFig,
-                       ConditionNumberThreshold = ConditionNumberThreshold)
+                       ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold)
 end
 function fixed_point(func::Function, Inputs::Array{Float64, 1};
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
@@ -104,7 +104,7 @@ function fixed_point(func::Function, Inputs::Array{Float64, 1};
     Inputs2[:,1] = Inputs
     return fixed_point(func, Inputs2; Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
                        MaxIter = MaxIter, MaxM = MaxM, ExtrapolationPeriod = ExtrapolationPeriod, Dampening = Dampening, PrintReports = PrintReports, ReportingSigFig = ReportingSigFig,
-                       ConditionNumberThreshold = ConditionNumberThreshold)
+                       ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold)
 end
 function fixed_point(func::Function, Inputs::Float64;
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
@@ -114,7 +114,7 @@ function fixed_point(func::Function, Inputs::Float64;
     Inputs2[1,1] = Inputs
     return fixed_point(func, Inputs2; Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
                        MaxIter = MaxIter, MaxM = MaxM, ExtrapolationPeriod = ExtrapolationPeriod, Dampening = Dampening, PrintReports = PrintReports, ReportingSigFig = ReportingSigFig,
-                       ConditionNumberThreshold = ConditionNumberThreshold)
+                       ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold)
 end
 function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{Float64,2} = Array{Float64,2}(undef,size(Inputs)[1],0),
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
