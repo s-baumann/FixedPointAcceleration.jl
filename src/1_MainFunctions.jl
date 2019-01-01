@@ -123,8 +123,8 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
     # This code first tests if the input point is a fixed point. Then if it is not a while loop runs to try to find a fixed point.
     if (ConditionNumberThreshold < 1) error("ConditionNumberThreshold must be at least 1.")  end
     SimpleStartIndex = size(Outputs)[2]
-    if (isempty(Outputs))
-        if (size(Inputs)[2] > 1.5)
+    if isempty(Outputs)
+        if size(Inputs)[2] > 1
             @warn("If you do not give outputs to the function then you can only give one vector of inputs (in a 2d array) to the fixed_pointFunction. So for a function that takes an N dimensional array you should input a Array{Float64}(N,1) array.  As you have input an array of size Array{Float64}(N,k) with k > 1 we have discarded everything but the last column to turn it into a Array{Float64}(N,1) array.\n")
             Inputs = Inputs[:,size(Inputs)[2]]
         end
@@ -142,7 +142,7 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
 
     LengthOfArray = size(Inputs)[1]
     # Do an initial run if no runs have been done:
-    if (isempty(Outputs))
+    if isempty(Outputs)
         ExecutedFunction = SafeFunction(Inputs[:,1])
         if ExecutedFunction.Error_ != NoError
             return FixedPointResults(Inputs, Outputs, InvalidInputOrOutputOfIteration; FailedEvaluation_ = ExecutedFunction)
@@ -159,7 +159,7 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
     iter = size(Resid)[2]
 
     ConvergenceVector = mapslices(ConvergenceMetric, Resid;  dims = [1])
-    if (ConvergenceVector[iter] < ConvergenceMetricThreshold)
+    if ConvergenceVector[iter] < ConvergenceMetricThreshold
         if (PrintReports)
             println("The last column of Inputs matrix is already a fixed point under input convergence metric and convergence threshold")
         end
@@ -168,7 +168,7 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
     # Printing a report for initial convergence
     Convergence = ConvergenceVector[iter]
     if (PrintReports)
-        println("                                                 Algorithm: ", lpad(Algorithm, 8)   , ". Iteration: ", lpad(iter, 5),". Convergence: ", lpad(round(Convergence, digits=5),8))
+        println("                                          Algorithm: ", lpad(Algorithm, 8)   , ". Iteration: ", lpad(iter, 5),". Convergence: ", lpad(round(Convergence, digits=ReportingSigFig),ReportingSigFig+3))
     end
     iter = iter + 1
 
@@ -177,7 +177,7 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
         NewInputFunctionReturn = fixed_point_new_input(Inputs, Outputs, Algorithm; MaxM = MaxM, SimpleStartIndex = SimpleStartIndex, ExtrapolationPeriod = ExtrapolationPeriod,
                                              Dampening = Dampening, ConditionNumberThreshold = ConditionNumberThreshold, PrintReports = PrintReports, ReplaceInvalids = ReplaceInvalids)
         if (Algorithm != Anderson) & PrintReports
-            print(lpad("",49))
+            print(lpad("",42))
         end
 
         ExecutedFunction = SafeFunction(NewInputFunctionReturn)
@@ -191,7 +191,7 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
         ConvergenceVector =  hcat(ConvergenceVector, ConvergenceMetric(Resid[:,iter]))
         Convergence = ConvergenceVector[iter]
         # Output of report and going to next iteration.
-        if (PrintReports) println("Algorithm: ", lpad(Algorithm,8)   , ". Iteration: ", lpad(iter,5), ". Convergence: ", lpad(round(Convergence, digits=5),8)) end
+        if (PrintReports) println("Algorithm: ", lpad(Algorithm,8)   , ". Iteration: ", lpad(iter,5), ". Convergence: ", lpad(round(Convergence, digits=ReportingSigFig),ReportingSigFig+3)) end
         iter  = iter + 1
     end
     fp = Outputs[:,size(Outputs)[2]]
@@ -233,48 +233,62 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
                                MaxM::Int = 10, SimpleStartIndex::Int = 1, ExtrapolationPeriod::Int = 1, Dampening::Float64 = 1,
                                ConditionNumberThreshold::Float64 = 1000, PrintReports::Bool = false, ReplaceInvalids::InvalidReplacement = NoAction)
     CompletedIters = size(Outputs)[2]
-    proposed_input = Outputs[:,CompletedIters]
+    simple_iterate = Outputs[:,CompletedIters]
+    proposed_input = repeat([NaN], size(simple_iterate)[1])
     if Algorithm == Simple
-         proposed_input = Outputs[:,CompletedIters]
+         proposed_input = simple_iterate
     elseif Algorithm == Anderson
-        if (CompletedIters < 1.5)
-            if (PrintReports) println(lpad(" ", 32), "  Using",  lpad(0, 3)," lags. ") end
-            return Outputs[:,CompletedIters]
-        end
-        VectorLength   = size(Outputs)[1]
-        M = min(MaxM-1,CompletedIters-1,VectorLength)
+        if CompletedIters < 2
+            if (PrintReports) print("                           Used:",  lpad(0, 3)," lags. ") end
+            proposed_input = simple_iterate
+        else
+            VectorLength   = size(Outputs)[1]
+            M = min(MaxM-1,CompletedIters-1,VectorLength)
 
-        Outputs         = Outputs[:, (CompletedIters-M):CompletedIters]
-        Inputs          = Inputs[ :, (CompletedIters-M):CompletedIters]
-        Resid           = Outputs .-  Inputs
-        DeltaOutputs    = Outputs[:,2:(M+1)] .- Outputs[:,1:M]
-        DeltaResids     = Resid[:,2:(M+1)]   .- Resid[:,1:M]
-        LastResid       = Resid[:,M+1]
-        LastOutput      = Outputs[:,M+1]
-        Coeffs          = repeat([NaN], VectorLength)
-        while (sum(isnan.(Coeffs))>0.5)
-            ConditionNumber = cond(DeltaResids)
-            if (ConditionNumber > ConditionNumberThreshold)
-                M = M-1
-                DeltaOutputs= DeltaOutputs[:, 2:(M+1)]
-                DeltaResids = DeltaResids[ :, 2:(M+1)]
-                continue
-            end
-            Fit = fit(LinearModel,  hcat(DeltaResids), LastResid)
-            Coeffs = Fit.pp.beta0
-            if (sum(isnan.(Coeffs))>0.5)
-                M = M-1
-                if (M < 1.5)
-                    # This happens occasionally in test cases where the iteration is very close to a fixed point.
-                    if (PrintReports) println(lpad(" ", 32), "  Using",  lpad(0, 3)," lags. ") end
-                    return LastOutput
+            recent_Outputs  = Outputs[:, (CompletedIters-M):CompletedIters]
+            recent_Inputs   = Inputs[ :, (CompletedIters-M):CompletedIters]
+            Resid           = recent_Outputs .-  recent_Inputs
+            DeltaOutputs    = recent_Outputs[:,2:(M+1)] .- recent_Outputs[:,1:M]
+            DeltaResids     = Resid[:,2:(M+1)]   .- Resid[:,1:M]
+            LastResid       = Resid[:,M+1]
+            LastOutput      = recent_Outputs[:,M+1]
+            Coeffs          = repeat([NaN], size(DeltaOutputs)[2])
+            ConditionNumber = NaN
+            while sum(isnan.(Coeffs)) > 0
+                if isempty(DeltaResids)
+                    # This happens if there is convergence by constant increments and thus the
+                    #  most recent DeltaResids is all zeros. So we end up dropping all DeltaResids and get an error here.
+                    break
                 end
-                DeltaOutputs = DeltaOutputs[:, 2:(M+1)]
-                DeltaResids  = DeltaResids[ :, 2:(M+1)]
+                ConditionNumber = cond(DeltaResids)
+                if ConditionNumber > ConditionNumberThreshold
+                    M = M-1
+                    DeltaOutputs= DeltaOutputs[:, 2:(M+1)]
+                    DeltaResids = DeltaResids[ :, 2:(M+1)]
+                    Coeffs      = repeat([NaN], size(DeltaOutputs)[2])
+                    continue
+                end
+                Fit = fit(LinearModel,  hcat(DeltaResids), LastResid)
+                Coeffs = Fit.pp.beta0
+                if sum(isnan.(Coeffs)) > 0
+                    M = M-1
+                    if (M < 1.5)
+                        # This happens occasionally in test cases where the iteration is very close to a fixed point.
+                        if (PrintReports) print("                          Used:",  lpad(0, 3)," lags. ") end
+                        break
+                    end
+                    DeltaOutputs = DeltaOutputs[:, 2:(M+1)]
+                    DeltaResids  = DeltaResids[ :, 2:(M+1)]
+                end
+            end
+            if isempty(Coeffs)
+                if (PrintReports) print("Condition number is ", lpad("NaN", 5),". Used:",  lpad(0, 3)," lags. ") end
+                proposed_input = repeat([NaN], VectorLength)
+            else
+                if (PrintReports) print("Condition number is ", lpad(ConditionNumber, 5),". Used:",  lpad(M+1, 3)," lags. ") end
+                proposed_input = LastOutput .- (Dampening .* vec(DeltaOutputs * Coeffs))
             end
         end
-        if (PrintReports) println("Condition number is ", lpad(ConditionNumber, 5),". Used:",  lpad(M+1, 3)," lags. ") end
-        proposed_input = LastOutput .- (Dampening .* vec(DeltaOutputs * Coeffs))
     elseif Algorithm == Aitken
         if ((CompletedIters + SimpleStartIndex) % 3) == 0
             # If we are in 3rd, 6th, 9th, 12th iterate from when we started Acceleration then we want to do a jumped Iterate,
@@ -286,10 +300,10 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
             proposed_input = x .- ((fx .- x).^2 ./ (ffx .- 2 .* fx .+ x))
         else
             # We just do a simple iterate. We do an attempt with the latest iterate.
-            proposed_input = Outputs[:,CompletedIters]
+            proposed_input = simple_iterate
         end
     elseif Algorithm == Newton
-        if (((CompletedIters + SimpleStartIndex) % 2 == 1) & (CompletedIters > 1))
+        if ((CompletedIters + SimpleStartIndex) % 2 == 1) & (CompletedIters > 1)
             # If we are in 3rd, 6th, 9th, 12th iterate from when we started Newton Acceleration then we want to do a Newton Iterate,
             # First we extract the guess that started this run of 3 iterates (x), the Function applied to it (fx) and the function applied to that (ffx)
             xk1  = Inputs[ :,(CompletedIters-1)]
@@ -304,7 +318,7 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
             proposed_input   = xk .- (gxk./derivative)
         else
             # We just do a simple iterate.
-            proposed_input = Outputs[:,CompletedIters]
+            proposed_input = simple_iterate
         end
     elseif (Algorithm == MPE) | (Algorithm == RRE)
         SimpleIteratesMatrix = put_together_without_jumps(Inputs, Outputs)
@@ -312,15 +326,15 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
             proposed_input = PolynomialExtrapolation(SimpleIteratesMatrix,Algorithm)
         else
             # We just do a simple iterate.
-            proposed_input = Outputs[:,CompletedIters]
+            proposed_input = simple_iterate
         end
     elseif (Algorithm == VEA) | (Algorithm == SEA)
         SimpleIteratesMatrix = put_together_without_jumps(Inputs, Outputs)
-        if (size(SimpleIteratesMatrix)[2] % ExtrapolationPeriod == 0)
+        if (size(SimpleIteratesMatrix)[2] % ExtrapolationPeriod) == 0
             proposed_input = EpsilonExtrapolation(SimpleIteratesMatrix, Algorithm)
         else
             # We just do a simple iterate.
-            proposed_input = Outputs[:,CompletedIters]
+            proposed_input = simple_iterate
         end
     end
     # Now the replacement strategies
@@ -329,12 +343,12 @@ function fixed_point_new_input(Inputs::Array{Float64,2}, Outputs::Array{Float64,
         return proposed_input
     else
         if ReplaceInvalids == ReplaceElements
-            proposed_input[dodgy_entries] = Outputs[dodgy_entries,CompletedIters]
+            proposed_input[dodgy_entries] = simple_iterate[dodgy_entries]
         elseif ReplaceInvalids == ReplaceVector
-            proposed_input = Outputs[:,CompletedIters]
+            proposed_input = simple_iterate
         end
     end
-    return (Dampening .* proposed_input) + (1-Dampening) .* Outputs[:,CompletedIters]
+    return (Dampening .* proposed_input) + ((1-Dampening) .* simple_iterate)
 end
 
 """
@@ -397,7 +411,7 @@ function EpsilonExtrapolation(Iterates::Array{Float64,2}, Algorithm::FixedPointA
     if (any(isnan.(Mat)) | any(ismissing.(Mat)))
         Mat = EpsilonExtrapolation(Iterates[:,3:size(Iterates)[2]],Algorithm)
     end
-    return Mat
+    return Mat[:,1]
 end
 
 """
