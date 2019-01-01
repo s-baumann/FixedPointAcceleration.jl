@@ -9,7 +9,7 @@ julia:
  - 1.0
 
  script:
-   - julia -e 'Pkg.clone(pwd()); Pkg.build("$pkg_name"); Pkg.test("$pkg_name"; coverage=true)'
+   - julia --code-coverage test/runtests.jl
  after_success:
  - julia -e 'cd(Pkg.dir("FixedPointAcceleration")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
 
