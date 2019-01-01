@@ -8,7 +8,7 @@ This package implements similar functionality to https://cran.r-project.org/web/
 * This package makes use of Julia's type system and is generally typed in a more stable and extendible way. FixedPoint results are always output in a FixedPointResults struct. All algorithms are specified by an enum.
 * This package does not include the plotting capability of the R package. This is not essential for the functionality of the package and since fixed_point calls can be chained together you can emulate regular plotting pretty easily where it is necessary.
 
-# Included Acceleration algorithms.
+## Included Acceleration algorithms.
 
 There are 8 acceleration algorithms included in this package. A more extensive explanation is available in the documentation for the R package:
 https://cran.r-project.org/web/packages/FixedPoint/vignettes/FixedPoint.pdf
@@ -42,7 +42,7 @@ Two important issues are important to highlight here:
 * All input functions must take and return Array{Float64,1} types. When solving for the fixedpoint of a scalar function use of the dot syntax - cos.(x) instead of cos(x) - might be useful for this.
 * fp_anderson.FixedPoint_  in this case may be missing. This occurs whenever a fixedpoint was not found that is correct to the specified ConvergenceMetric and ConvergenceMetricThreshold. In this case the fp_anderson.Outputs_ array will probably contain something close to a fixed point in its rightmost column.
 
-### Chaining
+### Chaining Fixed Point Acceleration Algorithms
 
 We can "chain" together different calls to the fixed_point function in order to switch acceleration algorithm
 at any point. For instance consider the following function and initial guess at a fixed point:
