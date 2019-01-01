@@ -1,20 +1,18 @@
 # Documentation: http://docs.travis-ci.com/user/languages/julia/
-
 language: julia
 
 os:
-
  - linux
-
  - osx
 
 julia:
-
  - 1.0
+
+ script:
+   - julia -e 'Pkg.clone(pwd()); Pkg.build("$pkg_name"); Pkg.test("$pkg_name"; coverage=true)'
+ after_success:
+ - julia -e 'cd(Pkg.dir("FixedPointAcceleration")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
 
 notifications:
 
 email: false
-
-after_success:
-- julia -e 'cd(Pkg.dir("FixedPointAcceleration")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
