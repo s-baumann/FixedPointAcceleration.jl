@@ -1,6 +1,8 @@
 # FixedPointAcceleration.jl
 
-[![Build Status](https://travis-ci.com/s-baumann/FixedPointAcceleration.jl.svg?branch=master)](https://travis-ci.org/s-baumann/FixedPointAcceleration.jl)
+| Build | Coverage |
+|-------|----------|
+| [![Build Status](https://travis-ci.com/s-baumann/FixedPointAcceleration.jl.svg?branch=master)](https://travis-ci.org/s-baumann/FixedPointAcceleration.jl) | [![codecov](https://codecov.io/gh/s-baumann/FixedPointAcceleration.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/s-baumann/FixedPointAcceleration.jl)
 
 This package implements similar functionality to https://cran.r-project.org/web/packages/FixedPoint/index.html. The key differences are:
 * This package makes use of Julia's type system and is generally typed in a more stable and extendible way. FixedPoint results are always output in a FixedPointResults struct. All algorithms are specified by an enum.
