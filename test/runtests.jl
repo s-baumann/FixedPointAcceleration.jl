@@ -16,3 +16,4 @@ println("Testing ReplaceInvalidsTest")
 @time @test include("ReplaceInvalidsTesting.jl")
 println("CommonIncrementsTest")
 @time @test include("CommonIncrementsTest.jl")
+# Note consumption smoothing problem is not tested for time and dependency reasons.
