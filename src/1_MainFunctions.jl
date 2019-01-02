@@ -89,7 +89,7 @@ A function for finding the fixed point of another function
 function fixed_point(func::Function, previous_FixedPointResults::FixedPointResults;
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
                     ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
-                    PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
+                    PrintReports::Bool = false, ReportingSigFig::Int = 10, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
     Inputs = previous_FixedPointResults.Inputs_
     Outputs = previous_FixedPointResults.Outputs_
     return fixed_point(func, Inputs; Outputs = Outputs, Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
@@ -99,7 +99,7 @@ end
 function fixed_point(func::Function, Inputs::Array{Float64, 1};
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
                     ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
-                    PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
+                    PrintReports::Bool = false, ReportingSigFig::Int = 10, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
     Inputs2 = Array{Float64, 2}(undef,size(Inputs)[1],1)
     Inputs2[:,1] = Inputs
     return fixed_point(func, Inputs2; Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
@@ -109,7 +109,7 @@ end
 function fixed_point(func::Function, Inputs::Float64;
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
                     ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
-                    PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
+                    PrintReports::Bool = false, ReportingSigFig::Int = 10, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
     Inputs2 = Array{Float64, 2}(undef,1,1)
     Inputs2[1,1] = Inputs
     return fixed_point(func, Inputs2; Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
