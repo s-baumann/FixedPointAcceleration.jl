@@ -42,12 +42,6 @@ struct FunctionEvaluationResult
     function FunctionEvaluationResult(Input::Array, Output::Array, Error_::FP_FunctionEvaluationError)
         return new(vec(Input), vec(Output), Error_)
     end
-    function FunctionEvaluationResult(Input::Float64, Output_::Missing, Error_::FP_FunctionEvaluationError)
-        return new(Array{Float64,1}([Input]), Output_, Error_)
-    end
-    function FunctionEvaluationResult(Input::Float64, Output::Array, Error_::FP_FunctionEvaluationError)
-        return new(Array{Float64,1}([Input]), Array{Float64,1}([Output]), Error_)
-    end
 end
 
 struct FixedPointResults
