@@ -6,7 +6,7 @@
 
 This package implements similar functionality to https://cran.r-project.org/web/packages/FixedPoint/index.html. The key differences are:
 * This package makes use of Julia's type system and is generally typed in a more stable and extendible way. FixedPoint results are always output in a FixedPointResults struct. All algorithms are specified by an enum.
-* This package does not include the plotting capability of the R package. This is not essential for the functionality of the package and since fixed_point calls can be chained together you can emulate regular plotting pretty easily where it is necessary.
+* This package does not include the plotting capability of the R package. This is not essential for the functionality of the package and since fixed_point calls can be chained together you can easily do whatever plotting you want pretty easily where necessary.
 
 ## Included Acceleration algorithms.
 
