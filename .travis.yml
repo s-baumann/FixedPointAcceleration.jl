@@ -8,12 +8,10 @@ os:
 julia:
  - 1.0
 
- script:
-   - julia --code-coverage test/runtests.jl
  after_success:
      # push coverage results to Coveralls
   - julia -e 'cd(normpath(Base.find_package("FixedPointAcceleration"), "..", "..")); using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
-  
+
 notifications:
 
 email: false
