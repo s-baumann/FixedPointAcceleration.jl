@@ -87,7 +87,7 @@ A function for finding the fixed point of another function
  #' F = fixed_point(Func, Inputs; Algorithm = Anderson, MaxM = 4, ReportingSigFig = 13)
 """
 function fixed_point(func::Function, previous_FixedPointResults::FixedPointResults;
-                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
+                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
                     ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
                     PrintReports::Bool = false, ReportingSigFig::Int = 10, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
     Inputs = previous_FixedPointResults.Inputs_
@@ -97,7 +97,7 @@ function fixed_point(func::Function, previous_FixedPointResults::FixedPointResul
                        ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold)
 end
 function fixed_point(func::Function, Inputs::Array{Float64, 1};
-                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
+                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
                     ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
                     PrintReports::Bool = false, ReportingSigFig::Int = 10, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
     Inputs2 = Array{Float64, 2}(undef,size(Inputs)[1],1)
@@ -107,7 +107,7 @@ function fixed_point(func::Function, Inputs::Array{Float64, 1};
                        ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold)
 end
 function fixed_point(func::Function, Inputs::Float64;
-                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
+                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
                     ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
                     PrintReports::Bool = false, ReportingSigFig::Int = 10, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
     Inputs2 = Array{Float64, 2}(undef,1,1)
@@ -117,9 +117,9 @@ function fixed_point(func::Function, Inputs::Float64;
                        ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold)
 end
 function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{Float64,2} = Array{Float64,2}(undef,size(Inputs)[1],0),
-                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
+                    Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
                     ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
-                    PrintReports::Bool = false, ReportingSigFig::Int = 5, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
+                    PrintReports::Bool = false, ReportingSigFig::Int = 10, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
     # This code first tests if the input point is a fixed point. Then if it is not a while loop runs to try to find a fixed point.
     if (ConditionNumberThreshold < 1) error("ConditionNumberThreshold must be at least 1.")  end
     SimpleStartIndex = size(Outputs)[2]
