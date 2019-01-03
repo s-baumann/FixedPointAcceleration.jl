@@ -13,6 +13,13 @@ fp.TerminationCondition_ == ReachedMaxIter
 fp = fixed_point(simple_vector_function, fp; Algorithm = Anderson)
 fp.TerminationCondition_ == ReachedConvergenceThreshold
 
+# Testing Input of NaN
+fp = fixed_point(simple_vector_function, [NaN,900])
+fp.FailedEvaluation_.Error_ == InputNAsDetected
+# Testing Input of Inf
+fp = fixed_point(simple_vector_function, [-Inf,900])
+fp.FailedEvaluation_.Error_ == InputInfsDetected
+
 # Testing Output of Nan
 function funcfunc(x::Array{Float64,1})
     if abs(x[1] - 4.0) < 1e-12
