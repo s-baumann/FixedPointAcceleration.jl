@@ -8,7 +8,6 @@ fp = fixed_point(simple_vector_function, Inputs; Algorithm = Anderson)
 # iterations for a while to fix this.
 fp.TerminationCondition_ == InvalidInputOrOutputOfIteration
 fp.FailedEvaluation_.Error_ == ErrorExecutingFunction
-fp
 fp = fixed_point(simple_vector_function, fp; Algorithm = Simple, MaxIter = 7)
 fp.TerminationCondition_ == ReachedMaxIter
 fp = fixed_point(simple_vector_function, fp; Algorithm = Anderson)
@@ -23,7 +22,7 @@ function funcfunc(x::Array{Float64,1})
 end
 Inputs = [4.0,1.0]
 fp = fixed_point(funcfunc, Inputs; Algorithm = Anderson)
-fp.FailedEvaluation_.Error_ == NAsDetected
+fp.FailedEvaluation_.Error_ == OutputNAsDetected
 # Testing Output of Missing
 function funcfunc(x::Array{Float64,1})
     if abs(x[1] - 4.0) < 1e-12
@@ -33,7 +32,7 @@ function funcfunc(x::Array{Float64,1})
 end
 Inputs = [4.0,1.0]
 fp = fixed_point(funcfunc, Inputs; Algorithm = Anderson)
-fp.FailedEvaluation_.Error_ == MissingsDetected
+fp.FailedEvaluation_.Error_ == OutputMissingsDetected
 # Testing Output of Inf
 function funcfunc(x::Array{Float64,1})
     if abs(x[1] - 4.0) < 1e-12
@@ -43,7 +42,7 @@ function funcfunc(x::Array{Float64,1})
 end
 Inputs = [4.0,1.0]
 fp = fixed_point(funcfunc, Inputs; Algorithm = Anderson)
-fp.FailedEvaluation_.Error_ == InfsDetected
+fp.FailedEvaluation_.Error_ == OutputInfsDetected
 # Testing Output of wrong size
 function funcfunc(x::Array{Float64,1})
     if abs(x[1] - 4.0) < 1e-12

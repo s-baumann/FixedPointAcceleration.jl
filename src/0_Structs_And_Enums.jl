@@ -2,9 +2,12 @@
     NoError = 0
     ErrorExecutingFunction = 1
     LengthOfOutputNotSameAsInput = 2
-    MissingsDetected = 3
-    NAsDetected = 4
-    InfsDetected = 5 # This is not always an error. The function f(x) = x has a fuxed point at infinity. In practical
+    InputMissingsDetected = 3
+    InputNAsDetected = 4
+    InputInfsDetected = 5
+    OutputMissingsDetected = 6
+    OutputNAsDetected = 7
+    OutputInfsDetected = 8 # This is not always an error. The function f(x) = x has a fuxed point at infinity. In practical
     # settings however an infinite fixed point is unlikely to be the desired one. Also the algorithms here would not
     # likely work in the infinity case.
 end

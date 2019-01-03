@@ -88,8 +88,11 @@ There are a few errors that can result in a InvalidInputOrOutputOfIteration term
 * NoError - This indicates no error. You should never see this unless developing in the package as a function evaluation without an error will not cause a InvalidInputOrOutputOfIteration termination that causes the FunctionEvaluationResult struct to be returned.
 * ErrorExecutingFunction - This indicates that there was an error evaluating the function with the given inputs. This will occur for instance if you try to evaluate sqrt.(x) at x = [-1.0] or 1/x at x = [0.0]. This may be solved by changing acceleration algorithm so that it does not try a vector which causes errors in the function. It may also be possible to reparameterise the function so that any vector is a valid input to the function.
 * LengthOfOutputNotSameAsInput - A function taking an N-dimensional vector is not returning an N-dimensional vector.
-* MissingsDetected - A function is returning an output vector containing missing values.
-* NAsDetected - A function is returning an output vector containing NaN values.
-* InfsDetected - A function is returning an output vector containing Inf values. While mathematically there is nothing wrong wtih this (Inf is a fixedpoint of the f(x) = x!), the algorithms of this package are not going to be useful in this case and hence it is not supported.
+* InputMissingsDetected - A function is returning an input vector containing missing values.
+* InputNAsDetected - A function is returning an input vector containing NaN values.
+* InputInfsDetected - A function is returning an input vector containing Inf values. While mathematically there is nothing wrong with this (Inf is a fixedpoint of the f(x) = x!), the algorithms of this package are not going to be useful in this case and hence it is not supported.
+* OutputMissingsDetected - A function is returning an output vector containing missing values.
+* OutputNAsDetected - A function is returning an output vector containing NaN values.
+* OutputInfsDetected - A function is returning an output vector containing Inf values. While mathematically there is nothing wrong with this (like for InputInfsDetected) it is not supported.
 
 Together this error handling system should handle any errors gracefully without raising an ErrorException. ErrorExceptions are avoided so that the Inputs and Outputs from previous iterates are retained and the search for a fixed point can be resumed without interruption. If an ErrorException does occur while using fixed_point please raise an issue in github because this is not expected.

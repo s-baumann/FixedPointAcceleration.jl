@@ -1,8 +1,9 @@
 """
-    create_safe_function_executor(Func::Function)
+    execute_function_safely(Func::Function, x::Array{Float64,1})
 This function creates a function that executes the function for which a fixed point is sought. It is a helper function that is not exported.
 ### Takes
  * Func - The function input to fixed_point
+ * x - The point at which to evaluate the function.
 ### Returns
 A FunctionEvaluationResult containing the following fields:
 * Input_ - The input
@@ -10,39 +11,45 @@ A FunctionEvaluationResult containing the following fields:
 * Error_ - A enum of type FP_FunctionEvaluationError representing what error occured.
 ### Examples
 Func(x) = sqrt(x)
-FunctionExecutor = create_safe_function_executor(Func)
-FunctionExecutor([-1.0,0.0,1.0])
-FunctionExecutor([Missing(),0.0,1.0])
-FunctionExecutor([7.0,0.0,1.0])
-FunctionExecutor([NaN,0.0,1.0])
-FunctionExecutor([Inf,0.0,1.0])
-FunctionExecutor(-1.0)
-FunctionExecutor(Missing())
-FunctionExecutor(1.0)
-FunctionExecutor(NaN)
-FunctionExecutor(Inf)
+execute_function_safely(Func, [-1.0,0.0,1.0])
+execute_function_safely(Func,[Missing(),0.0,1.0])
+execute_function_safely(Func,[7.0,0.0,1.0])
+execute_function_safely(Func,[NaN,0.0,1.0])
+execute_function_safely(Func,[Inf,0.0,1.0])
+execute_function_safely(Func,-1.0)
+execute_function_safely(Func,Missing())
+execute_function_safely(Func,1.0)
+execute_function_safely(Func,NaN)
+execute_function_safely(Func,Inf)
 """
-function create_safe_function_executor(Func::Function)
-    function CheckResultAndReturn_not_elementwise(x)
-        tf_result = Array
-        try
-            tf_result =  Func(x)
-        catch
-            return FunctionEvaluationResult(x, missing, ErrorExecutingFunction)
-        end
-        if sum(ismissing.(tf_result)) > 0
-            return FunctionEvaluationResult(x, tf_result, MissingsDetected)
-        elseif sum(isnan.(tf_result)) > 0
-            return FunctionEvaluationResult(x, tf_result, NAsDetected)
-        elseif sum(isinf.(tf_result)) > 0
-            return FunctionEvaluationResult(x, tf_result, InfsDetected)
-        elseif (length(tf_result) != length(x))
-            return FunctionEvaluationResult(x, tf_result, LengthOfOutputNotSameAsInput)
-        else
-            return FunctionEvaluationResult(x, tf_result, NoError)
-        end
+function execute_function_safely(Func::Function, x::Array{Float64,1})
+    # Check input
+    if sum(ismissing.(x)) > 0
+        return FunctionEvaluationResult(x, missing, InputMissingsDetected)
+    elseif sum(isnan.(x)) > 0
+        return FunctionEvaluationResult(x, missing, InputNAsDetected)
+    elseif sum(isinf.(x)) > 0
+        return FunctionEvaluationResult(x, missing, InputInfsDetected)
     end
-    return CheckResultAndReturn_not_elementwise
+    # Run function.
+    tf_result = Array
+    try
+        tf_result =  Func(x)
+    catch
+        return FunctionEvaluationResult(x, missing, ErrorExecutingFunction)
+    end
+    # Check Output and return.
+    if sum(ismissing.(tf_result)) > 0
+        return FunctionEvaluationResult(x, tf_result, OutputMissingsDetected)
+    elseif sum(isnan.(tf_result)) > 0
+        return FunctionEvaluationResult(x, tf_result, OutputNAsDetected)
+    elseif sum(isinf.(tf_result)) > 0
+        return FunctionEvaluationResult(x, tf_result, OutputInfsDetected)
+    elseif (length(tf_result) != length(x))
+        return FunctionEvaluationResult(x, tf_result, LengthOfOutputNotSameAsInput)
+    else
+        return FunctionEvaluationResult(x, tf_result, NoError)
+    end
 end
 
 """
@@ -137,13 +144,10 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
             SimpleStartIndex = 1
         end
     end
-    # Create safe function Executor
-    SafeFunction = create_safe_function_executor(func)
-
     LengthOfArray = size(Inputs)[1]
     # Do an initial run if no runs have been done:
     if isempty(Outputs)
-        ExecutedFunction = SafeFunction(Inputs[:,1])
+        ExecutedFunction = execute_function_safely(func, Inputs[:,1])
         if ExecutedFunction.Error_ != NoError
             return FixedPointResults(Inputs, Outputs, InvalidInputOrOutputOfIteration; FailedEvaluation_ = ExecutedFunction)
         end
@@ -180,7 +184,7 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
             print(lpad("",42))
         end
 
-        ExecutedFunction = SafeFunction(NewInputFunctionReturn)
+        ExecutedFunction = execute_function_safely(func, NewInputFunctionReturn)
         if ExecutedFunction.Error_ != NoError
             return FixedPointResults(Inputs, Outputs, InvalidInputOrOutputOfIteration; ConvergenceVector_  = vec(ConvergenceVector), FailedEvaluation_ = ExecutedFunction)
         end
@@ -199,13 +203,6 @@ function fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{F
     if (Convergence < ConvergenceMetricThreshold) Finish = ReachedConvergenceThreshold end
     return FixedPointResults(Inputs, Outputs, Finish; ConvergenceVector_  = vec(ConvergenceVector))
 end
-
-
-
-
-
-
-
 
 """
 This function takes the previous inputs and outputs from the fixed_point function and determines what vector to try next in seeking a fixed point.

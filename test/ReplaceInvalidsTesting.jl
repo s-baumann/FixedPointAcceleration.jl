@@ -15,7 +15,7 @@ function funcfunc(x::Array{Float64,1})
 end
 Inputs = [19.0,10.0]
 fp = fixed_point(funcfunc, Inputs; Algorithm = Aitken)
-fp.FailedEvaluation_.Error_ == InfsDetected
+fp.FailedEvaluation_.Error_ == InputInfsDetected
 fp.FailedEvaluation_.Input_[1] == -Inf
 !isinf(fp.FailedEvaluation_.Input_[2])
 # Now fixing with replace element

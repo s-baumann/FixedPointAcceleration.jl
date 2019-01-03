@@ -9,6 +9,7 @@ export put_together_without_jumps, create_safe_function_executor # Auxillery fun
 # Exporting enums
 export FixedPointAccelerationAlgorithm, Simple, Anderson, Aitken, Newton, VEA, SEA, MPE, RRE # Algorithms
 export InvalidReplacement, NoAction, ReplaceElements, ReplaceVector # Strategies for handling invalids in proposed new inputs.
-export FP_FunctionEvaluationError, NoError, ErrorExecutingFunction, LengthOfOutputNotSameAsInput, MissingsDetected, NAsDetected, InfsDetected # Errors in evaluating
+export FP_FunctionEvaluationError, NoError, ErrorExecutingFunction, LengthOfOutputNotSameAsInput, InputMissingsDetected
+export InputNAsDetected, InputInfsDetected, OutputMissingsDetected, OutputNAsDetected, OutputInfsDetected # Errors in evaluating
 export TerminationCondition, ReachedConvergenceThreshold, ReachedMaxIter, InvalidInputOrOutputOfIteration # Termination Conditions
 end
