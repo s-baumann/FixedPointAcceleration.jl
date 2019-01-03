@@ -53,6 +53,23 @@ function execute_function_safely(Func::Function, x::Array{Float64,1})
 end
 
 """
+    fixed_point(func::Function, previous_FixedPointResults::FixedPointResults;
+                Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
+                ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
+                PrintReports::Bool = false, ReportingSigFig::Int = 10, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
+    fixed_point(func::Function, Inputs::Array{Float64, 1};
+                Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
+                ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
+                PrintReports::Bool = false, ReportingSigFig::Int = 10, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
+    fixed_point(func::Function, Inputs::Float64;
+                Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
+                ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
+                PrintReports::Bool = false, ReportingSigFig::Int = 10, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
+    fixed_point(func::Function, Inputs::Array{Float64, 2}; Outputs::Array{Float64,2} = Array{Float64,2}(undef,size(Inputs)[1],0),
+                Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(Resids::Array{Float64, 1}) = maximum(abs.(Resids)),
+                ConvergenceMetricThreshold::Float64 = 1e-10, MaxIter::Int = 1000, MaxM::Int = 10, ExtrapolationPeriod::Int = 7, Dampening::Float64 = 1.0,
+                PrintReports::Bool = false, ReportingSigFig::Int = 10, ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Float64 = 1e3)
+
 A function for finding the fixed point of another function
 ### Takes
  *  f - This is the function for which a fixed point is sought. This function must take and return a vector of the same size dimension.
