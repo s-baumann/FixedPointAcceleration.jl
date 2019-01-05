@@ -1,6 +1,6 @@
 module FixedPointAcceleration
-using LinearAlgebra
-using GLM
+using LinearAlgebra: cond, pinv
+using GLM: fit, LinearModel
 include("0_Structs_And_Enums.jl")
 include("1_MainFunctions.jl")
 export fixed_point, fixed_point_new_input # Main functionality.
