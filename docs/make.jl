@@ -1,4 +1,4 @@
-using Distributions, Documenter, FixedPointAcceleration
+using Documenter, FixedPointAcceleration
 
 makedocs(
     format = :html,
