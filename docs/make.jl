@@ -1,14 +1,13 @@
 using Documenter, FixedPointAcceleration
 
 makedocs(
-    format = :html,
+    format = Documenter.HTML(),
     sitename = "FixedPointAcceleration",
     modules = [FixedPointAcceleration]
 )
 
 deploydocs(
     repo   = "github.com/s-baumann/FixedPointAcceleration.jl.git",
-    julia  = "1.0",
     target = "build",
     deps   = nothing,
     make   = nothing
