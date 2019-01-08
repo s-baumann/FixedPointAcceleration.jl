@@ -6,7 +6,7 @@ makedocs(
     modules = [FixedPointAcceleration],
     pages = ["index.md",
              "2_Algorithms.md",
-             "3_UsingAdvice",
+             "3_UsingAdvice.md",
              "99_refs.md"]
 )
 

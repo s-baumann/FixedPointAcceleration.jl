@@ -21,7 +21,7 @@ If $f: \Re^1 \rightarrow \Re^1$ and thus any solution $\hat{X}$ will be a scalar
 ```@contents
 pages = ["index.md",
          "2_Algorithms.md",
-         "3_UsingAdvice",
+         "3_UsingAdvice.md",
          "99_refs.md"]
 Depth = 2
 ```
