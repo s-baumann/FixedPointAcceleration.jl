@@ -11,6 +11,7 @@ julia:
 notifications:
 email: false
 
+# This does the documentation
 jobs:
   include:
     - stage: "Documentation"
@@ -22,3 +23,4 @@ jobs:
         - julia --project=docs/ docs/make.jl
 
 coveralls: true
+coverage: true

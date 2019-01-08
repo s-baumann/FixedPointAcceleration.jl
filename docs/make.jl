@@ -5,6 +5,7 @@ makedocs(
     sitename = "FixedPointAcceleration",
     modules = [FixedPointAcceleration],
     pages = ["index.md",
+             "1_FixedPoints.md",
              "2_Algorithms.md",
              "3_UsingAdvice.md",
              "99_refs.md"]
