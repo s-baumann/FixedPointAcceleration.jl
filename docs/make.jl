@@ -3,7 +3,11 @@ using Documenter, FixedPointAcceleration
 makedocs(
     format = Documenter.HTML(),
     sitename = "FixedPointAcceleration",
-    modules = [FixedPointAcceleration]
+    modules = [FixedPointAcceleration],
+    pages = ["index.md",
+             "2_Algorithms.md",
+             "3_UsingAdvice",
+             "99_refs.md"]
 )
 
 deploydocs(
