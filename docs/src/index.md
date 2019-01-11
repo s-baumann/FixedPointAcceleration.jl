@@ -14,6 +14,7 @@ pages = ["index.md",
          "1_FixedPoints.md",
          "2_Algorithms.md",
          "3_UsingAdvice.md",
+         "4_Applications.md",
          "99_refs.md"]
 Depth = 2
 ```
