@@ -53,7 +53,7 @@ var documenterSearchIndex = {"docs": [
     "page": "2 Acceleration algorithms",
     "title": "2.1 Newton acceleration",
     "category": "section",
-    "text": "Here we will define g(x) = f(x) - x. The general approach is to solve g(x) with a rootfinder. The x that provides this root will be a fixed point. Thus after two iterates we can approximate the fixed point with:x_i+1 = x_i - fracg(x_i)g^prime(x_i)FixedPointAcceleration.jl approximates the derivative g^prime(x_i) so that we use an estimated fixed point of:x_i+1 = x_i - fracg(x_i)  frac g(x_i) - g(x_i-1)x_i-x_i-1      The implementation of the Newton method in this package uses this formula to predict the fixed point given two previous iterates.[1] This method is designed for use with scalar functions.[1]: Only two rather than three are required because we can use x_i+1 = f(x_i) and x_i+2 = f(x_i+1)."
+    "text": "Here we will define g(x) = f(x) - x. The general approach is to solve g(x) with a rootfinder. The x that provides this root will be a fixed point. Thus after two iterates we can approximate the fixed point with:x_i+1 = x_i - fracg(x_i)g^prime(x_i)FixedPointAcceleration.jl approximates the derivative g^prime(x_i) so that we use an estimated fixed point of:textNext Guess = x_i - fracg(x_i)  frac g(x_i) - g(x_i-1)x_i-x_i-1      The implementation of the Newton method in this package uses this formula to predict the fixed point given two previous iterates.[1] This method is designed for use with scalar functions.[1]: Only two rather than three are required because we can use x_i+1 = f(x_i) and x_i+2 = f(x_i+1)."
 },
 
 {
