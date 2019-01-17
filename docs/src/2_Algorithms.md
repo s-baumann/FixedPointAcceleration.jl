@@ -9,7 +9,7 @@ $x_{i+1} = x_i - \frac{g(x_i)}{g^\prime(x_i)}$
 
 **FixedPointAcceleration.jl** approximates the derivative $g^\prime(x_i)$ so that we use an estimated fixed point of:
 
-$x_{i+1} = x_i - \frac{g(x_i)}{  \frac{ g(x_i) - g(x_{i-1})}{x_i-x_{i-1}}      }$
+$\text{Next Guess} = x_i - \frac{g(x_i)}{  \frac{ g(x_i) - g(x_{i-1})}{x_i-x_{i-1}}      }$
 
 The implementation of the Newton method in this package uses this formula to predict the fixed point given two previous iterates.[^1] This method is designed for use with scalar functions.
 
