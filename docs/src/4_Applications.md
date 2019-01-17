@@ -75,7 +75,82 @@ InitialGuess = repeat([1.0], 10)
 FPSolution = fixed_point(IterateOnce, InitialGuess; Algorithm = VEA)
 ```
 
-## 4.2 A consumption smoothing problem
+## 4.2 The Perceptron Classifier
+
+The perceptron is one of the oldest and simplest machine learning algorithms (Rosenblatt 1958). In its simplest form, for each observation it is applied it uses an N-dimensional vector of features x together with N+1 weights w to classify the observation as being in category one or category zero. It classifies observation j as a type one if $$w_0 + \sum_{i=1}^N w_i x_{i,j}  > 0$$ and as a type zero otherwise.
+
+The innovation of the perceptron was its method for training its weights, w. This is done by looping over a set of observations that can be used for training (the "training set") and for which the true category information is available.
+The perceptron classifies each observation. When it correctly classifies an observation no action is taken. On the other hand when the perceptron makes an error then it updates its weights with the following expressions.
+
+$$w_{0}^\prime = w_{0} + ( d_{j} - y_{j} )$$
+
+$$w_{i}^\prime = w_{i} + ( d_{j} - y_{j} ) x_{j,i} \hspace{1cm} \text{ for } i \geq 0$$
+
+Where $$w_i$$ is the old weight for the $i$'th feature and $$w_{i}^\prime$$ is the updated weight. $$x_{j,i}$$ is the feature value for
+observation $j$'s feature $i$, $$d_{j}$$ is the category label for observation $j$ and $$y_j$$ is the perceptron's prediction for this
+observation’s category.
+
+This training algorithm can be rewritten as fixed point problem. We can write a function that takes perceptron weights, loops over the
+data updating these weights and then returns the updated weight vector. If the perceptron classifies every observation correctly then
+the weights will not update and we are at a fixed point.[^7]
+
+The standard Perceptron updating algorithm does not work well with FixedPointAcceleration methods because of convergence by a fixed increment. This occurs because multiple iterates can result in the same observations being misclassified and hence the same change in the weights. As a result we modify the training algorithm to give training increments that change depending on distance from the fixedpoint. This can be done by updating the weights by an amount proportional to a concave function of the norm of $wx+b$.
+
+[^7]: Note that for perceptrons there are always uncountably many such fixed points
+where the perceptron correctly classifies the entire training set and will not further update. On the other hand it is possible that
+the data is not linearly separable in which case there may be no fixed point and the weights will continue to update forever.
+
+First we generate a dataset:
+```
+# Generating linearly seperable data
+using Distributions
+using FixedPointAcceleration
+using Random
+using DataFrames
+nobs = 20
+Random.seed!(1234)
+data1 = DataFrame([rand(Normal(3,2), nobs), rand(Normal(8,2), nobs), repeat([-1.0],nobs)], [:x1, :x2, :y])
+data2 = DataFrame([rand(Normal(-4,2), nobs), rand(Normal(10,12), nobs), repeat([1.0],nobs)], [:x1, :x2, :y])
+data  = vcat(data1,data2)
+# Plotting it
+using Plots
+plot(data1.x1, data1.x2,seriestype=:scatter)
+plot!(data2.x1, data2.x2,seriestype=:scatter)
+```
+
+Now we write a function that will take a set of weights, update them and return the updated weights.
+```
+# A function to train weights. This is not the normal perceptron function but changes weights by an amount proportional to
+# the distance fromthe seperation line. This ensures that the weights move more, the greater the seperation line is oway from
+# correctly seperating a datapoint.
+function IteratePerceptronWeights(w, LearningRate = 1)
+    for i in 1:length(data[:y])
+        target = data[i,:y]
+        score = w[1] + (w[2]*data[i,:x1]) + (w[3]*data[i,:x2])
+        ypred = 2*((score > 0)-0.5)
+        if abs(target-ypred) > 1e-10
+            update = LearningRate * -sign(score) * sqrt(abs(score))
+            w[1] = w[1] + update
+            w[2] = w[2] + update*data[i,:x1]
+            w[3] = w[3] + update*data[i,:x2]
+        end
+    end
+    return(w)
+end
+InitialGuess = [1.0, -2.0, 0.5]
+FP = fixed_point(IteratePerceptronWeights, InitialGuess; Algorithm = MPE, PrintReports = true)
+```
+
+We can verify that the set of weights represented by the fixed\_point function does correctly seperate the data by plotting it:
+```
+# Plotting new seperation line
+x1 = -6.0:0.1:6.0
+w = FP.FixedPoint_
+x2_on_sep_line = (-w[1] .- w[2] .* x1) ./ w[3]
+plot!(x1,x2_on_sep_line, label ="SeperationLine")
+```
+
+## 4.3 A consumption smoothing problem
 
 Consider an infinitely lived consumer that has a budget of $B_t$ at time $t$ and a periodic income of $1$. She has a periodic utility function given by $\epsilon_t x_t^\delta$, where $x_t$ is spending in period $t$ and $\epsilon_t$ is the shock in period $t$ drawn from some stationary nonnegative shock process with pdf $f(\epsilon)$ defined on the interval $[y,z]$. The problem for the consumer in period $t$ is to maximise their value function:
 
@@ -138,4 +213,4 @@ fp_anderson = fixed_point(OneIterateBudgetValues, InitialGuess; Algorithm = Ande
 fp_simple   = fixed_point(OneIterateBudgetValues, InitialGuess; Algorithm = Simple, PrintReports = true)
 ```
 
-This takes 22 iterates with the anderson algorithm which is drastically better than the several hundred iterates it takes with the simple method.
+This takes 22 iterates with the anderson algorithm which is drastically better than the 459 iterates it takes with the simple method.

@@ -7,6 +7,8 @@ Cabay, S., and L.W. Jackson. 1976. “A Polynomial Extrapolation Method for Find
 
 Fang, Haw-ren, and Yousef Saad. 2009. “Two Classes of Multisecant Methods for Nonlinear Acceleration.” Numerical Linear Algebra with Applications 16 (3): 197–221.
 
+Rosenblatt, F. 1958. "The perceptron: A probabilistic model for information storage and organization in the brain." Psychological Review, 65(6): 386–408.
+
 Smith, David, William Ford, and Avram Sidi. 1987. “Extrapolation Methods for Vector Sequences.” SIAM Review 29 (2): 199–233.
 
 Stokey, Nancy, Robert E. Lucas, and Edward Prescott. 1989. Recursive Methods in Economic Dynamics. Harvard University Press.
