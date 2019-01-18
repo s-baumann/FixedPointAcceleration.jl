@@ -96,10 +96,6 @@ the weights will not update and we are at a fixed point.[^7]
 
 The standard Perceptron updating algorithm does not work well with FixedPointAcceleration methods because of convergence by a fixed increment. This occurs because multiple iterates can result in the same observations being misclassified and hence the same change in the weights. As a result we modify the training algorithm to give training increments that change depending on distance from the fixedpoint. This can be done by updating the weights by an amount proportional to a concave function of the norm of $wx+b$.
 
-[^7]: Note that for perceptrons there are always uncountably many such fixed points
-where the perceptron correctly classifies the entire training set and will not further update. On the other hand it is possible that
-the data is not linearly separable in which case there may be no fixed point and the weights will continue to update forever.
-
 First we generate a dataset:
 ```
 # Generating linearly seperable data
@@ -149,6 +145,8 @@ w = FP.FixedPoint_
 x2_on_sep_line = (-w[1] .- w[2] .* x1) ./ w[3]
 plot!(x1,x2_on_sep_line, label ="SeperationLine")
 ```
+
+[^7]: Note that for perceptrons there are always uncountably many such fixed points where the perceptron correctly classifies the entire training set and will not further update. On the other hand it is possible that the data is not linearly separable in which case there may be no fixed point and the weights will continue to update forever.
 
 ## 4.3 A consumption smoothing problem
 
