@@ -78,13 +78,17 @@ fp = fixed_point(simple_vector_function, fp; Algorithm = Anderson)
 
 ## 3.3 Graceful error handling
 
-Hopefully **FixedPointAcceleration** is well tested enough that most kind of errors will be rare. **FixedPointAcceleration** also offers an option (ReplaceInvalids) to ensure that no acceleration algorithm generates guess vectors that contain NAs or Infs. This option can be set to ReplaceVector  which will replace an extrapolated vector containing missings, NANs or Infs by the vector output in the previous iterate. If it is set to ReplaceElement then it will replace the individual elements that are missings, NANs or Infs by the corresponding elements in the output of the previous iterate.
+Hopefully **FixedPointAcceleration** is well tested enough that most kind of errors will be rare. **FixedPointAcceleration** also offers an option (ReplaceInvalids) to ensure that no acceleration algorithm generates guess vectors that contain NaNs, Missings or Infs. This option can be set to ReplaceVector  which will replace an extrapolated vector containingNaNs, Missings or Infs by the vector output in the previous iterate. If it is set to ReplaceElement then it will replace the individual elements that are missings, NANs or Infs by the corresponding elements in the output of the previous iterate.
 
 Errors are likely however in cases where inputs functions have a restricted domain. For example this may include functions that require the input vector to have a particular shape (ie concavity) or functions where the input vector must be strictly positive. For a simple example consider the vectorised function we introduced in section 3.1. Now rather than
 
-$x^\prime[1] = \frac{\sqrt{\vert x[1] + x[2] \vert}}{2}$ we have $x^\prime[1] = \frac{\sqrt{ x[1] + x[2] }}{2}$
+$x^\prime[1] = \frac{\sqrt{\vert x[1] + x[2] \vert}}{2}$
 
-where the output x has a prime and the inputs has no prime symbol. $x^\prime[1]$ here is no longer real valued if the sum of the previous iterate is negative. This is what occurs in the 5th iterate of the Anderson method applied to this problem.
+we have
+
+$x^\prime[1] = \frac{\sqrt{ x[1] + x[2] }}{2}$
+
+where the output $$x$$ has a prime and the inputs has no prime symbol. $x^\prime[1]$ here is no longer real valued if the sum of the previous iterate is negative. This is what occurs in the 5th iterate of the Anderson method applied to this problem.
 
 The FixedPoint function handles these situations gracefully by saving all previous results as well as the proposed new vector that lead to the error. In the event of such an error the FailedEvaluation_ member of the returned FixedPointResults struct will describe the issue.
 
@@ -123,7 +127,7 @@ More generally similar problems exist for the other acceleration methods. When t
 then then the fixed point method receives information about what direction to go in but no information about how far to go.
 This is a complication that is common to all of these acceleration methods in this package.
 In these cases it may be possible to change the function to make it converge by varying increments while retaining the
-same set of fixed points. This is shown in the perceptron example in section 4.3. In other cases where it is not possible
+same set of fixed points. This is shown in the perceptron example in section 4.2. In other cases where it is not possible
 to modify the function, it is advisable to use the simple method.
 
 [^5]: When these complications arise the ReplaceInvalids method can be used to revert to a simple iterate or to change individual elements to the corresponding values in a simple iterate. This is as described in section 3.3.
