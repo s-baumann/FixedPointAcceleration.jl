@@ -1,5 +1,5 @@
 
-# 3.  Using the FixedPointAcceleration package
+# 3  Using the FixedPointAcceleration package
 
 ## 3.1 Basic examples of using FixedPointAcceleration
 

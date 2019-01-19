@@ -1,4 +1,4 @@
-## 5.0 Termination conditions and Error handling.
+# 5 Termination conditions and Error handling.
 
 There are three possible TerminationCondition_ types that can be returned in the FixedPointResults struct. These are:
 *  ReachedConvergenceThreshold - A fixed point has been reached.

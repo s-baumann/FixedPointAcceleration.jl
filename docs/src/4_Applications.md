@@ -1,4 +1,4 @@
-# 4.0 Applications
+# 4 Applications
 
 ## 4.1 Finding equilibrium prices in a pure exchange economy
 
