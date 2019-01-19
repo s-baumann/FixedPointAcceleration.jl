@@ -9,6 +9,7 @@ makedocs(
              "2_Algorithms.md",
              "3_UsingAdvice.md",
              "4_Applications.md",
+             "5_TerminationConditions.md",
              "99_refs.md"]
 )
 
