@@ -197,7 +197,7 @@ dd  = vcat(data1,data2)
 plot(data1.x1, data1.x2,seriestype=:scatter)
 plot!(data2.x1, data2.x2,seriestype=:scatter)
 ```
-Now we want to estimate the parameter $$\tau$$, the means (represented above by mu_1 and mu_2) and the covariance matrices (represented above by cov_1, cov_2) using only the realised datapoints in the DataFrame called dd. We will refer to these parameters as $$\theta$$.
+Now we want to estimate the parameter $$\tau$$, the means (represented above by mu\_1 and mu\_2) and the covariance matrices (represented above by cov\_1, cov\_2) using only the realised datapoints in the DataFrame called dd. We will refer to these parameters as $$\theta$$.
 
 If we knew from which distribution each datapoint came, the above task would be considerably easier. We could separate the data and for each use [standard techniques](https://en.wikipedia.org/wiki/Estimation_of_covariance_matrices) to find the expected mean and covariance matrix. We do not know from which distribution each datapoint came from however. We could use a guess for $$\theta$$ to estimate the probabilities of each datapoint coming from each distribution however (and call this vector of estimates by $$Z$$). Then we could choose maximum likelihood estimates of $$\theta$$ using our estimates of $$Z$$ in the likelihood expression. This is the EM approach. Note that it lends itself well to fixed point acceleration - We can write a function that given $$\theta$$ creates estimated probabilities of source distribution for each datapoint ($$Z$$) and uses these in a maximum likelihood expression to improve the estimate of $$\theta$$.
 
@@ -257,7 +257,7 @@ function update_theta(theta::Array{Float64,1}, dd::DataFrame)
     return updated_theta
 end
 ```
-Now we can come up with a choice for an initial guess based on eyeballing the plotted data. We can then put it into the fixed_point function to get ML estimates of these distributional parameters as well as $$\tau$$:
+Now we can come up with a choice for an initial guess based on eyeballing the plotted data. We can then put it into the fixed\_point function to get ML estimates of these distributional parameters as well as $$\tau$$:
 
 ```
 InitialGuess = [0.5, 7.5, 2.0, 0.0, 2.0, -5.0, 7.5, 2.0, 0.0, 10.0, 0.5]
