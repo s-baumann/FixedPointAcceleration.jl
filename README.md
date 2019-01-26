@@ -16,8 +16,8 @@ and the original papers are all cited there. A very brief description however is
 * Simple - This takes the output of the previous iterate and uses it as the next guess.
 
 In addition the following three scalar algorithms can be used (they are elementwise for vectors):
-* Aitken - This considers the sequence $$p, f(p), f(f(p)) ...$$ convergences at a constant rate to the fixed point. After each two iterates it estimates the rate and jumps to the anticipated fixed point;
-* Newton - This uses a Newtonian rootfinder to solve for the root of $$f(x) - x$$;
+* Aitken - This considers the sequence $$p,f(p),f(f(p))...$$ convergences at a constant rate to the fixed point. After each two iterates it estimates the rate and jumps to the anticipated fixed point;
+* Newton - This uses a Newtonian rootfinder to solve for the root of $$f(x)-x$$;
 * SEA - or Scalar Epsilon Algorithm. This uses an epsilon algorithm for finding a fixed point where an elementwise inverse is taken;
 
 In addition the following four algorithms are specialised for vectors of arbitrary length;
