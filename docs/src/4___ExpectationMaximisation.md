@@ -1,3 +1,4 @@
+# 4 Applications
 ## 4.3 Expectation Maximisation
 
 Consider we have a set of data which has come from two different multivariate normal distributions. There is a probability $$\tau$$ that a datapoint comes from the first multivariate distribution.

@@ -8,11 +8,11 @@ makedocs(
              "1_FixedPoints.md",
              "2_Algorithms.md",
              "3_UsingAdvice.md",
-             "4_Applications.md",
              "4___EquilibriumPriceVector.md",
              "4___Perceptron.md",
              "4___ExpectationMaximisation.md",
              "4___ConsumptionSmoothing.md",
+             "4___ConfidenceHypercube.md",
              "5_TerminationConditions.md",
              "99_refs.md"]
 )

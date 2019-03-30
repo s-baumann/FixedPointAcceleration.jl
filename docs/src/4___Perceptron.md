@@ -1,3 +1,4 @@
+# 4 Applications
 ## 4.2 The Perceptron Classifier
 
 The perceptron is one of the oldest and simplest machine learning algorithms (Rosenblatt 1958). In its simplest form, for each observation it is applied it uses an N-dimensional vector of features x together with N+1 weights w to classify the observation as being in category one or category zero. It classifies observation j as a type one if $$w_0 + \sum_{i=1}^N w_i x_{i,j}  > 0$$ and as a type zero otherwise.

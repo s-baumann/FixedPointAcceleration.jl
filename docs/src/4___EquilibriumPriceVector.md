@@ -1,3 +1,4 @@
+# 4 Applications
 ## 4.1 Finding equilibrium prices in a pure exchange economy
 
 Consider that there are N households in a pure exchange economy. Every household has preferences over G types of good. Household $n$ has a utility function of
