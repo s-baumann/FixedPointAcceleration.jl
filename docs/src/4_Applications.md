@@ -1,4 +1,4 @@
-﻿# 4 Applications
+# 4 Applications
 
 ## 4.1 Finding equilibrium prices in a pure exchange economy
 
@@ -400,5 +400,4 @@ FP = fixed_point(x -> one_iterate.(x, 0.95), [2.0]; Algorithm = Anderson, PrintR
 cutoff_multiplier = FP.FixedPoint_[1]
 # We can find the upper and lower edges of the hypercube in each dimension. They are stored in each dimension in the below array of tuples.
 cutoffs = vcat(zip(-cutoff_multiplier .* sqrt.(diag(covar_matrix)) , cutoff_multiplier .* sqrt.(diag(covar_matrix)))...)
-
 ```
