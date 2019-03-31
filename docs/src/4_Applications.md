@@ -331,17 +331,17 @@ fp_simple   = fixed_point(OneIterateBudgetValues, InitialGuess; Algorithm = Simp
 
 This takes 22 iterates with the Anderson algorithm which is drastically better than the 459 iterates it takes with the simple method.
 
-# 4.5 Finding a confidence hypercube for a multivariate normal distribution.
+## 4.5 Finding a confidence hypercube for a multivariate normal distribution.
 
-We can find a confidence interval that includes x\% of a univariate normal distribution easily. It is more difficult however to come up with a confidence interval (or confidence area) for a multivariate Gaussian distribution. The first reason is that there is some ambiguity in what such a confidence area should look like. Considering some dimensions of the distribution will be correlated, it may be natural to look for an elliptically shaped area that will give the smallest possible area that covers x\% of the probability mass of a multivariate normal distribution (See Korpela et al. 2017).
+We can find a confidence interval that includes x% of a univariate normal distribution easily. It is more difficult however to come up with a confidence interval (or confidence area) for a multivariate Gaussian distribution. The first reason is that there is some ambiguity in what such a confidence area should look like. Considering some dimensions of the distribution will be correlated, it may be natural to look for an elliptically shaped area that will give the smallest possible area that covers x% of the probability mass of a multivariate normal distribution (See Korpela et al. 2017).
 
 Parameterising an elliptical area may be difficult however and it may be more natural to define a hypercube based on some basis of the multivariate normal distribution. A natural algorithm to do this would be to:
 1. Guess cutoff points marking the edges of the hypercube.
 2. Integrate the pdf of the normal distribution over this hypercube.
 3. If the integral deviates from that desired then come up with a new guess with different cutoff points.
-Then we iterate these steps until there is a hypercube containing the desired x\% of the mass of the distribution. While this should reach a fixed point of cutoff points there will be many such hypercubes. For instance we could take the x\% confidence interval off the marginal distribution of one dimension of the multivariate normal. Using these cutoffs for this dimension and $[-\inf, \inf]$ as cutoffs for all of the other dimensions we will have a x\% confidence area.
+Then we iterate these steps until there is a hypercube containing the desired x\% of the mass of the distribution. While this should reach a fixed point of cutoff points there will be many such hypercubes. For instance we could take the x% confidence interval off the marginal distribution (in one dimension) of the multivariate normal. Using these cutoffs for this dimension and $[-\infty, \infty]$ as cutoffs for all of the other dimensions we will have a x% confidence area.
 
-We are likely to be more interested in the most "central" hypercube. We shall put in additional restriction that in each dimension the hypercube should extend the same number of standard deviations above/below the mean.
+We are likely to be more interested in the most "central" hypercube. We shall put in additional restriction that in each dimension the hypercube should extend the same number of standard deviations above and below the mean.
 
 First we generate an example multivariate normal distribution:
 ```
@@ -363,7 +363,7 @@ dist = MvNormal(prob_means, Symmetric(covar_matrix))
 chol_of_covar_matrix = LowerTriangular(cholesky(covar_matrix).L)
 ```
 
-Now normal numerical integration routines does not scale well with the number of dimensions and this distributions has 100 dimensions. As a result we will instead infer the integral through the use of an array of Sobol numbers:
+Now normal numerical integration routines does not scale well with the number of dimensions and this distributions has 100 dimensions. As a result we will instead infer the integral through the use of the Sobol sequence:
 ```
 # We create an array of values for integrating cheaply
 using Sobol
@@ -381,7 +381,7 @@ end
 draws = get_sobol_draws(chol, 100000, SobolSeq(dims))
 ```
 
-We can now write a function that updates the number of standard deviations above the mean at which to cutoff the
+We can now write a function that updates the number of standard deviations above and below the mean that defines the edges of the hypercube.
 ```
 # Update function
 function one_iterate(cutoff_multiplier::Float64, target::Float64; tuning_parameter::Float64 = 1.0)
@@ -393,9 +393,12 @@ function one_iterate(cutoff_multiplier::Float64, target::Float64; tuning_paramet
     end
     mass_in_area = in_confidence_area/number_of_draws
     confidence_gap = target - mass_in_area
-    return cutoff_multiplier * (1 + confidence_gap) * tuning_parameter
+    return cutoff_multiplier + confidence_gap * tuning_parameter
 end
 FP = fixed_point(x -> one_iterate.(x, 0.95), [2.0]; Algorithm = Anderson, PrintReports = true)
+# The final number of standard deviations above/below the mean to use is stored in FP:
+cutoff_multiplier = FP.FixedPoint_[1]
+# We can find the upper and lower edges of the hypercube in each dimension. They are stored in each dimension in the below array of tuples.
+cutoffs = vcat(zip(-cutoff_multiplier .* sqrt.(diag(covar_matrix)) , cutoff_multiplier .* sqrt.(diag(covar_matrix)))...)
+
 ```
-
-
