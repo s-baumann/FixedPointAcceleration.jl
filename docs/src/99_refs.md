@@ -7,6 +7,8 @@ Cabay, S., and L.W. Jackson. 1976. ["A Polynomial Extrapolation Method for Findi
 
 Fang, Haw-ren, and Yousef Saad. 2009. ["Two Classes of Multisecant Methods for Nonlinear Acceleration."](https://onlinelibrary.wiley.com/doi/abs/10.1002/nla.617) Numerical Linear Algebra with Applications 16 (3): 197–221.
 
+Glasserman, Paul. 2003. Monte Carlo Methods in Financial Engineering. Springer.
+
 Korpela, Jussi and Oikarinen, Emilia and Puolamäki, Kai and Ukkonen, Antti. 2017.  ["Multivariate Confidence Intervals."](https://arxiv.org/abs/1701.05763?fbclid=IwAR2TppxqYEDHFf3XiPNMW-ndu79WcVkKQ_l-kr2sdrt7f2jfJUumZGYQrHQ)
 
 Novikoff. A. 1963. ["On convergence proofs for perceptrons."](http://www.dtic.mil/dtic/tr/fulltext/u2/298258.pdf) Stanford Research Institute: Technical Report, 298258.

@@ -401,3 +401,92 @@ cutoff_multiplier = FP.FixedPoint_[1]
 # We can find the upper and lower edges of the hypercube in each dimension. They are stored in each dimension in the below array of tuples.
 cutoffs = vcat(zip(-cutoff_multiplier .* sqrt.(diag(covar_matrix)) , cutoff_multiplier .* sqrt.(diag(covar_matrix)))...)
 ```
+
+## 4.6 Importance Sampling
+
+To lower the variance of a Monte Carlo estimation, importance sampling is often used. We can use a simple method of importance sampling for function integrated over a multivariate standard normal distribution using the algorithm described in Glasserman (2003) on page 268 of that book.
+
+To briefly recount it we want to find $E[G(x)]$ where $x \in \Re^d$ is $N(0,I)$. We have the change of measure to a measure called $\mu$ which:
+
+$$E[G(Z)] &= E_\mu \left[ G(Z)e^{-\mu^\prime Z + \frac{1}{2}\mu^\prime\mu} \right]$$
+
+for any $\mu \in \Re^d$ where $d$ is the dimensionality of the function $G(\cdot)$. We can simulate this with the algorithm:
+
+for paths $i = 1, ..., N$\\
+	 generate $Z_i \sim N(\mu, I)$\\
+	 $Y_i \leftarrow G(Z_i) \exp(-\mu^\prime Z_i + \frac{1}{2}\mu^\prime \mu)$\\
+return $\frac{\sum_{i=1}^N Y_i}{N}$
+
+Now we need to figure out the vector $\mu$ which is composed of the shifts in the mean for each normal variable and thereby represents the change in probability measure. Note that for any vector our estimator should be unbiased and consistent but some can be more efficient than others. In the special case\footnote{Which is satisfied for CVA and DVA but not for FVA, thus the scope of this paper.} where $G(x) \geq 0 \forall x \in \Re^d$, an efficient choices is the vector $\mu$ which makes the following equation hold (for working out see equation 4.89 of Glasserman):
+
+$$\Delta F(\mu) = \mu$$
+
+Where $F(x) = \ln(G(x))$ and  $\Delta F(\mu)$ is the Jacobian of the function $F(\cdot)$
+
+The first problem here is how to to efficiently get the Jacobian. For a high dimensional problem (which all XVA problems become) numerical differentiation will not work but aad will work so we can use the ForwardDiff package. The second problem is the high dimensional fixedpoint problem for which we can used FixedPointAcceleration.
+
+```
+using LinearAlgebra
+using Distributions
+using FixedPointAcceleration
+using ForwardDiff
+using Random
+twister = MersenneTwister(1)
+dims = 5
+random_function_multiples = rand(twister, dims)
+Wish = Wishart(dims, diagm(0 => ones(dims)))
+random_PSD_matrix = rand(twister, Wish)
+chol = cholesky(random_PSD_matrix).factors
+
+function G(x::Array)
+    transformed_normals = 0.3 .* (chol * x)
+    return sum(random_function_multiples .* exp.(transformed_normals))
+end
+function F(x::Array)
+    return log(G(x))
+end
+function grad_F(x::Array)
+  return ForwardDiff.gradient(F, x)
+end
+
+fp = fixed_point(grad_F, repeat([1.0],dims))
+drifts = fp.FixedPoint_
+iterations = fp.Iterations_
+
+batches = 200000
+batch_size = 30
+paths = batches * batch_size
+draws = rand(twister, Normal(), paths, dims)
+
+normal_batch_result = Array{Float64,1}(undef, batches)
+is__batch_result     = Array{Float64,1}(undef, batches)
+normal_result = Array{Float64,1}(undef, batches)
+is_result     = Array{Float64,1}(undef, batches)
+
+for batch in 1:batches
+    println("Now doing batch ", batch)
+    batch_vec = Array{Float64,1}(undef, batch_size)
+    batch_is_vec = Array{Float64,1}(undef, batch_size)
+    for i in 1:batch_size
+        row = (batch-1)*batch_size + i
+        vv = draws[row,:]
+        batch_vec[i] = G(vv)
+        vv2 = vv + drifts
+        batch_is_vec[i] = G(vv2) * exp(0.5 * (drifts' * drifts) - drifts' * vv2)
+    end
+    normal_batch_result[batch] = mean(batch_vec)
+    is__batch_result[batch]    = mean(batch_is_vec)
+    normal_result[batch]       = mean(normal_batch_result[1:batch])
+    is_result[batch]           = mean(is__batch_result[1:batch])
+end
+
+final_val = normal_result[batches]
+upto = 3000
+
+using Plots
+plt = plot(1:upto , normal_result[1:upto] , label= "Normal QMC")
+plt = plot!(iterations .+ collect(1:upto), is_result[1:upto], label= "QMC with Importance Sampling")
+plt = plot!(1:(upto+iterations), repeat([final_val], upto+iterations), label= "Converged Value")
+```
+
+You can see that convergence is much faster here using importance sampling.
