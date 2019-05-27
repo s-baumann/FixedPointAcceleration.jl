@@ -9,7 +9,7 @@ fp = fixed_point(simple_vector_function, Inputs; Algorithm = Anderson)
 # iterations for a while to fix this.
 fp.TerminationCondition_ == InvalidInputOrOutputOfIteration
 fp.FailedEvaluation_.Error_ == ErrorExecutingFunction
-fp = fixed_point(simple_vector_function, fp; Algorithm = Simple, MaxIter = UInt(7))
+fp = fixed_point(simple_vector_function, fp; Algorithm = Simple, MaxIter = Integer(7))
 fp.TerminationCondition_ == ReachedMaxIter
 fp = fixed_point(simple_vector_function, fp; Algorithm = Anderson)
 fp.TerminationCondition_ == ReachedConvergenceThreshold

@@ -55,7 +55,7 @@ struct FixedPointResults{R<:Real}
     FixedPoint_::Union{Missing,Array{R,1}}
     Convergence_::Union{Missing,R}          #
     TerminationCondition_::TerminationCondition
-    Iterations_::UInt
+    Iterations_::Integer
     ConvergenceVector_::Union{Missing,Array{R,1}}
     FailedEvaluation_::Union{Missing,FunctionEvaluationResult}
     Inputs_::Array{R,2}

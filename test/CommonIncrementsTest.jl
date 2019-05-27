@@ -20,7 +20,7 @@ fp_aitken = fixed_point(funcfunc, Inputs; Algorithm = Aitken, PrintReports = tru
 fp_aitken.TerminationCondition_ == ReachedConvergenceThreshold
 fp_newton = fixed_point(funcfunc, Inputs; Algorithm = Newton, PrintReports = true, ReplaceInvalids = ReplaceElements)
 fp_newton.TerminationCondition_ == ReachedConvergenceThreshold
-fp_simple = fixed_point(funcfunc, Inputs; Algorithm = Simple, PrintReports = true, ReplaceInvalids = ReplaceElements, ReportingSigFig =  UInt(10))
+fp_simple = fixed_point(funcfunc, Inputs; Algorithm = Simple, PrintReports = true, ReplaceInvalids = ReplaceElements, ReportingSigFig =  Integer(10))
 fp_simple.TerminationCondition_ == ReachedConvergenceThreshold
 fp_SEA = fixed_point(funcfunc, Inputs; Algorithm = SEA, PrintReports = true, ReplaceInvalids = ReplaceElements)
 fp_SEA.TerminationCondition_ == ReachedConvergenceThreshold
