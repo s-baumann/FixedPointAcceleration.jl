@@ -14,6 +14,7 @@ function funcfunc(x::Array{Float64,1})
     return output
 end
 Inputs = [19.0,10.0]
+"""
 fp_anderson = fixed_point(funcfunc, Inputs; Algorithm = Anderson, PrintReports = true, ReplaceInvalids = ReplaceElements)
 fp_anderson.TerminationCondition_ == ReachedConvergenceThreshold
 fp_aitken = fixed_point(funcfunc, Inputs; Algorithm = Aitken, PrintReports = true, ReplaceInvalids = ReplaceElements)
@@ -24,7 +25,8 @@ fp_simple = fixed_point(funcfunc, Inputs; Algorithm = Simple, PrintReports = tru
 fp_simple.TerminationCondition_ == ReachedConvergenceThreshold
 fp_SEA = fixed_point(funcfunc, Inputs; Algorithm = SEA, PrintReports = true, ReplaceInvalids = ReplaceElements)
 fp_SEA.TerminationCondition_ == ReachedConvergenceThreshold
-fp_VEA = fixed_point(funcfunc, Inputs; Algorithm = VEA, PrintReports = false, ReplaceInvalids = ReplaceElements)
+"""
+fp_VEA = fixed_point(funcfunc, Inputs; Algorithm = VEA, PrintReports = true, ReplaceInvalids = ReplaceElements)
 fp_VEA.TerminationCondition_ == ReachedConvergenceThreshold
 fp_RRE = fixed_point(funcfunc, Inputs; Algorithm = RRE, PrintReports = true, ReplaceInvalids = ReplaceElements)
 fp_RRE.TerminationCondition_ == ReachedMaxIter # This one fails because it keeps proposing bad ideas.

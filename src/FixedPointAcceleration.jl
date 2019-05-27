@@ -11,5 +11,5 @@ export FixedPointAccelerationAlgorithm, Simple, Anderson, Aitken, Newton, VEA, S
 export InvalidReplacement, NoAction, ReplaceElements, ReplaceVector # Strategies for handling invalids in proposed new inputs.
 export FP_FunctionEvaluationError, NoError, ErrorExecutingFunction, LengthOfOutputNotSameAsInput, InputMissingsDetected
 export InputNAsDetected, InputInfsDetected, OutputMissingsDetected, OutputNAsDetected, OutputInfsDetected # Errors in evaluating
-export TerminationCondition, ReachedConvergenceThreshold, ReachedMaxIter, InvalidInputOrOutputOfIteration # Termination Conditions
+export TerminationCondition, ReachedConvergenceThreshold, ReachedMaxIter, InvalidInputOrOutputOfIteration, FunctionIsNotTypeStable # Termination Conditions
 end

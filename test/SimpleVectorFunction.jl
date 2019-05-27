@@ -16,3 +16,10 @@ fp_MPE      = fixed_point(func, Inputs; Algorithm = MPE)
 fp_MPE.Convergence_ < 1e-10
 fp_RRE      = fixed_point(func, Inputs; Algorithm = RRE)
 fp_RRE.Convergence_ < 1e-10
+
+# Now trying a function with a typeswitch from Int to Float
+Inputs = [1,4]
+fp_simple   = fixed_point(func, Inputs; Algorithm = Simple)
+fp_simple.Convergence_ < 1e-10
+fp_anderson = fixed_point(func, Inputs; Algorithm = Anderson)
+fp_anderson.Convergence_ < 1e-10

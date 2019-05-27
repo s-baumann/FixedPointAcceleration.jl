@@ -17,3 +17,4 @@ println("Testing ReplaceInvalidsTest")
 println("CommonIncrementsTest")
 @time @test include("CommonIncrementsTest.jl")
 # Note consumption smoothing problem is not tested for time and dependency reasons.
+# Note that the Autodiff extention is not included for the same reason.
