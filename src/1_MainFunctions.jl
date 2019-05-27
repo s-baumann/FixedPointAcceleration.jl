@@ -216,8 +216,8 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
         Inputs  = hcat(Inputs, ExecutedFunction.Input_)
         Outputs = hcat(Outputs, convert(Array{output_type,1}, ExecutedFunction.Output_))
         # Checking and recording convergence
-        ConvergenceVector =  vcat(ConvergenceVector, ConvergenceMetric(ExecutedFunction.Input_, ExecutedFunction.Output_))
-        Convergence = ConvergenceVector[iter]
+        Convergence = ConvergenceMetric(ExecutedFunction.Input_, ExecutedFunction.Output_)
+        ConvergenceVector =  vcat(ConvergenceVector, Convergence)
         # Output of report and going to next iteration.
         if (PrintReports) println("Algorithm: ", lpad(Algorithm,8)   , ". Iteration: ", lpad(iter,5), ". Convergence: ", lpad(round(Convergence, digits=ReportingSigFig),ReportingSigFig+3)) end
         iter  = iter + 1
