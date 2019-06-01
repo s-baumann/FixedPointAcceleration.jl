@@ -175,6 +175,8 @@ using Distributions
 using FixedPointAcceleration
 using Random
 using DataFrames
+using Plots
+using LinearAlgebra
 true_tau = 0.6
 nobs_1 = 400
 nobs_2 = convert(Int, round(nobs_1 * ((1-true_tau)/true_tau)))

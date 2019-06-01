@@ -1,9 +1,10 @@
 """
-    execute_function_safely(Func::Function, x::Array{Float64,1})
+    execute_function_safely(Func::Function, x::Array{Float64,1}; type_check::Bool = false) where T<:Real
 This function creates a function that executes the function for which a fixed point is sought. It is a helper function that is not exported.
 ### Takes
  * Func - The function input to fixed_point
  * x - The point at which to evaluate the function.
+ * type_check - Should the type stability of the function be checked and a error reported in an input vector of Ints turns into a vector of floats (for instance)
 ### Returns
 A FunctionEvaluationResult containing the following fields:
 * Input_ - The input
@@ -34,24 +35,39 @@ function execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool
     # Run function.
     lenx = length(x)
     tf_result = Array{T,1}(undef,lenx)
+    byproduct = missing
+    tf_full_result = missing
     try
-        tf_result =  Func(x)
+        tf_full_result =  Func(x)
     catch
         return FunctionEvaluationResult(x, missing, ErrorExecutingFunction)
     end
+
+    side_effect_to_report = missing
+    # Now we if tf_full_result is an array then it is the normal case.
+    if isa(tf_full_result,Array)
+        tf_result = tf_full_result
+    elseif isa(tf_full_result,Tuple)
+        # In this case we assume that we have a tuple where the first output
+        # is the fp array and the second is a NamedTuple
+        tf_result = tf_full_result[1]
+        side_effect_to_report = tf_full_result[2]
+    else
+        error("The Fixedpoint function can only return a vector or a tuple  of which the first entry is the vector for which a fixedpoint is sought and the second is a namedtuple (the contents of which are output for the user but are not used in fixed point acceleration).")
+    end
     # Check Output and return.
     if sum(ismissing.(tf_result)) > 0
-        return FunctionEvaluationResult(x, tf_result, OutputMissingsDetected)
+        return FunctionEvaluationResult(x, tf_result, OutputMissingsDetected, side_effect_to_report)
     elseif sum(isnan.(tf_result)) > 0
-        return FunctionEvaluationResult(x, tf_result, OutputNAsDetected)
+        return FunctionEvaluationResult(x, tf_result, OutputNAsDetected, side_effect_to_report)
     elseif sum(isinf.(tf_result)) > 0
-        return FunctionEvaluationResult(x, tf_result, OutputInfsDetected)
+        return FunctionEvaluationResult(x, tf_result, OutputInfsDetected, side_effect_to_report)
     elseif (length(tf_result) != length(x))
-        return FunctionEvaluationResult(x, tf_result, LengthOfOutputNotSameAsInput)
+        return FunctionEvaluationResult(x, tf_result, LengthOfOutputNotSameAsInput, side_effect_to_report)
     elseif type_check & (!isa(tf_result[1], T))
-        return FunctionEvaluationResult(x, tf_result, FunctionIsNotTypeStable)
+        return FunctionEvaluationResult(x, tf_result, FunctionIsNotTypeStable, side_effect_to_report)
     else
-        return FunctionEvaluationResult(x, tf_result, NoError)
+        return FunctionEvaluationResult(x, tf_result, NoError, side_effect_to_report)
     end
 end
 
@@ -170,7 +186,7 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
     if isempty(Outputs)
         ExecutedFunction = execute_function_safely(func, Inputs[:,1])
         if ExecutedFunction.Error_ != NoError
-            return FixedPointResults(Inputs, Outputs, InvalidInputOrOutputOfIteration; FailedEvaluation_ = ExecutedFunction)
+            return FixedPointResults(Inputs, Outputs, InvalidInputOrOutputOfIteration; FailedEvaluation_ = ExecutedFunction, Other_Output = ExecutedFunction.Other_Output_)
         end
         output_type = promote_type(typeof(Inputs[1]), typeof(ExecutedFunction.Output_[1]))
         converted_outputs = convert.(Ref(output_type), ExecutedFunction.Output_)
@@ -192,7 +208,7 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
         if (PrintReports)
             println("The last column of Inputs matrix is already a fixed point under input convergence metric and convergence threshold")
         end
-        return FixedPointResults(Inputs, Outputs, ReachedConvergenceThreshold ; ConvergenceVector_  = vec(ConvergenceVector))
+        return FixedPointResults(Inputs, Outputs, ReachedConvergenceThreshold; ConvergenceVector_ = vec(ConvergenceVector), Other_Output = ExecutedFunction.Other_Output_)
     end
     # Printing a report for initial convergence
     Convergence = ConvergenceVector[iter]
@@ -200,6 +216,7 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
         println("                                          Algorithm: ", lpad(Algorithm, 8)   , ". Iteration: ", lpad(iter, 5),". Convergence: ", lpad(round(Convergence, digits=ReportingSigFig),ReportingSigFig+3))
     end
     iter = iter + 1
+    final_other_output = missing
     while (Convergence > ConvergenceMetricThreshold) & (iter <= MaxIter)
         # Generating new input and output.
         NewInputFunctionReturn = fixed_point_new_input(Inputs, Outputs, Algorithm; MaxM = MaxM,
@@ -211,8 +228,9 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
         end
         ExecutedFunction = execute_function_safely(func, NewInputFunctionReturn; type_check = true)
         if ExecutedFunction.Error_ != NoError
-            return FixedPointResults(Inputs, Outputs, InvalidInputOrOutputOfIteration; ConvergenceVector_  = vec(ConvergenceVector), FailedEvaluation_ = ExecutedFunction)
+            return FixedPointResults(Inputs, Outputs, InvalidInputOrOutputOfIteration; ConvergenceVector_  = vec(ConvergenceVector), FailedEvaluation_ = ExecutedFunction, Other_Output = ExecutedFunction.Other_Output_)
         end
+        final_other_output = ExecutedFunction.Other_Output_
         Inputs  = hcat(Inputs, ExecutedFunction.Input_)
         Outputs = hcat(Outputs, convert(Array{output_type,1}, ExecutedFunction.Output_))
         # Checking and recording convergence
@@ -224,7 +242,7 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
     end
     Finish = ReachedMaxIter
     if (Convergence < ConvergenceMetricThreshold) Finish = ReachedConvergenceThreshold end
-    return FixedPointResults(Inputs, Outputs, Finish; ConvergenceVector_  = vec(ConvergenceVector))
+    return FixedPointResults(Inputs, Outputs, Finish; ConvergenceVector_  = vec(ConvergenceVector),  Other_Output = final_other_output)
 end
 
 """
