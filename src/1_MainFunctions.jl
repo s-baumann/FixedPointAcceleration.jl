@@ -35,10 +35,9 @@ function execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool
     # Run function.
     lenx = length(x)
     tf_result = Array{T,1}(undef,lenx)
-    byproduct = missing
     tf_full_result = missing
     try
-        tf_full_result =  Func(x)
+        tf_full_result =  Func(deepcopy(x))
     catch
         return FunctionEvaluationResult(x, missing, ErrorExecutingFunction)
     end
@@ -57,17 +56,17 @@ function execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool
     end
     # Check Output and return.
     if sum(ismissing.(tf_result)) > 0
-        return FunctionEvaluationResult(x, tf_result, OutputMissingsDetected, side_effect_to_report)
+        return FunctionEvaluationResult(x, tf_result, OutputMissingsDetected      , side_effect_to_report)
     elseif sum(isnan.(tf_result)) > 0
-        return FunctionEvaluationResult(x, tf_result, OutputNAsDetected, side_effect_to_report)
+        return FunctionEvaluationResult(x, tf_result, OutputNAsDetected           , side_effect_to_report)
     elseif sum(isinf.(tf_result)) > 0
-        return FunctionEvaluationResult(x, tf_result, OutputInfsDetected, side_effect_to_report)
+        return FunctionEvaluationResult(x, tf_result, OutputInfsDetected          , side_effect_to_report)
     elseif (length(tf_result) != length(x))
         return FunctionEvaluationResult(x, tf_result, LengthOfOutputNotSameAsInput, side_effect_to_report)
     elseif type_check & (!isa(tf_result[1], T))
-        return FunctionEvaluationResult(x, tf_result, FunctionIsNotTypeStable, side_effect_to_report)
+        return FunctionEvaluationResult(x, tf_result, FunctionIsNotTypeStable     , side_effect_to_report)
     else
-        return FunctionEvaluationResult(x, tf_result, NoError, side_effect_to_report)
+        return FunctionEvaluationResult(x, tf_result, NoError                     , side_effect_to_report)
     end
 end
 
