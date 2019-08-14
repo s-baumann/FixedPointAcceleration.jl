@@ -1,5 +1,5 @@
 """
-    execute_function_safely(Func::Function, x::Array{Float64,1}; type_check::Bool = false) where T<:Real
+    execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool = false, quiet_errors::Bool = true) where T<:Real
 This function creates a function that executes the function for which a fixed point is sought. It is a helper function that is not exported.
 ### Takes
  * Func - The function input to fixed_point
@@ -23,7 +23,7 @@ execute_function_safely(Func,1.0)
 execute_function_safely(Func,NaN)
 execute_function_safely(Func,Inf)
 """
-function execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool = false) where T<:Real
+function execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool = false, quiet_errors::Bool = true) where T<:Real
     # Check input
     if sum(ismissing.(x)) > 0
         return FunctionEvaluationResult(x, missing, InputMissingsDetected)
@@ -36,10 +36,14 @@ function execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool
     lenx = length(x)
     tf_result = Array{T,1}(undef,lenx)
     tf_full_result = missing
-    try
+    if quiet_errors
+        try
+            tf_full_result =  Func(deepcopy(x))
+        catch
+            return FunctionEvaluationResult(x, missing, ErrorExecutingFunction)
+        end
+    else
         tf_full_result =  Func(deepcopy(x))
-    catch
-        return FunctionEvaluationResult(x, missing, ErrorExecutingFunction)
     end
 
     side_effect_to_report = missing
@@ -74,19 +78,19 @@ end
     fixed_point(func::Function, previous_FixedPointResults::FixedPointResults;
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(input::Array, output::Array) = maximum(abs.(output .- input)),
                     ConvergenceMetricThreshold::R = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0),
-                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3) where R<:Real
+                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = true) where R<:Real
     fixed_point(func::Function, Inputs::Array{T, 1};
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(input::Array, output::Array) = maximum(abs.(output .- input)),
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0),
-                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3) where T<:Real
+                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = true) where T<:Real
     fixed_point(func::Function, Inputs::Real;
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(input::Array, output::Array) = maximum(abs.(output .- input)),
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0),
-                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3)
+                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = true)
     fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = Array{T,2}(undef,size(Inputs)[1],0),
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(input::Array, output::Array) = maximum(abs.(output .- input)),
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0),
-                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3) where T<:Real where R<:Real
+                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = true) where T<:Real where R<:Real
 
 A function for finding the fixed point of another function
 ### Takes
@@ -104,6 +108,7 @@ A function for finding the fixed point of another function
  *  ReportingSigFig - This is the number of significant figures that will be used in printing the convergence values to the console (only if PrintReports is TRUE).
  *  ReplaceInvalids -Sometimes an acceleration algorithm proposed a vector with an invalid coordinate (NaN, Inf or missing). This parameter can be set to ReplaceInvalids (to replace invalid coordinates by the simple iterate values), ReplaceVector (to replace entire vector with a simple iterate) or NoAction (where an imminent error will occur).
  *  ConditionNumberThreshold - This is a threshold for what condition number is acceptable for solving the least squares problem for the Anderson Algorithm. If the condition number is larger than this threshold then fewer previous iterates will be used in solving the problem. This has no effect unless the "Anderson" Algorithm is used.
+ *  quiet_errors - If true the function will return everything already calculated as soon as an error occurs. The callstack that lead to the error is not returned however. If false an error will be thrown with a callstack.
 ### Returns
  * A list containing the fixed_point, the Inputs and corresponding Outputs, and convergence values (which are computed under the "ConvergenceMetric").
    The list will also include a "Finish" statement describing why it has finished. This is often going to be due to either MaxIter or ConvergenceMetricThreshold being
@@ -131,37 +136,37 @@ A function for finding the fixed point of another function
 function fixed_point(func::Function, previous_FixedPointResults::FixedPointResults;
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
                     ConvergenceMetricThreshold::R = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0),
-                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3) where R<:Real
+                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = true) where R<:Real
     Inputs = previous_FixedPointResults.Inputs_
     Outputs = previous_FixedPointResults.Outputs_
     return fixed_point(func, Inputs; Outputs = Outputs, Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
                        MaxIter = MaxIter, MaxM = MaxM, ExtrapolationPeriod = ExtrapolationPeriod, Dampening = Dampening, PrintReports = PrintReports, ReportingSigFig = ReportingSigFig,
-                       ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold)
+                       ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold, quiet_errors = quiet_errors)
 end
 function fixed_point(func::Function, Inputs::Array{T, 1};
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0),
-                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3) where T<:Real
+                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = true) where T<:Real
     Inputs2 = Array{Float64, 2}(undef,size(Inputs)[1],1)
     Inputs2[:,1] = Inputs
     return fixed_point(func, Inputs2; Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
                        MaxIter = MaxIter, MaxM = MaxM, ExtrapolationPeriod = ExtrapolationPeriod, Dampening = Dampening, PrintReports = PrintReports, ReportingSigFig = ReportingSigFig,
-                       ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold)
+                       ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold, quiet_errors = quiet_errors)
 end
 function fixed_point(func::Function, Inputs::Real;
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0),
-                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3)
+                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = true)
     Inputs2 = Array{typeof(Inputs), 2}(undef,1,1)
     Inputs2[1,1] = Inputs
     return fixed_point(func, Inputs2; Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
                        MaxIter = MaxIter, MaxM = MaxM, ExtrapolationPeriod = ExtrapolationPeriod, Dampening = Dampening, PrintReports = PrintReports, ReportingSigFig = ReportingSigFig,
-                       ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold)
+                       ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold, quiet_errors = quiet_errors)
 end
 function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = Array{T,2}(undef,size(Inputs)[1],0),
                     Algorithm::FixedPointAccelerationAlgorithm = Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0),
-                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3) where T<:Real where R<:Real
+                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::InvalidReplacement = NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = true) where T<:Real where R<:Real
     # This code first tests if the input point is a fixed point. Then if it is not a while loop runs to try to find a fixed point.
     if (ConditionNumberThreshold < 1) error("ConditionNumberThreshold must be at least 1.")  end
     SimpleStartIndex = Integer(size(Outputs)[2])
@@ -183,7 +188,7 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
     output_type = T
     # Do an initial run if no runs have been done:
     if isempty(Outputs)
-        ExecutedFunction = execute_function_safely(func, Inputs[:,1])
+        ExecutedFunction = execute_function_safely(func, Inputs[:,1]; quiet_errors = quiet_errors)
         if ExecutedFunction.Error_ != NoError
             return FixedPointResults(Inputs, Outputs, InvalidInputOrOutputOfIteration; FailedEvaluation_ = ExecutedFunction, Other_Output = ExecutedFunction.Other_Output_)
         end
@@ -225,7 +230,7 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
         if PrintReports & (Algorithm != Anderson)
             print(lpad("",42))
         end
-        ExecutedFunction = execute_function_safely(func, NewInputFunctionReturn; type_check = true)
+        ExecutedFunction = execute_function_safely(func, NewInputFunctionReturn; type_check = true, quiet_errors = quiet_errors)
         if ExecutedFunction.Error_ != NoError
             return FixedPointResults(Inputs, Outputs, InvalidInputOrOutputOfIteration; ConvergenceVector_  = vec(ConvergenceVector), FailedEvaluation_ = ExecutedFunction, Other_Output = ExecutedFunction.Other_Output_)
         end
