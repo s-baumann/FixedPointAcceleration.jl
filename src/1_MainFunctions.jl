@@ -217,7 +217,7 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
     # Printing a report for initial convergence
     Convergence = ConvergenceVector[iter]
     if (PrintReports)
-        println("                                          Algorithm: ", lpad(Algorithm, 8)   , ". Iteration: ", lpad(iter, 5),". Convergence: ", lpad(round(Convergence, digits=ReportingSigFig),ReportingSigFig+3))
+        println("                                          Algorithm: ", lpad(Algorithm, 8)   , ". Iteration: ", lpad(iter, 5),". Convergence: ", lpad(round(Convergence, sigdigits=ReportingSigFig),ReportingSigFig+3))
     end
     iter = iter + 1
     final_other_output = missing
@@ -241,7 +241,7 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
         Convergence = ConvergenceMetric(ExecutedFunction.Input_, ExecutedFunction.Output_)
         ConvergenceVector =  vcat(ConvergenceVector, Convergence)
         # Output of report and going to next iteration.
-        if (PrintReports) println("Algorithm: ", lpad(Algorithm,8)   , ". Iteration: ", lpad(iter,5), ". Convergence: ", lpad(round(Convergence, digits=ReportingSigFig),ReportingSigFig+3)) end
+        if (PrintReports) println("Algorithm: ", lpad(Algorithm,8)   , ". Iteration: ", lpad(iter,5), ". Convergence: ", lpad(round(Convergence, sigdigits=ReportingSigFig),ReportingSigFig+3)) end
         iter  = iter + 1
     end
     Finish = ReachedMaxIter
@@ -331,7 +331,7 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
                 if (PrintReports) print("Condition number is ", lpad("NaN", 5),". Used:",  lpad(0, 3)," lags. ") end
                 proposed_input = repeat([NaN], VectorLength)
             else
-                if (PrintReports) print("Condition number is ", lpad(ConditionNumber, 5),". Used:",  lpad(M+1, 3)," lags. ") end
+                if (PrintReports) print("Condition number is ", lpad(round(ConditionNumber, sigdigits = 2), 5),". Used:",  lpad(M+1, 3)," lags. ") end
                 proposed_input = LastOutput .- (Dampening .* vec(DeltaOutputs * Coeffs))
             end
         end
