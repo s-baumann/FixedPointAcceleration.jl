@@ -217,7 +217,7 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
     # Printing a report for initial convergence
     Convergence = ConvergenceVector[iter]
     if (PrintReports)
-        println("                                          Algorithm: ", lpad(Algorithm, 8)   , ". Iteration: ", lpad(iter, 5),". Convergence: ", lpad(round(Convergence, sigdigits=ReportingSigFig),ReportingSigFig+3))
+        println("                                          Algorithm: ", lpad(Algorithm, 8)   , ". Iteration: ", lpad(iter, 5),". Convergence: ", lpad(round(Convergence, sigdigits=ReportingSigFig),ReportingSigFig+4), ". Time: ", now())
     end
     iter = iter + 1
     final_other_output = missing
@@ -241,7 +241,7 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
         Convergence = ConvergenceMetric(ExecutedFunction.Input_, ExecutedFunction.Output_)
         ConvergenceVector =  vcat(ConvergenceVector, Convergence)
         # Output of report and going to next iteration.
-        if (PrintReports) println("Algorithm: ", lpad(Algorithm,8)   , ". Iteration: ", lpad(iter,5), ". Convergence: ", lpad(round(Convergence, sigdigits=ReportingSigFig),ReportingSigFig+3)) end
+        if (PrintReports) println("Algorithm: ", lpad(Algorithm,8)   , ". Iteration: ", lpad(iter,5), ". Convergence: ", lpad(round(Convergence, sigdigits=ReportingSigFig),ReportingSigFig+4), ". Time: ", now()) end
         iter  = iter + 1
     end
     Finish = ReachedMaxIter
