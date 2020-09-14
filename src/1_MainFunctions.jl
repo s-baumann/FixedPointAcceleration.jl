@@ -227,7 +227,7 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
                                      SimpleStartIndex = SimpleStartIndex,ExtrapolationPeriod = ExtrapolationPeriod,
                                      Dampening = Dampening, ConditionNumberThreshold = ConditionNumberThreshold,
                                      PrintReports = PrintReports, ReplaceInvalids = ReplaceInvalids)
-        if PrintReports & (Algorithm != Anderson)
+        if PrintReports & (Algorithm != :Anderson)
             print(lpad("",42))
         end
         ExecutedFunction = execute_function_safely(func, NewInputFunctionReturn; type_check = true, quiet_errors = quiet_errors)
@@ -280,7 +280,7 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
     CompletedIters = size(Outputs)[2]
     simple_iterate = Outputs[:,CompletedIters]
     proposed_input = repeat([NaN], size(simple_iterate)[1])
-    if Algorithm == Simple
+    if Algorithm == :Simple
          proposed_input = simple_iterate
     elseif Algorithm == :Anderson
         if CompletedIters < 2

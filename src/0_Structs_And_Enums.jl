@@ -34,7 +34,7 @@ struct FixedPointResults{R<:Real}
         if (!(ismissing(ConvergenceVector_))) && !(isempty(ConvergenceVector_))
             Convergence_ = ConvergenceVector_[Iterations_]
         end
-        if TerminationCondition_ == ReachedConvergenceThreshold
+        if TerminationCondition_ == :ReachedConvergenceThreshold
             FixedPoint_ = Outputs_[:,Iterations_]
         end
         return new{R}(FixedPoint_, Other_Output, Convergence_, TerminationCondition_, Iterations_, ConvergenceVector_, FailedEvaluation_, Inputs_, Outputs_)
