@@ -14,14 +14,14 @@ function funcfunc(x::Array{Float64,1})
     return output
 end
 Inputs = [19.0,10.0]
-fp = fixed_point(funcfunc, Inputs; Algorithm = Aitken)
+fp = fixed_point(funcfunc, Inputs; Algorithm = :Aitken)
 fp.FailedEvaluation_.Error_ == InputInfsDetected
 fp.FailedEvaluation_.Input_[1] == -Inf
 !isinf(fp.FailedEvaluation_.Input_[2])
 # Now fixing with replace element
-fp = fixed_point(funcfunc, Inputs; Algorithm = Aitken, ReplaceInvalids = ReplaceElements)
+fp = fixed_point(funcfunc, Inputs; Algorithm = :Aitken, ReplaceInvalids = :ReplaceElements)
 fp.TerminationCondition_ == ReachedConvergenceThreshold
 # Now fixing with replace element
-fp2 = fixed_point(funcfunc, Inputs; Algorithm = Aitken, ReplaceInvalids = ReplaceVector)
+fp2 = fixed_point(funcfunc, Inputs; Algorithm = :Aitken, ReplaceInvalids = :ReplaceVector)
 fp2.TerminationCondition_ == ReachedConvergenceThreshold
 fp.Iterations_ != fp2.Iterations_

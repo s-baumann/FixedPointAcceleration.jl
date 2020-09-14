@@ -84,8 +84,8 @@ function update_theta(theta::Array{Float64,1}, dd::DataFrame)
     return (updated_theta, side_product)
 end
 
-
+# Here we are using an EM algorithm to estimate a Gaussian mixture model.
 
 InitialGuess = [0.5, 7.5, 2.0, 0.0, 2.0, -5.0, 7.5, 2.0, 0.0, 10.0, 0.5]
-fp_anderson = fixed_point(x -> update_theta(x,dd), InitialGuess; Algorithm = Anderson, PrintReports = true)
+fp_anderson = fixed_point(x -> update_theta(x,dd), InitialGuess; Algorithm = :Anderson, PrintReports = true)
 isa(fp_anderson.Other_Output_, NamedTuple)

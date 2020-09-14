@@ -15,7 +15,7 @@ This is a fast converging and inexpensive sequence which probably makes an accel
 using FixedPointAcceleration
 SequenceFunction(x) = 0.5 .* (x .+ 100 ./ x)
 Initial_Guess = 6.0
-FP_Simple   = fixed_point(SequenceFunction, Initial_Guess; Algorithm = Simple)
+FP_Simple   = fixed_point(SequenceFunction, Initial_Guess; Algorithm = :Simple)
 ```
 
 We can also solve for a vector of fixed points at the same time. For instance every square root from 1 to 100.
@@ -24,7 +24,7 @@ We can also solve for a vector of fixed points at the same time. For instance ev
 NumbersVector = collect(1:100)
 SequenceFunction(x) = 0.5 .* (x .+ NumbersVector ./ x)
 Initial_Guess = repeat([10],100)
-FP_SEA   = fixed_point(SequenceFunction, Initial_Guess; Algorithm = RRE)
+FP_SEA   = fixed_point(SequenceFunction, Initial_Guess; Algorithm = :RRE)
 ```
 Note that in this case the RRE method is being applied elementwise.
 
@@ -35,8 +35,8 @@ The utility of the acceleration algorithms contained in **FixedPoint** are more 
 ```
 SimpleVectorFunction(x) = [0.5*sqrt(abs(x[1] + x[2])), 1.5*x[1] + 0.5*x[2]]
 Initial_Guess =  [0.3,900]
-FP_Simple = fixed_point(SimpleVectorFunction  , Initial_Guess; Algorithm = Simple)
-FP_Anderson = fixed_point(SimpleVectorFunction, Initial_Guess; Algorithm = Anderson)
+FP_Simple = fixed_point(SimpleVectorFunction  , Initial_Guess; Algorithm = :Simple)
+FP_Anderson = fixed_point(SimpleVectorFunction, Initial_Guess; Algorithm = :Anderson)
 ```
 This function takes 105 iterates to find a fixed point with the simple method but only 14 with the Anderson acceleration method.
 
@@ -50,14 +50,14 @@ Initial_Guess = [1.1,2.2]
 ```
 Now we can initially do two simple iterates. Then do three iterates with the MPE method. Then one with the simple method and then finish with the RRE method. This can be done in the following way:
 ```
-fp_chain      = fixed_point(func, Initial_Guess; Algorithm = Simple, MaxIter = 2)
-fp_chain      = fixed_point(func, fp_chain; Algorithm = MPE, MaxIter = 3)
-fp_chain      = fixed_point(func, fp_chain; Algorithm = Simple, MaxIter = 1)
-fp_chain      = fixed_point(func, fp_chain; Algorithm = RRE, MaxIter = 100)
+fp_chain      = fixed_point(func, Initial_Guess; Algorithm = :Simple, MaxIter = 2)
+fp_chain      = fixed_point(func, fp_chain; Algorithm = :MPE, MaxIter = 3)
+fp_chain      = fixed_point(func, fp_chain; Algorithm = :Simple, MaxIter = 1)
+fp_chain      = fixed_point(func, fp_chain; Algorithm = :RRE, MaxIter = 100)
 ```
 Now as it turns out The MPE (and RRE) does simple iterates except for every iterate that is a multiple of the ExtrapolationPeriod (7 by default). And so there is no difference from the above sequence of iterates and just doing all iterates with the RRE. This can be verified with the following:
 ```
-fp_nochain = fixed_point(func, Inputs; Algorithm = RRE, MaxIter = 100)
+fp_nochain = fixed_point(func, Inputs; Algorithm = :RRE, MaxIter = 100)
 fp_chain.Iterations_ == fp_nochain.Iterations_
 all(abs.(fp_chain.Inputs_ .- fp_nochain.Inputs_) .< 1e-14)
 ```
@@ -68,12 +68,12 @@ fixed point of the following function:
 ```
 simple_vector_function(x) = [0.5*sqrt(x[1] + x[2]), 1.5*x[1] + 0.5*x[2]]
 Inputs = [0.3,900]
-fp = fixed_point(simple_vector_function, Inputs; Algorithm = Anderson)
+fp = fixed_point(simple_vector_function, Inputs; Algorithm = :Anderson)
 ```
 Inspecting this fp object reveals an error after the 3rditeration because Anderson tries to use a negative value for both x entries which results in the square root of a negative number. We can switch to simple iterations to get closer to the fixed point at which point Anderson will no longer try negative numbers. This will fix this.
 ```
-fp = fixed_point(simple_vector_function, fp; Algorithm = Simple, MaxIter = 7)
-fp = fixed_point(simple_vector_function, fp; Algorithm = Anderson)
+fp = fixed_point(simple_vector_function, fp; Algorithm = :Simple, MaxIter = 7)
+fp = fixed_point(simple_vector_function, fp; Algorithm = :Anderson)
 ```
 
 ## 3.3 Graceful error handling
@@ -97,16 +97,16 @@ This information is useful in order to diagnose the issue. In this case we might
 ```
 SimpleVectorFunction(x) = [0.5*sqrt(x[1] + x[2]), 1.5*x[1] + 0.5*x[2]]
 Initial_Guess = [0.3,900]
-FPSolution = FixedPoint(SimpleVectorFunction, Initial_Guess; Algorithm = Anderson)
+FPSolution = FixedPoint(SimpleVectorFunction, Initial_Guess; Algorithm = :Anderson)
 ```
 
 ```
 # We can use this information to decide to switch to the simple method.
 # No error results as the simple method doesn't extrapolate.
-FPSolution = FixedPoint(SimpleVectorFunction, FPSolution; Algorithm = Simple, MaxIter = 5)
+FPSolution = FixedPoint(SimpleVectorFunction, FPSolution; Algorithm = :Simple, MaxIter = 5)
 # Now we switch to the Anderson Method again. No error results because we are
 # close to fixed point.
-FPSolution = FixedPoint(SimpleVectorFunction, FPSolution; Algorithm = Anderson)
+FPSolution = FixedPoint(SimpleVectorFunction, FPSolution; Algorithm = :Anderson)
 ```
 
 ## 3.4 Convergence by constant increments

@@ -72,7 +72,7 @@ end
 
 
 InitialGuess = repeat([1.0], 10)
-FPSolution = fixed_point(IterateOnce, InitialGuess; Algorithm = VEA)
+FPSolution = fixed_point(IterateOnce, InitialGuess; Algorithm = :VEA)
 ```
 
 ## 4.2 The Perceptron Classifier
@@ -131,7 +131,7 @@ function IteratePerceptronWeights(w, LearningRate = 1)
     return(w)
 end
 InitialGuess = [1.0, -2.0, 0.5]
-FP = fixed_point(IteratePerceptronWeights, InitialGuess; Algorithm = Simple, PrintReports = true)
+FP = fixed_point(IteratePerceptronWeights, InitialGuess; Algorithm = :Simple, PrintReports = true)
 ```
 
 Only the simple method is convergent here and it is relatively slow taking 1121 iterations. We can still get a beneﬁt from accelerators however if we can modify the training algorithm to give training increments that change depending on distance from the ﬁxed point. This can be done by updating the weights by an amount proportional to a concave function of the norm of $$w_0 + \sum_{i=1}^N w_i x_{i,j}$$. Note that the instances in which the weights are not updated stay the same and hence the modiﬁed training function will result in the same set of ﬁxed points as the basic function. This is done in the next piece of code where the MPE method is used. It can be seen that there is a substantial increase in speed with only 54 iterations required by the MPE method.
@@ -152,16 +152,16 @@ function IteratePerceptronWeights(w, LearningRate = 1)
     return(w)
 end
 InitialGuess = [1.0, -2.0, 0.5]
-FP = fixed_point(IteratePerceptronWeights, InitialGuess; Algorithm = MPE, PrintReports = true)
+FP = fixed_point(IteratePerceptronWeights, InitialGuess; Algorithm = :MPE, PrintReports = true)
 ```
 
-We can verify that the set of weights represented by the fixed\_point function does correctly seperate the data by plotting it:
+We can verify that the set of weights represented by the fixed\_point function does correctly separate the data by plotting it:
 ```
-# Plotting new seperation line
+# Plotting new separation line
 x1 = -6.0:0.1:6.0
 w = FP.FixedPoint_
 x2_on_sep_line = (-w[1] .- w[2] .* x1) ./ w[3]
-plot!(x1,x2_on_sep_line, label ="SeperationLine")
+plot!(x1,x2_on_sep_line, label ="Separation line")
 ```
 
 [^7]: Note that for perceptrons there are always uncountably many such fixed points where the perceptron correctly classifies the entire training set and will not further update. On the other hand it is possible that the data is not linearly separable in which case there may be no fixed point and the weights will continue to update forever.
@@ -263,8 +263,8 @@ Now we can come up with a choice for an initial guess based on eyeballing the pl
 
 ```
 InitialGuess = [0.5, 7.5, 2.0, 0.0, 2.0, -5.0, 7.5, 2.0, 0.0, 10.0, 0.5]
-fp_anderson = fixed_point(x -> update_theta(x,dd), InitialGuess; Algorithm = Anderson, PrintReports = true)
-fp_simple   = fixed_point(x -> update_theta(x,dd), InitialGuess; Algorithm = Simple, PrintReports = true)
+fp_anderson = fixed_point(x -> update_theta(x,dd), InitialGuess; Algorithm = :Anderson, PrintReports = true)
+fp_simple   = fixed_point(x -> update_theta(x,dd), InitialGuess; Algorithm = :Simple, PrintReports = true)
 ```
 We can see that the Anderson method only takes 15 iterations while the simple method takes 80. By checking the generated fixedpoint against the data generation process it can also be verified that the fixedpoint we find provides quite good estimates.
 
@@ -327,8 +327,8 @@ function OneIterateBudgetValues(BudgetValues::Array{Float64,1})
     return new_budget_values
 end
 
-fp_anderson = fixed_point(OneIterateBudgetValues, InitialGuess; Algorithm = Anderson, PrintReports = true)
-fp_simple   = fixed_point(OneIterateBudgetValues, InitialGuess; Algorithm = Simple, PrintReports = true)
+fp_anderson = fixed_point(OneIterateBudgetValues, InitialGuess; Algorithm = :Anderson, PrintReports = true)
+fp_simple   = fixed_point(OneIterateBudgetValues, InitialGuess; Algorithm = :Simple, PrintReports = true)
 ```
 
 This takes 22 iterates with the Anderson algorithm which is drastically better than the 459 iterates it takes with the simple method.
@@ -397,7 +397,7 @@ function one_iterate(cutoff_multiplier::Float64, target::Float64; tuning_paramet
     confidence_gap = target - mass_in_area
     return cutoff_multiplier + confidence_gap * tuning_parameter
 end
-FP = fixed_point(x -> one_iterate.(x, 0.95), [2.0]; Algorithm = Anderson, PrintReports = true)
+FP = fixed_point(x -> one_iterate.(x, 0.95), [2.0]; Algorithm = :Anderson, PrintReports = true)
 # The final number of standard deviations above/below the mean to use is stored in FP:
 cutoff_multiplier = FP.FixedPoint_[1]
 # We can find the upper and lower edges of the hypercube in each dimension. They are stored in each dimension in the below array of tuples.
@@ -419,13 +419,13 @@ for paths $i = 1, ..., N$\\
 	 $Y_i \leftarrow G(Z_i) \exp(-\mu^\prime Z_i + \frac{1}{2}\mu^\prime \mu)$\\
 return $\frac{\sum_{i=1}^N Y_i}{N}$
 
-Now we need to figure out the vector $\mu$ which is composed of the shifts in the mean for each normal variable and thereby represents the change in probability measure. Note that for any vector our estimator should be unbiased and consistent but some can be more efficient than others. In the special case\footnote{Which is satisfied for CVA and DVA but not for FVA, thus the scope of this paper.} where $G(x) \geq 0 \forall x \in \Re^d$, an efficient choices is the vector $\mu$ which makes the following equation hold (for working out see equation 4.89 of Glasserman):
+Now we need to figure out the vector $\mu$ which is composed of the shifts in the mean for each normal variable and thereby represents the change in probability measure. Note that for any vector our estimator should be unbiased and consistent but some can be more efficient than others. In the special case where $G(x) \geq 0 \forall x \in \Re^d$, an efficient choices is the vector $\mu$ which makes the following equation hold (for working out see equation 4.89 of Glasserman):
 
 $$\Delta F(\mu) = \mu$$
 
 Where $F(x) = \ln(G(x))$ and  $\Delta F(\mu)$ is the Jacobian of the function $F(\cdot)$
 
-The first problem here is how to to efficiently get the Jacobian. For a high dimensional problem (which all XVA problems become) numerical differentiation will not work but aad will work so we can use the ForwardDiff package. The second problem is the high dimensional fixedpoint problem for which we can used FixedPointAcceleration.
+The first problem here is how to efficiently get the Jacobian. For a high dimensional problem numerical differentiation will not work but automatic differentiation will work so we can use the ForwardDiff package. The second problem is the high dimensional fixedpoint problem for which we can used FixedPointAcceleration.
 
 ```
 using LinearAlgebra
