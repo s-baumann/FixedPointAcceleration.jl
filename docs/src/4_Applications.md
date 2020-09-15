@@ -414,11 +414,11 @@ $$E[G(Z)] = E_\mu \left[ G(Z)e^{-\mu^\prime Z + \frac{1}{2}\mu^\prime\mu} \right
 
 for any $\mu \in \Re^d$ where $d$ is the dimensionality of the function $G(\cdot)$. We can simulate this with the algorithm:
 
-for paths $i = 1, ..., N$\\
+for paths $i = 1, ..., N$
 
-	 generate $Z_i \sim N(\mu, I)$\\
+	 generate $Z_i \sim N(\mu, I)$
 
-	 $Y_i \leftarrow G(Z_i) \exp(-\mu^\prime Z_i + \frac{1}{2}\mu^\prime \mu)$\\
+	 $Y_i \leftarrow G(Z_i) \exp(-\mu^\prime Z_i + \frac{1}{2}\mu^\prime \mu)$
 
 return $\frac{\sum_{i=1}^N Y_i}{N}$
 
