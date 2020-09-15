@@ -10,9 +10,7 @@ This package implements similar functionality to https://cran.r-project.org/web/
 
 ## Included Acceleration algorithms.
 
-There are 8 acceleration algorithms included in this package. A more extensive explanation is available in the documentation for the R package:
-https://cran.r-project.org/web/packages/FixedPoint/vignettes/FixedPoint.pdf
-and the original papers are all cited there. A very brief description however is:
+There are 8 acceleration algorithms included in this package. A more extensive explanation is available in the documentation. A very brief description however is:
 * Simple - This takes the output of the previous iterate and uses it as the next guess.
 
 In addition the following three scalar algorithms can be used (they are elementwise for vectors):
@@ -34,7 +32,7 @@ We can first use FixedPointAcceleration to find the fixed point of the 1d functi
 using FixedPointAcceleration
 cos_func(x) = cos.(x)
 Inputs = 1.1
-fp_anderson = fixed_point(cos_func, Inputs; Algorithm = Anderson)
+fp_anderson = fixed_point(cos_func, Inputs; Algorithm = :Anderson)
 # And we can see the fixed point by looking at
 fp_anderson.FixedPoint_
 ```
