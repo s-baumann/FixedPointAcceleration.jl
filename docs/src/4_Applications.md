@@ -341,7 +341,7 @@ Parameterising an elliptical area may be difficult however and it may be more na
 1. Guess cutoff points marking the edges of the hypercube.
 2. Integrate the pdf of the normal distribution over this hypercube.
 3. If the integral deviates from that desired then come up with a new guess with different cutoff points.
-Then we iterate these steps until there is a hypercube containing the desired x\% of the mass of the distribution. While this should reach a fixed point of cutoff points there will be many such hypercubes. For instance we could take the x% confidence interval off the marginal distribution (in one dimension) of the multivariate normal. Using these cutoffs for this dimension and $[-\infty, \infty]$ as cutoffs for all of the other dimensions we will have a x% confidence area.
+Then we iterate these steps until there is a hypercube containing the desired x% of the mass of the distribution. While this should reach a fixed point of cutoff points there will be many such hypercubes. For instance we could take the x% confidence interval off the marginal distribution (in one dimension) of the multivariate normal. Using these cutoffs for this dimension and $[-\infty, \infty]$ as cutoffs for all of the other dimensions we will have a x% confidence area.
 
 We are likely to be more interested in the most "central" hypercube. We shall put in additional restriction that in each dimension the hypercube should extend the same number of standard deviations above and below the mean.
 
@@ -410,13 +410,16 @@ To lower the variance of a Monte Carlo estimation, importance sampling is often 
 
 To briefly recount it we want to find $E[G(x)]$ where $x \in \Re^d$ is $N(0,I)$. We have the change of measure to a measure called $\mu$ which:
 
-$$E[G(Z)] &= E_\mu \left[ G(Z)e^{-\mu^\prime Z + \frac{1}{2}\mu^\prime\mu} \right]$$
+$$E[G(Z)] = E_\mu \left[ G(Z)e^{-\mu^\prime Z + \frac{1}{2}\mu^\prime\mu} \right]$$
 
 for any $\mu \in \Re^d$ where $d$ is the dimensionality of the function $G(\cdot)$. We can simulate this with the algorithm:
 
 for paths $i = 1, ..., N$\\
+
 	 generate $Z_i \sim N(\mu, I)$\\
+
 	 $Y_i \leftarrow G(Z_i) \exp(-\mu^\prime Z_i + \frac{1}{2}\mu^\prime \mu)$\\
+
 return $\frac{\sum_{i=1}^N Y_i}{N}$
 
 Now we need to figure out the vector $\mu$ which is composed of the shifts in the mean for each normal variable and thereby represents the change in probability measure. Note that for any vector our estimator should be unbiased and consistent but some can be more efficient than others. In the special case where $G(x) \geq 0 \forall x \in \Re^d$, an efficient choices is the vector $\mu$ which makes the following equation hold (for working out see equation 4.89 of Glasserman):
