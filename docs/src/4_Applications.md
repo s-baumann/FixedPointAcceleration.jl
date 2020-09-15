@@ -414,13 +414,10 @@ $$E[G(Z)] = E_\mu \left[ G(Z)e^{-\mu^\prime Z + \frac{1}{2}\mu^\prime\mu} \right
 
 for any $\mu \in \Re^d$ where $d$ is the dimensionality of the function $G(\cdot)$. We can simulate this with the algorithm:
 
-for paths $i = 1, ..., N$
-
-	 generate $Z_i \sim N(\mu, I)$
-
-	 $Y_i \leftarrow G(Z_i) \exp(-\mu^\prime Z_i + \frac{1}{2}\mu^\prime \mu)$
-
-return $\frac{\sum_{i=1}^N Y_i}{N}$
+``for paths $i = 1, ..., N$ \\``
+``\hspace{1cm}generate $Z_i \sim N(\mu, I)$``
+``\hspace{1cm}$Y_i \leftarrow G(Z_i) \exp(-\mu^\prime Z_i + \frac{1}{2}\mu^\prime \mu)$``
+``return $\frac{\sum_{i=1}^N Y_i}{N}$``
 
 Now we need to figure out the vector $\mu$ which is composed of the shifts in the mean for each normal variable and thereby represents the change in probability measure. Note that for any vector our estimator should be unbiased and consistent but some can be more efficient than others. In the special case where $G(x) \geq 0 \forall x \in \Re^d$, an efficient choices is the vector $\mu$ which makes the following equation hold (for working out see equation 4.89 of Glasserman):
 
