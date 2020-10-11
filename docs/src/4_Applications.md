@@ -183,11 +183,11 @@ nobs_2 = convert(Int, round(nobs_1 * ((1-true_tau)/true_tau)))
 Random.seed!(1234)
 mu_1 = [0.0,8.0]
 cov_1 = [2.0,0.5,2.0]
-covar_1 = Symmetric([cov_1[1] cov_1[2]; cov_1[2] cov_1[3]])
+covar_1 = Hermitian([cov_1[1] cov_1[2]; cov_1[2] cov_1[3]])
 md_1 = MultivariateNormal(mu_1,covar_1)
 mu_2 = [-4.0,10.0]
 cov_2 = [2.0,-0.75,12.0]
-covar_2 = Symmetric([cov_2[1] cov_2[2]; cov_2[2] cov_2[3]])
+covar_2 = Hermitian([cov_2[1] cov_2[2]; cov_2[2] cov_2[3]])
 md_2 = MultivariateNormal(mu_2,covar_2)
 
 rands_from_1 = transpose(rand(md_1, nobs_1))
@@ -233,11 +233,11 @@ function update_theta(theta::Array{Float64,1}, dd::DataFrame)
     # We will use the convention that theta's 11 entries are (mu_1, cov_1, mu_2, cov_2, tau). First unpacking theta:
     mu_1    = theta[[1,2]]
     cov_1   = theta[[3,4,5]]
-    covar_1 = Symmetric([cov_1[1] cov_1[2]; cov_1[2] cov_1[3]])
+    covar_1 = Hermitian([cov_1[1] cov_1[2]; cov_1[2] cov_1[3]])
     md_1 = MultivariateNormal(mu_1,covar_1)
     mu_2    = theta[[6,7]]
     cov_2   = theta[[8,9,10]]
-    covar_2 = Symmetric([cov_2[1] cov_2[2]; cov_2[2] cov_2[3]])
+    covar_2 = Hermitian([cov_2[1] cov_2[2]; cov_2[2] cov_2[3]])
     md_2 = MultivariateNormal(mu_2,covar_2)
     tau     = theta[11]
     # Getting Z
@@ -361,7 +361,7 @@ prob_means = repeat([0.0],100)
 dims = 100
 wish = Wishart(dims, diagm(0 => ones(dims)))
 covar_matrix = rand(wish, 1)[1]
-dist = MvNormal(prob_means, Symmetric(covar_matrix))
+dist = MvNormal(prob_means, Hermitian(covar_matrix))
 chol_of_covar_matrix = LowerTriangular(cholesky(covar_matrix).L)
 ```
 
