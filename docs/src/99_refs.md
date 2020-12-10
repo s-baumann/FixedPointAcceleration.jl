@@ -3,6 +3,8 @@
 
 Anderson, D.G. 1965. ["Iterative Procedures for Nonlinear Integral Equations."](https://dl.acm.org/citation.cfm?id=321305) Journal of the ACM 12 (4): 547–60.
 
+Baumann, S. and Klymak, M. ["Fixed Point Acceleration in R"](https://cran.r-project.org/package=FixedPoint) The R Journal 11 (1): 359-375.
+
 Cabay, S., and L.W. Jackson. 1976. ["A Polynomial Extrapolation Method for Finding Limits and Antilimits of Vector Sequences."](https://epubs.siam.org/doi/10.1137/0713060) Siam Journal of Numerical Analysis 13 (5): 734–52.
 
 Fang, Haw-ren, and Yousef Saad. 2009. ["Two Classes of Multisecant Methods for Nonlinear Acceleration."](https://onlinelibrary.wiley.com/doi/abs/10.1002/nla.617) Numerical Linear Algebra with Applications 16 (3): 197–221.

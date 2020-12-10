@@ -7,3 +7,5 @@ Fixed point finders are conceptually similar to both optimisation and root findi
 In this paper section 1 starts by with a brief explanation of fixed points before section 2 describes the acceleration algorithms provided by **FixedPointAcceleration.jl**. Here the goal is  to illustrate the logic underling each algorithm so users can better choose which suits their problem. Readers interested in the underlying mathematics are referred to the original papers. Section 3 then illustrates a few features of the package that enable users to better track the progress of an algorithm while it is running and switch algorithms if desired before a fixed point is found.
 
 Section 4 then presents several applications of these fixed point algorithms in economics, statistics and machine learning.
+
+Note that to a large degree this package mirrors the R package [FixedPoint](https://cran.r-project.org/package=FixedPoint) by the same authors. This documentation also mirrors the "Fixed Point Acceleration in R" (Baumann & Klymak 2019) paper also by the same authors (although this documentation is changed to reflect the implementation in Julia and contains some new examples).
