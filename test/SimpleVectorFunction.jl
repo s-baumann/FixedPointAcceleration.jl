@@ -23,3 +23,9 @@ fp_simple   = fixed_point(func, Inputs; Algorithm = :Simple)
 fp_simple.Convergence_ < 1e-10
 fp_anderson = fixed_point(func, Inputs; Algorithm = :Anderson)
 fp_anderson.Convergence_ < 1e-10
+
+# And finally printing a couple of them to test printing.
+fp_anderson2 = fixed_point(func, Inputs; Algorithm = :Anderson, PrintReports = true)
+fp_anderson2.Convergence_ < 1e-10
+fp_simple2   = fixed_point(func, Inputs; Algorithm = :Simple, PrintReports = true)
+fp_simple2.Convergence_ < 1e-10
