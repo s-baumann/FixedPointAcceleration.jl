@@ -32,7 +32,7 @@ fp_simple2.Convergence_ < 1e-10
 
 # Testing function that returns a missing
 f(x) = [missing, missing]
-fp_simple3   = fixed_point(f, inputs; Algorithm = :Simple, PrintReports = true)
+fp_simple3   = fixed_point(f, Inputs; Algorithm = :Simple, PrintReports = true)
 fp_simple3.TerminationCondition_ == :InvalidInputOrOutputOfIteration
 f(x) = [1, missing]
 fp_simple4   = fixed_point(f, Inputs; Algorithm = :Simple, PrintReports = true)
