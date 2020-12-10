@@ -25,9 +25,7 @@ execute_function_safely(Func,Inf)
 """
 function execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool = false, quiet_errors::Bool = true) where T<:Real
     # Check input
-    if sum(ismissing.(x)) > 0
-        return FunctionEvaluationResult(x, missing, :InputMissingsDetected)
-    elseif sum(isnan.(x)) > 0
+    if sum(isnan.(x)) > 0
         return FunctionEvaluationResult(x, missing, :InputNAsDetected)
     elseif sum(isinf.(x)) > 0
         return FunctionEvaluationResult(x, missing, :InputInfsDetected)
