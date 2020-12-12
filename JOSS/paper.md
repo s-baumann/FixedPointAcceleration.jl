@@ -7,18 +7,18 @@ tags:
 authors:
   - name: Stuart Baumann
     orcid: 0000-0002-9657-0969
-    affiliation: 1
+    affiliation: Credit Suisse Securities (Europe)
   - name: Margaryta Klymak
     orcid: 0000-0003-4376-883X
-    affiliation: 2
+    affiliation: University of Oxford
 affiliations:
  - name: Credit Suisse Securities (Europe)
    index: 1
  - name: University of Oxford
    index: 2
 date: 12 December 2020
-citation_package: biblatex
 bibliography: paper.bib
+
 ---
 
 # Summary
