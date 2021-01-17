@@ -3,7 +3,6 @@ using Distributions
 using FixedPointAcceleration
 using Random
 using DataFrames
-using Plots
 using LinearAlgebra
 true_tau = 0.6
 nobs_1 = 400
@@ -11,11 +10,11 @@ nobs_2 = convert(Int, round(nobs_1 * ((1-true_tau)/true_tau)))
 Random.seed!(1234)
 mu_1 = [0.0,8.0]
 cov_1 = [2.0,0.5,2.0]
-covar_1 = Hermitian([cov_1[1] cov_1[2]; cov_1[2] cov_1[3]])
+covar_1 = Symmetric([cov_1[1] cov_1[2]; cov_1[2] cov_1[3]])
 md_1 = MultivariateNormal(mu_1,covar_1)
 mu_2 = [-4.0,10.0]
 cov_2 = [2.0,-0.75,12.0]
-covar_2 = Hermitian([cov_2[1] cov_2[2]; cov_2[2] cov_2[3]])
+covar_2 = Symmetric([cov_2[1] cov_2[2]; cov_2[2] cov_2[3]])
 md_2 = MultivariateNormal(mu_2,covar_2)
 
 rands_from_1 = transpose(rand(md_1, nobs_1))
@@ -23,10 +22,6 @@ rands_from_2 = transpose(rand(md_2, nobs_2))
 data1 = DataFrame([rands_from_1[:,1], rands_from_1[:,2]], [:x1, :x2])
 data2 = DataFrame([rands_from_2[:,1], rands_from_2[:,2]], [:x1, :x2])
 dd  = vcat(data1,data2)
-# Plotting it:
-plot(data1.x1, data1.x2,seriestype=:scatter)
-plot!(data2.x1, data2.x2,seriestype=:scatter)
-
 
 
 function z_estimate_given_theta(x::Array{Float64,1}, md_1::MultivariateNormal, md_2::MultivariateNormal, tau::Float64)
@@ -57,11 +52,11 @@ function update_theta(theta::Array{Float64,1}, dd::DataFrame)
     # We will use the convention that theta's 11 entries are (mu_1, cov_1, mu_2, cov_2, tau). First unpacking theta:
     mu_1    = theta[[1,2]]
     cov_1   = theta[[3,4,5]]
-    covar_1 = Hermitian([cov_1[1] cov_1[2]; cov_1[2] cov_1[3]])
+    covar_1 = Symmetric([cov_1[1] cov_1[2]; cov_1[2] cov_1[3]])
     md_1 = MultivariateNormal(mu_1,covar_1)
     mu_2    = theta[[6,7]]
     cov_2   = theta[[8,9,10]]
-    covar_2 = Hermitian([cov_2[1] cov_2[2]; cov_2[2] cov_2[3]])
+    covar_2 = Symmetric([cov_2[1] cov_2[2]; cov_2[2] cov_2[3]])
     md_2 = MultivariateNormal(mu_2,covar_2)
     tau     = theta[11]
     # Getting Z
@@ -88,4 +83,8 @@ end
 
 InitialGuess = [0.5, 7.5, 2.0, 0.0, 2.0, -5.0, 7.5, 2.0, 0.0, 10.0, 0.5]
 fp_anderson = fixed_point(x -> update_theta(x,dd), InitialGuess; Algorithm = :Anderson, PrintReports = true)
+isa(fp_anderson.Other_Output_, NamedTuple)
+
+# Testing the case with one iterate.
+fp_anderson = fixed_point(x -> update_theta(x,dd), InitialGuess; MaxIter = 1)
 isa(fp_anderson.Other_Output_, NamedTuple)

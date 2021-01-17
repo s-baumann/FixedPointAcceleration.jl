@@ -35,7 +35,7 @@ function OneIterateBudgetValues(BudgetValues::Array{Float64,1})
     return new_budget_values
 end
 
-function new_point(level::Float64, stepp::Float64, max_grad::Float64, grad_frac::Float64)
+function new_point(level::Real, stepp::Real, max_grad::Real, grad_frac::Real)
     expp = exp(grad_frac)
     frac = expp / (expp+1)
     if isinf(max_grad)
@@ -45,7 +45,7 @@ function new_point(level::Float64, stepp::Float64, max_grad::Float64, grad_frac:
     end
 end
 
-function invert_new_point(level::Float64, previous_level::Float64, previous_stepp::Float64, previous_max_grad::Float64)
+function invert_new_point(level::Real, previous_level::Real, previous_stepp::Real, previous_max_grad::Real)
     rise = level - previous_level
     if isinf(previous_max_grad)
         return log(rise)

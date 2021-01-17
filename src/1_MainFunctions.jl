@@ -184,11 +184,13 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
     end
     LengthOfArray = size(Inputs)[1]
     output_type = T
+    final_other_output = missing
     # Do an initial run if no runs have been done:
     if isempty(Outputs)
         ExecutedFunction = execute_function_safely(func, Inputs[:,1]; quiet_errors = quiet_errors)
+        final_other_output = ExecutedFunction.Other_Output_
         if ExecutedFunction.Error_ != :NoError
-            return FixedPointResults(Inputs, Outputs, :InvalidInputOrOutputOfIteration; FailedEvaluation_ = ExecutedFunction, Other_Output = ExecutedFunction.Other_Output_)
+            return FixedPointResults(Inputs, Outputs, :InvalidInputOrOutputOfIteration; FailedEvaluation_ = ExecutedFunction, Other_Output = final_other_output)
         end
         output_type = promote_type(typeof(Inputs[1]), typeof(ExecutedFunction.Output_[1]))
         converted_outputs = convert.(Ref(output_type), ExecutedFunction.Output_)
@@ -210,7 +212,7 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
         if (PrintReports)
             println("The last column of Inputs matrix is already a fixed point under input convergence metric and convergence threshold")
         end
-        return FixedPointResults(Inputs, Outputs, :ReachedConvergenceThreshold; ConvergenceVector_ = vec(ConvergenceVector), Other_Output = ExecutedFunction.Other_Output_)
+        return FixedPointResults(Inputs, Outputs, :ReachedConvergenceThreshold; ConvergenceVector_ = vec(ConvergenceVector), Other_Output = final_other_output)
     end
     # Printing a report for initial convergence
     Convergence = ConvergenceVector[iter]
@@ -218,7 +220,6 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
         println("                                          Algorithm: ", lpad(Algorithm, 8)   , ". Iteration: ", lpad(iter, 5),". Convergence: ", lpad(round(Convergence, sigdigits=ReportingSigFig),ReportingSigFig+4), ". Time: ", now())
     end
     iter = iter + 1
-    final_other_output = missing
     while (Convergence > ConvergenceMetricThreshold) & (iter <= MaxIter)
         # Generating new input and output.
         NewInputFunctionReturn = fixed_point_new_input(Inputs, Outputs, Algorithm; MaxM = MaxM,
