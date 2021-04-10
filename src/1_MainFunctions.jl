@@ -88,7 +88,7 @@ end
     fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = Array{T,2}(undef,size(Inputs)[1],0),
                     Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input::Array, output::Array) = maximum(abs.(output .- input)),
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0),
-                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false) where T<:Real where R<:Real
+                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false, other_outputs::Union{Missing,NamedTuple} = missing) where T<:Real where R<:Real
 
 A function for finding the fixed point of another function
 ### Takes
@@ -107,6 +107,7 @@ A function for finding the fixed point of another function
  *  ReplaceInvalids -Sometimes an acceleration algorithm proposed a vector with an invalid coordinate (NaN, Inf or missing). This parameter can be set to :ReplaceInvalids (to replace invalid coordinates by the simple iterate values), :ReplaceVector (to replace entire vector with a simple iterate) or :NoAction (where an imminent error will occur).
  *  ConditionNumberThreshold - This is a threshold for what condition number is acceptable for solving the least squares problem for the Anderson Algorithm. If the condition number is larger than this threshold then fewer previous iterates will be used in solving the problem. This has no effect unless the :Anderson Algorithm is used.
  *  quiet_errors - If true the function will return everything already calculated as soon as an error occurs. The callstack that lead to the error is not returned however. If false an error will be thrown with a callstack.
+ *  other_outputs - This allows you to pass in side products (as in Other_Output_ in a FixedPointResults struct). It is only used if the FixedPointResults that is input has already found a fixedpoint. 
 ### Returns
  * A list containing the fixed_point, the Inputs and corresponding Outputs, and convergence values (which are computed under the "ConvergenceMetric").
    The list will also include a "Finish" statement describing why it has finished. This is often going to be due to either MaxIter or ConvergenceMetricThreshold being
@@ -137,9 +138,10 @@ function fixed_point(func::Function, previous_FixedPointResults::FixedPointResul
                     PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false)
     Inputs = previous_FixedPointResults.Inputs_
     Outputs = previous_FixedPointResults.Outputs_
+    side_products = previous_FixedPointResults.Other_Output_
     return fixed_point(func, Inputs; Outputs = Outputs, Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
                        MaxIter = MaxIter, MaxM = MaxM, ExtrapolationPeriod = ExtrapolationPeriod, Dampening = Dampening, PrintReports = PrintReports, ReportingSigFig = ReportingSigFig,
-                       ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold, quiet_errors = quiet_errors)
+                       ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold, quiet_errors = quiet_errors, other_outputs = side_products)
 end
 function fixed_point(func::Function, Inputs::Array{T, 1};
                     Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
@@ -164,7 +166,7 @@ end
 function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = Array{T,2}(undef,size(Inputs)[1],0),
                     Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0),
-                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false) where T<:Real where R<:Real
+                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false, other_outputs::Union{Missing,NamedTuple} = missing) where T<:Real where R<:Real
     # This code first tests if the input point is a fixed point. Then if it is not a while loop runs to try to find a fixed point.
     if (ConditionNumberThreshold < 1) error("ConditionNumberThreshold must be at least 1.")  end
     SimpleStartIndex = Integer(size(Outputs)[2])
@@ -184,7 +186,7 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
     end
     LengthOfArray = size(Inputs)[1]
     output_type = T
-    final_other_output = missing
+    final_other_output = other_outputs
     # Do an initial run if no runs have been done:
     if isempty(Outputs)
         ExecutedFunction = execute_function_safely(func, Inputs[:,1]; quiet_errors = quiet_errors)
