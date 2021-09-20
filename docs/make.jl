@@ -10,7 +10,7 @@ makedocs(
              "Advice in using package" => "3_UsingAdvice.md",
              "Applications" => "4_Applications.md",
              "Termination Conditions" => "5_TerminationConditions.md",
-             "API" => "api.md",
+             "API" => "6_api.md",
              "References" => "99_refs.md"]
 )
 
