@@ -1,27 +1,24 @@
 """
     execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool = false, quiet_errors::Bool = true) where T<:Real
 This function creates a function that executes the function for which a fixed point is sought. It is a helper function that is not exported.
-### Takes
- * Func - The function input to fixed_point
- * x - The point at which to evaluate the function.
- * type_check - Should the type stability of the function be checked and a error reported in an input vector of Ints turns into a vector of floats (for instance)
+### Inputs
+ * `Func` - The function input to fixed_point
+ * `x` - The point at which to evaluate the function.
+ * `type_check` - Should the type stability of the function be checked and a error reported in an input vector of Ints turns into a vector of floats (for instance)
 ### Returns
-A FunctionEvaluationResult containing the following fields:
-* Input_ - The input
-* Output_ - The output of the FunctionExecutor. May be missing if function could not complete without error.
-* Error_ - A symbol representing what error occured.
+ * A `FunctionEvaluationResult`
 ### Examples
-Func(x) = sqrt(x)
-execute_function_safely(Func, [-1.0,0.0,1.0])
-execute_function_safely(Func,[Missing(),0.0,1.0])
-execute_function_safely(Func,[7.0,0.0,1.0])
-execute_function_safely(Func,[NaN,0.0,1.0])
-execute_function_safely(Func,[Inf,0.0,1.0])
-execute_function_safely(Func,-1.0)
-execute_function_safely(Func,Missing())
-execute_function_safely(Func,1.0)
-execute_function_safely(Func,NaN)
-execute_function_safely(Func,Inf)
+    Func(x) = sqrt(x)
+    execute_function_safely(Func, [-1.0,0.0,1.0])
+    execute_function_safely(Func,[Missing(),0.0,1.0])
+    execute_function_safely(Func,[7.0,0.0,1.0])
+    execute_function_safely(Func,[NaN,0.0,1.0])
+    execute_function_safely(Func,[Inf,0.0,1.0])
+    execute_function_safely(Func,-1.0)
+    execute_function_safely(Func,Missing())
+    execute_function_safely(Func,1.0)
+    execute_function_safely(Func,NaN)
+    execute_function_safely(Func,Inf)
 """
 function execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool = false, quiet_errors::Bool = true) where T<:Real
     # Check input
@@ -91,23 +88,23 @@ end
                     PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false, other_outputs::Union{Missing,NamedTuple} = missing) where T<:Real where R<:Real
 
 A function for finding the fixed point of another function
-### Takes
- *  func - This is the function for which a fixed point is sought. This function must take and return a vector of the same size dimension.
- *  Inputs - This can be either a 1D-vector of values that is an initial guess for a fixed point or it can be an N x A matrix of previous inputs for which corresponding outputs are available. In this case N is the dimensionality of the fixed point vector you are seeking (Hence each column is a matrix that is input to f) and A is the number of previous Inputs/Outputs that are being provided to the fixed point. Where a matrix is input, a corresponding outputs must be provided or the last column of the outputs matrix is taken as a startpoint guess and the rest of the inputs and output matrices are discarded.
- *  Outputs - This is a matrix of the Function values for each column of the input. It must be provided so that column k of the outputs matrix is equal to Function(Column k of inputs matrix).
- *  Algorithm - This is the fixed point Algorithm to be used. It can be :Anderson, :Simple, :Aitken, :Newton, :MPE, :RRE, :VEA or :SEA. See documentation and references to see explanations of these Algorithms.
- *  ConvergenceMetric This is a function that takes in a vector of inputs and a table of outputs and returns a scalar. This scalar should be low when convergence is close to being achieved. By default this is the maximum residual by absolute value (the sup norm in the space of residuals).
- *   ConvergenceMetricThreshold This is the threshold for terminating the algorithm. The algorithm will terminate when the scalar that ConvergenceMetric returns is less than ConvergenceMetricThreshold. This can be set to a negative number in which case the algorithm will run until MaxIter is hit or an error occurs (Note that an error is likely in trying to use any Algorithm other than "Simple" when a fixed point is already found).
- *  MaxIter - This is the maximum number of iterates that will be undertaken.
- *  MaxM - This is the maximum number of saved iterates that are used in the Anderson algorithm. It has no effect if another Algorithm is chosen. Note that the number of previous iterates that will actually be used is the minimum of MaxIter, the dimensionality of the f's vector and the number of inputs that have been tried to  previously (the width of the Outputs matrix at each given stage of the algorithm). If PrintReports = TRUE, the number of previous iterates actually used is reported as the algorithm is running.
- *  ExtrapolationPeriod - This is the number of simple iterates to perform before extrapolating. This is used for the MPE, RRE, VEA and SEA Algorithms and has no effect if another Algorithm is chosen Where an epsilon algorithm is used this should be a multiple of 2, ie (4,6,8,etc).
- *  Dampening - This is the dampening parameter. By default it is 1 which means no dampening takes place. It can also be less than 1 (indicating dampening) or more than 1 (indicating extrapolation).
- *  PrintReports - This is a boolean describing whether to print ongoing ConvergenceMetric values for each iterate.
- *  ReportingSigFig - This is the number of significant figures that will be used in printing the convergence values to the console (only if PrintReports is TRUE).
- *  ReplaceInvalids -Sometimes an acceleration algorithm proposed a vector with an invalid coordinate (NaN, Inf or missing). This parameter can be set to :ReplaceInvalids (to replace invalid coordinates by the simple iterate values), :ReplaceVector (to replace entire vector with a simple iterate) or :NoAction (where an imminent error will occur).
- *  ConditionNumberThreshold - This is a threshold for what condition number is acceptable for solving the least squares problem for the Anderson Algorithm. If the condition number is larger than this threshold then fewer previous iterates will be used in solving the problem. This has no effect unless the :Anderson Algorithm is used.
- *  quiet_errors - If true the function will return everything already calculated as soon as an error occurs. The callstack that lead to the error is not returned however. If false an error will be thrown with a callstack.
- *  other_outputs - This allows you to pass in side products (as in Other_Output_ in a FixedPointResults struct). It is only used if the FixedPointResults that is input has already found a fixedpoint.
+### Inputs
+ *  `func` - This is the function for which a fixed point is sought. This function must take and return a vector of the same size dimension.
+ *  `Inputs` - This can be either a 1D-vector of values that is an initial guess for a fixed point or it can be an N x A matrix of previous inputs for which corresponding outputs are available. In this case N is the dimensionality of the fixed point vector you are seeking (Hence each column is a matrix that is input to f) and A is the number of previous Inputs/Outputs that are being provided to the fixed point. Where a matrix is input, a corresponding outputs must be provided or the last column of the outputs matrix is taken as a startpoint guess and the rest of the inputs and output matrices are discarded.
+ *  `Outputs` - This is a matrix of the Function values for each column of the input. It must be provided so that column k of the outputs matrix is equal to Function(Column k of inputs matrix).
+ *  `Algorithm` - This is the fixed point Algorithm to be used. It can be :Anderson, :Simple, :Aitken, :Newton, :MPE, :RRE, :VEA or :SEA. See documentation and references to see explanations of these Algorithms.
+ *  `ConvergenceMetric` - This is a function that takes in a vector of inputs and a table of outputs and returns a scalar. This scalar should be low when convergence is close to being achieved. By default this is the maximum residual by absolute value (the sup norm in the space of residuals).
+ *  `ConvergenceMetricThreshold` - This is the threshold for terminating the algorithm. The algorithm will terminate when the scalar that ConvergenceMetric returns is less than ConvergenceMetricThreshold. This can be set to a negative number in which case the algorithm will run until MaxIter is hit or an error occurs (Note that an error is likely in trying to use any Algorithm other than "Simple" when a fixed point is already found).
+ *  `MaxIter` - This is the maximum number of iterates that will be undertaken.
+ *  `MaxM` - This is the maximum number of saved iterates that are used in the Anderson algorithm. It has no effect if another Algorithm is chosen. Note that the number of previous iterates that will actually be used is the minimum of MaxIter, the dimensionality of the f's vector and the number of inputs that have been tried to  previously (the width of the Outputs matrix at each given stage of the algorithm). If PrintReports = TRUE, the number of previous iterates actually used is reported as the algorithm is running.
+ *  `ExtrapolationPeriod` - This is the number of simple iterates to perform before extrapolating. This is used for the MPE, RRE, VEA and SEA Algorithms and has no effect if another Algorithm is chosen Where an epsilon algorithm is used this should be a multiple of 2, ie (4,6,8,etc).
+ *  `Dampening` - This is the dampening parameter. By default it is 1 which means no dampening takes place. It can also be less than 1 (indicating dampening) or more than 1 (indicating extrapolation).
+ *  `PrintReports` - This is a boolean describing whether to print ongoing ConvergenceMetric values for each iterate.
+ *  `ReportingSigFig` - This is the number of significant figures that will be used in printing the convergence values to the console (only if PrintReports is TRUE).
+ *  `ReplaceInvalids` - Sometimes an acceleration algorithm proposed a vector with an invalid coordinate (NaN, Inf or missing). This parameter can be set to :ReplaceInvalids (to replace invalid coordinates by the simple iterate values), :ReplaceVector (to replace entire vector with a simple iterate) or :NoAction (where an imminent error will occur).
+ *  `ConditionNumberThreshold` - This is a threshold for what condition number is acceptable for solving the least squares problem for the Anderson Algorithm. If the condition number is larger than this threshold then fewer previous iterates will be used in solving the problem. This has no effect unless the :Anderson Algorithm is used.
+ *  `quiet_errors` - If true the function will return everything already calculated as soon as an error occurs. The callstack that lead to the error is not returned however. If false an error will be thrown with a callstack.
+ *  `other_outputs` - This allows you to pass in side products (as in Other_Output_ in a FixedPointResults struct). It is only used if the FixedPointResults that is input has already found a fixedpoint.
 ### Returns
  * A list containing the fixed_point, the Inputs and corresponding Outputs, and convergence values (which are computed under the "ConvergenceMetric").
    The list will also include a "Finish" statement describing why it has finished. This is often going to be due to either MaxIter or ConvergenceMetricThreshold being
@@ -115,22 +112,22 @@ A function for finding the fixed point of another function
    and the "Finish" statement will describe the issue. In this event there will also be additional objects returned in the list "NewInputVector" and possibly
    "NewOutputVector" that are useful in debugging the issue.
 ### Examples
- #' # For the simplest possible example we can seek the fixed point of the cos function with a scalar.
- #' Inputs = 0.3
- #' Func(x) = cos(x)
- #' A = fixed_point(Func, Inputs; Algorithm = :Aitken, Dampening = 0.5)
- #' B = fixed_point(Func, Inputs; Algorithm = :Anderson, Dampening = 1.0)
- #'
- #' # For this next one the ConvergenceMetricThreshold is negative so the algorithm
- #' # will keep running until MaxIter is met.
- #' C = fixed_point(Func, Inputs; Algorithm = :Simple, MaxIter = 4, ConvergenceMetricThreshold = -1.0)
- #' # But we can continue solving for this fixed point but now switching to the Newton Algorithm.
- #' D = fixed_point(Func, C[:Inputs], C[:Outputs]; Algorithm = :Newton)
- #'
- #' # We can also find a 4 dimensional fixed point vector of this function.
- #' Inputs = [0.3, 98, 0, pi]
- #' E = fixed_point(Func, Inputs; Algorithm = :Anderson)
- #' F = fixed_point(Func, Inputs; Algorithm = :Anderson, MaxM = 4, ReportingSigFig = 13)
+    # For the simplest possible example we can seek the fixed point of the cos function with a scalar.
+    Inputs = 0.3
+    Func(x) = cos(x)
+    A = fixed_point(Func, Inputs; Algorithm = :Aitken, Dampening = 0.5)
+    B = fixed_point(Func, Inputs; Algorithm = :Anderson, Dampening = 1.0)
+
+    # For this next one the ConvergenceMetricThreshold is negative so the algorithm
+    # will keep running until MaxIter is met.
+    C = fixed_point(Func, Inputs; Algorithm = :Simple, MaxIter = 4, ConvergenceMetricThreshold = -1.0)
+    # But we can continue solving for this fixed point but now switching to the Newton Algorithm.
+    D = fixed_point(Func, C[:Inputs], C[:Outputs]; Algorithm = :Newton)
+
+    # We can also find a 4 dimensional fixed point vector of this function.
+    Inputs = [0.3, 98, 0, pi]
+    E = fixed_point(Func, Inputs; Algorithm = :Anderson)
+    F = fixed_point(Func, Inputs; Algorithm = :Anderson, MaxM = 4, ReportingSigFig = 13)
 """
 function fixed_point(func::Function, previous_FixedPointResults::FixedPointResults;
                     Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
@@ -268,12 +265,12 @@ This function takes the previous inputs and outputs from the fixed_point functio
 ### Returns
  * A nicely formatted string version of the input number for printing to the console.
 ### Examples
-FPFunction = function(x){c(0.5*sqrt(abs(x[1] + x[2])), 1.5*x[1] + 0.5*x[2])}
-A = fixed_point( Function = FPFunction, Inputs = [0.3,900], MaxIter = 6, Algorithm = :Simple)
-NewGuessAnderson = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :Anderson)
-NewGuessVEA = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :VEA)
-NewGuessMPE = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :MPE)
-NewGuessAitken = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :Aitken)
+    FPFunction = function(x){c(0.5*sqrt(abs(x[1] + x[2])), 1.5*x[1] + 0.5*x[2])}
+    A = fixed_point( Function = FPFunction, Inputs = [0.3,900], MaxIter = 6, Algorithm = :Simple)
+    NewGuessAnderson = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :Anderson)
+    NewGuessVEA = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :VEA)
+    NewGuessMPE = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :MPE)
+    NewGuessAitken = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :Aitken)
 """
 function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArray{T,2}, Algorithm::Symbol = :Anderson;
                                MaxM::Integer = 10, SimpleStartIndex::Integer = 1, ExtrapolationPeriod::Integer = 1, Dampening::S = AbstractFloat(1),
@@ -397,11 +394,11 @@ end
 
 """
 This function performs Minimal Polynomial extrapolation (MPE) or Reduced Rank Extrapolation (RRE) given a matrix of previous iterates of the function.
-### Takes
- * Iterates - A matrix of inputs and outputs excluding jumps. Can be pieced together from Inputs and Outputs matrices of the fixed_point function using the put_together_without_jumps function
- * Algorithm The Algorithm for polynomial extrapolation. Should be either "MPE" for minimal polynomial extrapolation or "RRE" for reduced rank extrapolation.
+### Inputs
+ * `Iterates` - A matrix of inputs and outputs excluding jumps. Can be pieced together from Inputs and Outputs matrices of the fixed_point function using the put_together_without_jumps function
+ * `Algorithm` - The Algorithm for polynomial extrapolation. Should be either "MPE" for minimal polynomial extrapolation or "RRE" for reduced rank extrapolation.
 ### Returns
- * A vector containing the extrapolated vector.
+ * A `Vector` containing the extrapolated vector.
 """
 function PolynomialExtrapolation(Iterates::AbstractArray{R,2}, Algorithm::Symbol) where R<:Real
     if (Algorithm == :MPE)
@@ -429,11 +426,11 @@ end
 
 """
 This is a helper function for EpsilonExtrapolation
-### Takes
- * Iterates - A matrix representing different iterates with one iterate per column. Can be pieced together from Inputs and Outputs matrices of the fixed_point function using the put_together_without_jumps function
- * Algorithm - Algorithm for epsilon extrapolation. Should be either "VEA" for the vector extrapolation algorithm or "SEA" for the scalar epsilon algorithm.
+### Inputs
+ * `Iterates` - A matrix representing different iterates with one iterate per column. Can be pieced together from Inputs and Outputs matrices of the fixed_point function using the put_together_without_jumps function
+ * `Algorithm` - Algorithm for epsilon extrapolation. Should be either "VEA" for the vector extrapolation algorithm or "SEA" for the scalar epsilon algorithm.
 ### Returns
- *  A vector with the extrapolated vector.
+ *  A `Vector` with the extrapolated vector.
 """
 function EpsilonExtrapolation(Iterates::AbstractArray{R,2}, Algorithm::Symbol) where R<:Real
     # The function cannot do anything to a one column input so will return input unchanged.
@@ -460,11 +457,11 @@ end
 
 """
 This is a helper function for EpsilonExtrapolation
-### Takes
- * DifferenceMatrix - The matrix of the differences in elements to be inverted.
- * Algorithm - SEA or VEA.
+### Inputs
+ * `DifferenceMatrix` - The matrix of the differences in elements to be inverted.
+ * `Algorithm` - SEA or VEA.
 ### Returns
- * A vector of the result of inverting each (column) vector in a mmatrix.
+ * A `Vector` of the result of inverting each (column) vector in a mmatrix.
 """
 function EpsilonExtrapolationVectorOfInverses(DifferenceMatrix::AbstractArray{T,2}, Algorithm::Symbol) where T<:Real
     if (size(DifferenceMatrix)[1] == 1) | (Algorithm == :SEA)
@@ -481,10 +478,10 @@ end
 
 """
 This function takes the previous inputs and outputs and assembles a matrix with both excluding jumps.
-### Takes
- * Inputs - This is an N x A matrix of previous inputs for which corresponding outputs are available. In this case N is the dimensionality of the fixed point vector that is being sought (and each column is a matrix that is input to the "Function") and A is the number of previous Inputs/Outputs that are being provided to the fixed point.
- * Outputs This is a matrix of "Function" values for each column of the "Inputs" matrix.
- * AgreementThreshold A parameter for determining when a column in Inputs and a column in Outputs match. They are deemed to match if the sum of the absolute values of the difference in the columns is less than AgreementThreshold.
+### Inputs
+ * `Inputs` - This is an N x A matrix of previous inputs for which corresponding outputs are available. In this case N is the dimensionality of the fixed point vector that is being sought (and each column is a matrix that is input to the "Function") and A is the number of previous Inputs/Outputs that are being provided to the fixed point.
+ * `Outputs` This is a matrix of "Function" values for each column of the "Inputs" matrix.
+ * `AgreementThreshold` - A parameter for determining when a column in Inputs and a column in Outputs match. They are deemed to match if the sum of the absolute values of the difference in the columns is less than AgreementThreshold.
 ### Returns
  * A matrix of inputs and outputs excluding jumps.
 """
