@@ -171,12 +171,13 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{T,2} = 
         if size(Inputs)[2] > 1
             @warn("If you do not give outputs to the function then you can only give one vector of inputs (in a 2d array) to the fixed_pointFunction. So for a function that takes an N dimensional array you should input a Array{Float64}(N,1) array.  As you have input an array of size Array{Float64}(N,k) with k > 1 we have discarded everything but the last column to turn it into a Array{Float64}(N,1) array.\n")
             Inputs = Inputs[:,size(Inputs)[2]]
+            Inputs = reshape(Inputs, length(Inputs), 1)
         end
     else
         if size(Inputs) != size(Outputs)
-            @warn("If you input a matrix of outputs as well as a matrix of inputs then inputs and outputs must be the same shape. As they differ in this case the last column of the inputs matrix has been
-                  taken as the starting point and everything else discarded.")
+            @warn("If you input a matrix of outputs as well as a matrix of inputs then inputs and outputs must be the same shape. As they differ in this case the last column of the inputs matrix has been taken as the starting point and everything else discarded.")
             Inputs  = Inputs[:,size(Inputs)[2]]
+            Inputs = reshape(Inputs, length(Inputs), 1)
             Outputs = Array{T,2}(undef,size(Inputs)[1],0)
             SimpleStartIndex = Integer(1)
         end

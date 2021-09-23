@@ -6,7 +6,7 @@
  * `Error_` - A symbol representing what error occured.
 """
 struct FunctionEvaluationResult{T<:Real,R}
-    Input_::Array{T,1}
+    Input_::Vector{T}
     Output_::Union{Missing,Vector{Missing},Vector{Union{Missing,R}},Vector{R}}
     Other_Output_::Union{Missing,NamedTuple}
     Error_::Symbol
@@ -39,7 +39,7 @@ end
   * `Outputs_` - What were all the corresponding outputs.
 """
 struct FixedPointResults{R<:Real}
-    FixedPoint_::Union{Missing,Array{R,1}}
+    FixedPoint_::Union{Missing,Vector{R}}
     Other_Output_::Union{Missing,NamedTuple}
     Convergence_::Union{Missing,R}          #
     TerminationCondition_::Symbol
