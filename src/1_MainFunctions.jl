@@ -380,6 +380,8 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
             # We just do a simple iterate.
             proposed_input = simple_iterate
         end
+    else
+        error("The algorithm you tried to input is not valid. Choose from :Simple, :Anderson, :Aitken, :Newton, :MPE, :RRE, :VEA or :SEA. Note capitalisation must match.")
     end
     # Now the replacement strategies
     dodgy_entries = isnan.(proposed_input) .| ismissing.(proposed_input) .| isinf.(proposed_input)
