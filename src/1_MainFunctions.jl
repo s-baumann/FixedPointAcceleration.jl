@@ -43,15 +43,13 @@ function execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool
 
     side_effect_to_report = missing
     # Now we if tf_full_result is an array then it is the normal case.
-    if isa(tf_full_result,Array)
+    if isa(tf_full_result,Vector)
         tf_result = tf_full_result
-    elseif isa(tf_full_result,Tuple)
-        # In this case we assume that we have a tuple where the first output
-        # is the fp array and the second is a NamedTuple
+    elseif isa(tf_full_result,Tuple) && (length(tf_full_result) == 2) && ((isa(tf_full_result[1],Vector) & isa(tf_full_result[2],NamedTuple)))
         tf_result = tf_full_result[1]
         side_effect_to_report = tf_full_result[2]
     else
-        error("The Fixedpoint function can only return a vector or a tuple  of which the first entry is the vector for which a fixedpoint is sought and the second is a namedtuple (the contents of which are output for the user but are not used in fixed point acceleration).")
+        error("This function returned a $(typeof(tf_full_result)). The Fixedpoint function can only return a vector or a tuple of which the first entry is the vector for which a fixedpoint is sought and the second is a namedtuple (the contents of which are output for the user but are not used in fixed point acceleration).")
     end
     # Check Output and return.
     if sum(ismissing.(tf_result)) > 0

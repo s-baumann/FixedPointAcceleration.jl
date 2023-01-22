@@ -37,7 +37,7 @@ fp_anderson = fixed_point(cos_func, Inputs; Algorithm = :Anderson)
 fp_anderson.FixedPoint_
 ```
 Two important issues are important to highlight here:
-* All input functions must take and return Array{Float64,1} types. When solving for the fixedpoint of a scalar function use of the dot syntax - cos.(x) instead of cos(x) - might be useful for this.
+* All input functions must take and return Vector{<:Real} types. When solving for the fixedpoint of a scalar function use of the dot syntax - cos.(x) instead of cos(x) - might be useful for this.
 * fp_anderson.FixedPoint_  in this case may be missing. This occurs whenever a fixedpoint was not found that is correct to the specified ConvergenceMetric and ConvergenceMetricThreshold. In this case the fp_anderson.Outputs_ array will probably contain something close to a fixed point in its rightmost column.
 
 For more examples and information see the documentation.
