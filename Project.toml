@@ -1,7 +1,7 @@
 name = "FixedPointAcceleration"
 uuid = "817d07cb-a79a-5c30-9a31-890123675176"
 authors = ["Stuart Baumann <stuart@stuartbaumann.com>"]
-version = "0.3.5"
+version = "0.3.6"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
