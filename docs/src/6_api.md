@@ -27,4 +27,7 @@ Pages = ["api.md"]
 ```@docs
     put_together_without_jumps
     execute_function_safely
+	EpsilonExtrapolationVectorOfInverses
+	PolynomialExtrapolation
+	EpsilonExtrapolation
 ```
