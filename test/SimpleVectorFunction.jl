@@ -42,7 +42,7 @@ using Test
 
     # Testing the outputting of a tuple
     f(x) = (a = [1.0, 1.0], b = :goodProgressInFunction)
-    @test_throws ErrorException("The Fixedpoint function can only return a vector or a tuple  of which the first entry is the vector for which a fixedpoint is sought and the second is a namedtuple (the contents of which are output for the user but are not used in fixed point acceleration).") fixed_point(f, Inputs; Algorithm = :Simple, PrintReports = true)
+    @test_throws ErrorException("This function returned a @NamedTuple{a::Vector{Float64}, b::Symbol}. The Fixedpoint function can only return a vector or a tuple of which the first entry is the vector for which a fixedpoint is sought and the second is a namedtuple (the contents of which are output for the user but are not used in fixed point acceleration).") fixed_point(f, Inputs; Algorithm = :Simple, PrintReports = true)
     # And doing side effects properly.
     f(x) = ([1.0, 1.0], (b = :goodProgressInFunction,))
     fp_simple5 = fixed_point(f, Inputs; Algorithm = :Simple, PrintReports = true)
