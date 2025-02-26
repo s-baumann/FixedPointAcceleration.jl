@@ -13,14 +13,14 @@ struct FunctionEvaluationResult{T<:Real,R}
     function FunctionEvaluationResult(Input::Vector{T}, Output_::Missing, Error_::Symbol, Other_Output_::Union{Missing,NamedTuple} = missing) where T<:Real
         return new{T,T}(Input, Output_, Other_Output_, Error_)
     end
-    function FunctionEvaluationResult(Input::Vector{T}, Output::Vector{R}, Error_::Symbol, Other_Output_::Union{Missing,NamedTuple} = missing) where T<:Real where R<:Real
-        return new{T,R}(Input, convert(Array{Union{Missing,R},1}, Output), Other_Output_, Error_)
-    end
-    function FunctionEvaluationResult(Input::Vector{T}, Output::Vector{Union{Missing,R}}, Error_::Symbol, Other_Output_::Union{Missing,NamedTuple} = missing) where T<:Real where R<:Real
-        return new{T,R}(Input, Output, Other_Output_, Error_)
-    end
-    function FunctionEvaluationResult(Input::Vector{T}, Output::Vector{Missing}, Error_::Symbol, Other_Output_::Union{Missing,NamedTuple} = missing) where T<:Real
-        return new{T,T}(Input, Output, Other_Output_, Error_)
+    function FunctionEvaluationResult(Input::Vector{T}, Output::Vector{R}, Error_::Symbol, Other_Output_::Union{Missing,NamedTuple} = missing) where T<:Real where R<:Union{Missing,<:Real}
+        if R === Missing
+            return new{T,T}(Input, Output, Other_Output_, Error_)
+        elseif R <: Real
+            return new{T,R}(Input, convert(Array{Union{Missing,R},1}, Output), Other_Output_, Error_)
+        else
+            return new{T,nonmissingtype(R)}(Input, Output, Other_Output_, Error_)
+        end
     end
 end
 
