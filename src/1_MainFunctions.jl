@@ -158,10 +158,10 @@ function fixed_point(func::Function, Inputs::Real;
                        MaxIter = MaxIter, MaxM = MaxM, ExtrapolationPeriod = ExtrapolationPeriod, Dampening = Dampening, PrintReports = PrintReports, ReportingSigFig = ReportingSigFig,
                        ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold, quiet_errors = quiet_errors)
 end
-function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{R,2} = Array{T,2}(undef,size(Inputs)[1],0),
+function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{<:Real,2} = Array{T,2}(undef,size(Inputs)[1],0),
                     Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0),
-                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false, other_outputs::Union{Missing,NamedTuple} = missing) where T<:Real where R<:Real
+                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false, other_outputs::Union{Missing,NamedTuple} = missing) where T<:Real
     # This code first tests if the input point is a fixed point. Then if it is not a while loop runs to try to find a fixed point.
     if (ConditionNumberThreshold < 1) error("ConditionNumberThreshold must be at least 1.")  end
     SimpleStartIndex = Integer(size(Outputs)[2])
@@ -181,7 +181,7 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{R,2} = 
         end
     end
     LengthOfArray = size(Inputs)[1]
-    output_type = promote_type(T,R)
+    output_type = promote_type(T,eltype(Outputs))
     final_other_output = other_outputs
     # Do an initial run if no runs have been done:
     if isempty(Outputs)
