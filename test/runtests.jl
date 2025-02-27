@@ -2,6 +2,8 @@ using FixedPointAcceleration
 using Test
 
 # Run tests
+println("Auto QUality Assurance")
+include("Aqua.jl")
 println("Test putting together iterates with jumps")
 include("TestPuttingInputsAndOutputsTogether.jl")
 println("Test simple Scalar function")
