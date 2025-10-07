@@ -43,12 +43,7 @@ Check if the algorithm uses epsilon extrapolation.
 """
 function is_epsilon_method end
 
-"""
-    algorithm_to_symbol(alg::FixedPointAlgorithm)
 
-Convert algorithm to symbol for legacy support with extrapolation methods.
-"""
-function algorithm_to_symbol end
 
 # Default implementations
 needs_extrapolation_period(::FixedPointAlgorithm) = false

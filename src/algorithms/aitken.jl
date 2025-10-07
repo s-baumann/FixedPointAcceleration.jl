@@ -22,7 +22,7 @@ needs_extrapolation_period(::Aitken) = false
 get_extrapolation_period(::Aitken) = 1
 is_polynomial_method(::Aitken) = false
 is_epsilon_method(::Aitken) = false
-algorithm_to_symbol(::Aitken) = :Aitken
+
 
 # Algorithm implementation
 """

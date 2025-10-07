@@ -18,7 +18,7 @@ needs_extrapolation_period(::Newton) = false
 get_extrapolation_period(::Newton) = 1
 is_polynomial_method(::Newton) = false
 is_epsilon_method(::Newton) = false
-algorithm_to_symbol(::Newton) = :Newton
+
 
 # Algorithm implementation
 """

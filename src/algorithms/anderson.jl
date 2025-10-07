@@ -39,7 +39,7 @@ needs_extrapolation_period(::Anderson) = false
 get_extrapolation_period(::Anderson) = 1
 is_polynomial_method(::Anderson) = false
 is_epsilon_method(::Anderson) = false
-algorithm_to_symbol(::Anderson) = :Anderson
+
 
 # Algorithm implementation
 """

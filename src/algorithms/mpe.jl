@@ -33,7 +33,7 @@ needs_extrapolation_period(::MPE) = true
 get_extrapolation_period(alg::MPE) = alg.extrapolation_period
 is_polynomial_method(::MPE) = true
 is_epsilon_method(::MPE) = false
-algorithm_to_symbol(::MPE) = :MPE
+
 
 # Algorithm implementation
 """
@@ -45,8 +45,22 @@ function _compute_proposed_input(inputs, outputs, alg::MPE, options)
 
     simple_iterates_matrix = put_together_without_jumps(inputs, outputs)
     if (size(simple_iterates_matrix)[2] % alg.extrapolation_period == 0)
-        return PolynomialExtrapolation(simple_iterates_matrix, algorithm_to_symbol(alg))
+        return _mpe_extrapolation(simple_iterates_matrix)
     else
         return simple_iterate
     end
+end
+
+"""
+Perform Minimal Polynomial Extrapolation on a matrix of iterates.
+"""
+function _mpe_extrapolation(iterates::AbstractArray{R,2}) where {R<:Number}
+    total_columns = size(iterates)[2]
+    old_differences = iterates[:, 2:(total_columns - 1)] .- iterates[:, 1:(total_columns - 2)]
+    last_difference = iterates[:, total_columns] .- iterates[:, (total_columns - 1)]
+    inverse_old_differences = pinv(old_differences)
+    c_vector = -inverse_old_differences * last_difference
+    c_vector = vcat(c_vector, 1)
+    sum_vec = sum(c_vector)
+    return (iterates[:, 2:total_columns] * c_vector) ./ sum_vec
 end

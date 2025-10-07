@@ -6,7 +6,6 @@ using Dates: now
 include("types.jl")
 include("function_execution.jl")
 include("utilities.jl")
-include("extrapolation_methods.jl")
 
 # Include all algorithm-specific files
 include("algorithms/base.jl")
