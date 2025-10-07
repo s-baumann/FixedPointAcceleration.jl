@@ -121,11 +121,15 @@ using Test
         # This should handle complex sqrt properly
         result = fixed_point(problematic_func, [-1.0 + 0.0im], Simple(); MaxIter=10)
         # Should not crash - either converge or reach max iterations
-        @test result.TerminationCondition_ in [:ReachedConvergenceThreshold, :ReachedMaxIter, :InvalidInputOrOutputOfIteration]
+        @test result.TerminationCondition_ in [
+            :ReachedConvergenceThreshold, :ReachedMaxIter, :InvalidInputOrOutputOfIteration
+        ]
 
         # Test with function that returns complex infinity
         inf_func(x) = [x[1] * (1.0 + 0.0im) / 0.0]
-        result_inf = fixed_point(inf_func, [1.0 + 0.0im], Simple(); MaxIter=5, quiet_errors=true)
+        result_inf = fixed_point(
+            inf_func, [1.0 + 0.0im], Simple(); MaxIter=5, quiet_errors=true
+        )
         @test result_inf.TerminationCondition_ == :InvalidInputOrOutputOfIteration
     end
 

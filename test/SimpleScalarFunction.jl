@@ -25,6 +25,8 @@ using Test
     a = fixed_point(func, fp_RRE.Inputs_, fp_RRE.Outputs_, RRE(); MaxIter=20)
     @test a.Convergence_ < 1e-8 # If the above line throws then that is a test failure.
     # Testing different input/output shapes
-    b = fixed_point(func, fp_RRE.Inputs_[:, 1:1], fp_RRE.Outputs_[:, 1:1], RRE(); MaxIter=20)
+    b = fixed_point(
+        func, fp_RRE.Inputs_[:, 1:1], fp_RRE.Outputs_[:, 1:1], RRE(); MaxIter=20
+    )
     @test b.Convergence_ < 1e-8 # If the above line throws then that is a test failure.
 end
