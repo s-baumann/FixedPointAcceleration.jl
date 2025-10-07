@@ -1,3 +1,5 @@
+module test_simple_scalar
+
 using Test
 @testset "Simple Scalar Function" begin
     using FixedPointAcceleration
@@ -30,4 +32,5 @@ using Test
         func, fp_RRE.Inputs_[:, 1:1], fp_RRE.Outputs_[:, 1:1], RRE(), opts_20
     )
     @test b.Convergence_ < 1e-8 # If the above line throws then that is a test failure.
+end
 end

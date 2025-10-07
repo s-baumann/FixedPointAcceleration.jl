@@ -1,4 +1,9 @@
+module test_replace_invalids
+
 using Test
+
+using FixedPointAcceleration
+
 @testset "Replace Invalids Testing" begin
     # Testing algos generating an invalid input.
     function funcfunc(x::Array{Float64,1})
@@ -29,4 +34,6 @@ using Test
     fp2 = fixed_point(funcfunc, Inputs, Aitken(), opts_replace_vector)
     @test fp2.TerminationCondition_ == :ReachedConvergenceThreshold
     @test fp.Iterations_ != fp2.Iterations_
+end
+
 end

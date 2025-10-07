@@ -1,3 +1,5 @@
+module test_Configuration
+
 using FixedPointAcceleration
 using Test
 
@@ -81,4 +83,5 @@ using Test
         # Should get same convergence (within numerical tolerance)
         @test isapprox(result_old.FixedPoint_, result_new.FixedPoint_, rtol=1e-10)
     end
+end
 end

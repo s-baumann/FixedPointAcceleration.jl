@@ -1,3 +1,5 @@
+module test_consumption
+
 using Test
 @testset "Test Consumption Smoothing" begin
     using SchumakerSpline
@@ -143,7 +145,7 @@ using Test
     opts_custom_conv = FixedPointOptions(
         max_iterations=1,
         print_reports=true,
-        convergence_metric=shapeconvergence
+        metric=shapeconvergence
     )
     fp_reparam = fixed_point(
         Reparameterised_FP_Vector,
@@ -159,7 +161,7 @@ using Test
         OneIterateBudgetValues,
         InitialGuess,
         Anderson(),
-        FixedPointOptions(quiet_errors=false, convergence_threshold=1e-06)
+        FixedPointOptions(quiet_errors=false, threshold=1e-06)
     )
     fpfp = fp.FixedPoint_
     fp_ander = fixed_point(
@@ -168,8 +170,8 @@ using Test
         Anderson(),
         FixedPointOptions(
             quiet_errors=false,
-            convergence_threshold=1e-06,
-            convergence_function=shapeconvergence,
+            threshold=1e-06,
+            metric=shapeconvergence,
             reporting_sig_figs=10
         )
     )
@@ -181,8 +183,8 @@ using Test
         Aitken(),
         FixedPointOptions(
             quiet_errors=false,
-            convergence_threshold=1e-06,
-            convergence_function=shapeconvergence,
+            threshold=1e-06,
+            metric=shapeconvergence,
             reporting_sig_figs=10
         )
     )
@@ -191,11 +193,11 @@ using Test
     fp_newton = fixed_point(
         Reparameterised_FP_Vector,
         shape_guess,
-        Newton(),
+        FixedPointAcceleration.Newton(),
         FixedPointOptions(
             quiet_errors=false,
-            convergence_threshold=1e-06,
-            convergence_function=shapeconvergence,
+            threshold=1e-06,
+            metric=shapeconvergence,
             reporting_sig_figs=10
         )
     )
@@ -207,11 +209,13 @@ using Test
         SEA(),
         FixedPointOptions(
             quiet_errors=false,
-            convergence_threshold=1e-06,
-            convergence_function=shapeconvergence,
+            threshold=1e-06,
+            metric=shapeconvergence,
             reporting_sig_figs=10
         )
     )
     iterated = ShapeToBud(fp_sea.FixedPoint_)
     @test sum(abs.(fpfp .- iterated) .> 1e-4) == 0
+end
+
 end

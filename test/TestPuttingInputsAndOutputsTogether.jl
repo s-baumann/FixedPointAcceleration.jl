@@ -1,4 +1,7 @@
+module test_putting_inputs_and_outputs_together
 using Test
+
+import FixedPointAcceleration: put_together_without_jumps
 @testset "Putting inputs and outputs together" begin
     func(x) = sqrt.(x)
     Inputs = Array{Float64,1}([2.0, 3.0, 4.0, 5.0, 7.0, 9.0, 25.6])
@@ -26,4 +29,6 @@ using Test
 
     Iterates = put_together_without_jumps(Inputs, Outputs)
     @test Iterates == hcat(NewGuess, func.(NewGuess), func.(func.(NewGuess)))
+end
+
 end

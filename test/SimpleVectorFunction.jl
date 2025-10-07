@@ -1,4 +1,7 @@
+module test_simple_vector
+
 using Test
+using FixedPointAcceleration
 @testset "Simple Vector Function" begin
     func(x) = [0.5*sqrt(abs(x[1] + x[2])), 1.5*x[1] + 0.5*x[2]]
     Inputs = [0.3, 900.0]
@@ -50,4 +53,6 @@ using Test
     f4(x) = ([1.0, 1.0], (b=:goodProgressInFunction,))
     fp_simple5 = fixed_point(f4, Inputs, Simple(), print_opts)
     @test fp_simple5.Convergence_ < 1e-10
+end
+
 end

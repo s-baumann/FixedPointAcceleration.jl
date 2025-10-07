@@ -1,3 +1,5 @@
+module test_complex
+
 using Test
 @testset "Complex Number Functions" begin
     using FixedPointAcceleration
@@ -192,4 +194,6 @@ using Test
             @test result.Iterations_ <= result_simple.Iterations_
         end
     end
+end
+
 end

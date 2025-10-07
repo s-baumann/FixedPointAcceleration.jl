@@ -10,15 +10,29 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [compat]
 Aqua = "0.8"
-Dates = "<0.0.1, 1"
+DataFrames = "1.8.0"
+Dates = "1"
+Distributions = "0.25.122"
+ForwardDiff = "1.2.1"
 GLM = "^1"
-LinearAlgebra = "<0.0.1, 1"
-Test = "<0.0.1, 1"
-julia = "^1.4"
+HCubature = "1.7.0"
+LinearAlgebra = "1"
+Optim = "1.13.2"
+Random = "1.11.0"
+SchumakerSpline = "1.4.5"
+Test = "1"
+julia = "1.10"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+HCubature = "19dc6840-f33b-545b-b366-655c7e3ffd49"
+Optim = "429524aa-4258-5aef-a3af-852621145aeb"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SchumakerSpline = "65e68595-3a03-5ff5-a6a2-f05fa774f32e"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "Test"]
+test = ["Aqua", "Test", "Distributions", "HCubature", "Optim", "ForwardDiff", "Random", "SchumakerSpline", "DataFrames"]

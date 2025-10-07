@@ -2,27 +2,14 @@ using FixedPointAcceleration
 using Test
 
 # Run tests
-println("Auto QUality Assurance")
-include("Aqua.jl")
-println("Test putting together iterates with jumps")
-include("TestPuttingInputsAndOutputsTogether.jl")
-println("Test simple Scalar function")
-include("SimpleScalarFunction.jl")
-println("Test simple vector function")
-include("SimpleVectorFunction.jl")
-println("Test Chaining together calls with cos functions.")
-include("Chaining.jl")
-println("Testing Bounds Error")
-include("BoundsError.jl")
-println("Testing ReplaceInvalidsTest")
-include("ReplaceInvalidsTesting.jl")
-println("Testing Complex Number Functions")
-include("ComplexNumberTests.jl")
-#println("CommonIncrementsTest")
-#@time @test include("CommonIncrementsTest.jl")
-#println("test_side_products")
-#@time @test include("test_side_products.jl")
-
-# Note consumption smoothing problem is not tested for time and dependency reasons.
-# Note that the Autodiff extention is not included for the same reason.
-# And test_side_products for the same reason.
+@testset "quality assurance" include("Aqua.jl")
+@testset "input_output" include("TestPuttingInputsAndOutputsTogether.jl")
+@testset "CommonIncrements" include("CommonIncrementsTest.jl")
+@testset "SimpleScalarFunction" include("SimpleScalarFunction.jl")
+@testset "SimpleVectorFunction" include("SimpleVectorFunction.jl")
+@testset "Chaining" include("Chaining.jl")
+@testset "BoundsError" include("BoundsError.jl")
+@testset "ReplaceInvalidsTesting" include("ReplaceInvalidsTesting.jl")
+@testset "ComplexNumberTests" include("ComplexNumberTests.jl")
+# @testset "test_side_products" include("test_side_products.jl")
+@testset "consumption smoothing" include("ConsumptionSmoothingProblem.jl")

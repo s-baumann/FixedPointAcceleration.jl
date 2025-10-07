@@ -1,3 +1,4 @@
+module test_side_products
 using Test
 @testset "Simple Side Products" begin
     # Generating data from two two-dimensional gaussian processes
@@ -98,4 +99,5 @@ using Test
     # Testing the case with one iterate.
     fp_anderson = fixed_point(x -> update_theta(x, dd), InitialGuess, Simple(), FixedPointOptions(max_iterations=1))
     @test isa(fp_anderson.Other_Output_, NamedTuple)
+end
 end
