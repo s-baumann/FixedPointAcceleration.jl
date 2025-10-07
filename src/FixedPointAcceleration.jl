@@ -1,33 +1,22 @@
 module FixedPointAcceleration
-using LinearAlgebra: cond, pinv
 using Dates: now
 
-include("options.jl")
-include("results.jl")
-include("function_execution.jl")
-include("utilities.jl")
+using LinearAlgebra: qr, norm, pinv, qr!, QRPivoted, norm, svd, Diagonal
 
-# Include all algorithm-specific files
-include("algorithms/base.jl")
-include("algorithms/simple.jl")
-include("algorithms/anderson.jl")
-include("algorithms/aitken.jl")
-include("algorithms/newton.jl")
-include("algorithms/mpe.jl")
-include("algorithms/rre.jl")
-include("algorithms/vea.jl")
-include("algorithms/sea.jl")
-include("algorithm_implementations.jl")  # This includes all the algorithm files
+include("config.jl")
+include("state.jl")
+include("methods.jl")
+include("workspace.jl")
+include("anderson_impl.jl")
+include("polynomial_impl.jl")
+include("epsilon_impl.jl")
+include("solve.jl")
+include("step.jl")
 
-include("fixed_point.jl")
+export solve, solve!, FixedPointConfig, FixedPointSolution
+export Simple, Anderson, Aitken, MPE, RRE, VEA, SEA
 
-export fixed_point # Main functionality.
-
-# Export algorithm types
-export Simple, Anderson, Aitken, Newton, MPE, RRE, VEA, SEA
-
-# Export configuration types and presets
-export FixedPointOptions
-export default_options, robust_options, fast_options, debug_options
+include("old/FixedPointAcceleration.jl")
+export OldImplementation
 
 end

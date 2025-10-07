@@ -33,20 +33,38 @@ Base.@kwdef struct FixedPointOptions
 
     # Validation
     function FixedPointOptions(
-        metric, threshold, max_iterations,
-        dampening, dampening_with_input, replace_invalids, quiet_errors,
-        print_reports, reporting_sig_figs
+        metric,
+        threshold,
+        max_iterations,
+        dampening,
+        dampening_with_input,
+        replace_invalids,
+        quiet_errors,
+        print_reports,
+        reporting_sig_figs,
     )
         threshold >= 0 || throw(ArgumentError("threshold must be non-negative"))
         max_iterations > 0 || throw(ArgumentError("max_iterations must be positive"))
         0 < dampening <= 1 || throw(ArgumentError("dampening must be in (0, 1]"))
         replace_invalids in [:NoAction, :ReplaceElements, :ReplaceVector] || throw(
-            ArgumentError("replace_invalids must be :NoAction, :ReplaceElements, or :ReplaceVector")
+            ArgumentError(
+                "replace_invalids must be :NoAction, :ReplaceElements, or :ReplaceVector",
+            ),
         )
-        reporting_sig_figs > 0 || throw(ArgumentError("reporting_sig_figs must be positive"))
+        reporting_sig_figs > 0 ||
+            throw(ArgumentError("reporting_sig_figs must be positive"))
 
-        new(metric, threshold, max_iterations, dampening, dampening_with_input,
-            replace_invalids, quiet_errors, print_reports, reporting_sig_figs)
+        new(
+            metric,
+            threshold,
+            max_iterations,
+            dampening,
+            dampening_with_input,
+            replace_invalids,
+            quiet_errors,
+            print_reports,
+            reporting_sig_figs,
+        )
     end
 end
 

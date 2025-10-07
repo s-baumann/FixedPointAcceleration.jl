@@ -5,6 +5,7 @@ version = "1.0.2"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [compat]
@@ -13,6 +14,7 @@ DataFrames = "1.8.0"
 Dates = "1"
 Distributions = "0.25.122"
 ForwardDiff = "1.2.1"
+GLM = "1.9.0"
 HCubature = "1.7.0"
 LinearAlgebra = "1"
 Optim = "1.13.2"

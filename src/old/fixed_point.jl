@@ -152,7 +152,9 @@ function _initial_evaluation!(
             # Create a dummy convergence vector to avoid errors
             convergence_vector = [Inf]
         else
-            output_type = promote_type(typeof(inputs_mat[1]), typeof(executed_func.output[1]))
+            output_type = promote_type(
+                typeof(inputs_mat[1]), typeof(executed_func.output[1])
+            )
             converted_outputs = convert.(Ref(output_type), executed_func.output)
             outputs_mat = hcat(outputs_mat, converted_outputs)
             inputs_mat = convert.(Ref(output_type), inputs_mat)
@@ -225,7 +227,10 @@ function _maybe_report_initial(
 end
 
 function _iteration_loop!(
-    func::Function, algorithm::FixedPointAlgorithm, options::FixedPointOptions, state::_IterationState
+    func::Function,
+    algorithm::FixedPointAlgorithm,
+    options::FixedPointOptions,
+    state::_IterationState,
 )
     convergence = state.convergence_vector[end]
     iteration = length(state.convergence_vector) + 1
@@ -252,16 +257,15 @@ function _iteration_loop!(
         state.other_output_val = executed_func.other_output
         state.inputs = hcat(state.inputs, executed_func.input)
         col_type = eltype(state.inputs)
-        state.outputs = hcat(
-            state.outputs, convert(Vector{col_type}, executed_func.output)
-        )
+        state.outputs = hcat(state.outputs, convert(Vector{col_type}, executed_func.output))
         convergence = options.metric(executed_func.input, executed_func.output)
         push!(state.convergence_vector, convergence)
 
         _maybe_report_initial(options, algorithm, iteration, convergence)
         iteration += 1
     end
-    final_status = convergence < options.threshold ? :ReachedConvergenceThreshold : :ReachedMaxIter
+    final_status =
+        convergence < options.threshold ? :ReachedConvergenceThreshold : :ReachedMaxIter
     return FixedPointResults(
         state.inputs,
         state.outputs,

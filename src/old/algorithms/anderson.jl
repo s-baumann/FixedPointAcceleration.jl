@@ -2,8 +2,6 @@
 Anderson acceleration algorithm implementation.
 """
 
-using LinearAlgebra: cond, pinv
-
 """
     Anderson(; maxM=10, condition_threshold=1e3)
 

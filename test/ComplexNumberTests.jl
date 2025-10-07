@@ -2,7 +2,9 @@ module test_complex
 
 using Test
 @testset "Complex Number Functions" begin
-    using FixedPointAcceleration
+    using FixedPointAcceleration.OldImplementation:
+        fixed_point, Simple, Anderson, Aitken, Newton, MPE, RRE, VEA, SEA, FixedPointOptions
+    # Core already loaded at top-level in runtests; avoid duplicate using
 
     # Define option configurations used throughout tests
     opts_100 = FixedPointOptions(max_iterations=100)
