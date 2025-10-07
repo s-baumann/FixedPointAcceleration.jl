@@ -91,11 +91,11 @@ using Test
 
     InitialGuess = [0.5, 7.5, 2.0, 0.0, 2.0, -5.0, 7.5, 2.0, 0.0, 10.0, 0.5]
     fp_anderson = fixed_point(
-        x -> update_theta(x, dd), InitialGuess; Algorithm=:Anderson, PrintReports=true
+        x -> update_theta(x, dd), InitialGuess; Anderson(); PrintReports=true
     )
     @test isa(fp_anderson.Other_Output_, NamedTuple)
 
     # Testing the case with one iterate.
-    fp_anderson = fixed_point(x -> update_theta(x, dd), InitialGuess; MaxIter=1)
+    fp_anderson = fixed_point(x -> update_theta(x, dd), InitialGuess, MaxIter=1)
     @test isa(fp_anderson.Other_Output_, NamedTuple)
 end

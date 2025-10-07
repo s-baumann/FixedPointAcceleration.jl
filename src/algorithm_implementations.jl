@@ -1,178 +1,213 @@
+# New dispatch-based interface
 """
-    fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArray{T,2}, Algorithm::Symbol = :Anderson;
-                               MaxM::Integer = 10, SimpleStartIndex::Integer = 1, ExtrapolationPeriod::Integer = 1, Dampening::S = AbstractFloat(1), Dampening_With_Input::Bool = false,
-                               ConditionNumberThreshold::R = AbstractFloat(1000), PrintReports::Bool = false, ReplaceInvalids::InvalidReplacement = :NoAction) where R<:Real where S<:Real where T<:Real
+    fixed_point_new_input(inputs, outputs, algorithm::FixedPointAlgorithm, options::Dict)
 
-This function takes the previous inputs and outputs from the fixed_point function and determines what vector to try next in seeking a fixed point.
+Modern dispatch-based interface for computing the next input in fixed point iteration.
+
 ### Inputs
-* `Inputs` - This is an N x A matrix of previous inputs for which corresponding outputs are available. In this case N is the dimensionality of the fixed point vector that is being sought (Hence each column is a matrix that is input to the "Function") and A is the number of previous Inputs/Outputs that are being provided to the fixed point.
-* `Outputs` - This is a matrix of Function values for the each column of the `Inputs` matrix.
-* `Algorithm` - This is the fixed point Algorithm to be used. It can be "Anderson", "Simple", "Aitken", "Newton", "MPE", "RRE", "VEA", "SEA".
-* `MaxM` - This is the number of saved iterates that are used in the Anderson algorithm. This has no role if another Algorithm is used.
-* `SimpleStartIndex` - This is the index for what column in the input/output matrices did the algorithm start doing simple iterates without jumps. This is used for all Algorithms except the simple and Anderson Algorithms where it has no effect.
-* `ExtrapolationPeriod` - This is the number of simple iterates to perform before extrapolating. This is used for the MPE, RRE, VEA and SEA Algorithms and has no effect if another Algorithm is chosen.
-* `Dampening` - This is the dampening parameter. By default it is 1 which means no dampening takes place. It can also be less than 1 (indicating dampening) or more than 1 (indicating extrapolation).
-* `Dampening_With_Input` - This is a boolean that indicates whether the dampening parameter should be multiplied by the input (if true) or the output of the most recent iterate.
-* `ConditionNumberThreshold` - This is what threshold should be chosen to drop previous iterates if the matrix is ill conditioned. Only used in Anderson acceleration.
-* `PrintReports` - This is a boolean describing whether to print ongoing ConvergenceMetric values for each iterate.
+* `inputs` - N×A matrix of previous inputs
+* `outputs` - N×A matrix of corresponding outputs
+* `algorithm` - Algorithm instance (e.g., Anderson(), Simple(), etc.)
+* `options` - Dictionary containing algorithm options
+
 ### Returns
- * A `Vector` of the next guess for the fixed point.
-### Examples
-    FPFunction = function(x){c(0.5*sqrt(abs(x[1] + x[2])), 1.5*x[1] + 0.5*x[2])}
-    A = fixed_point( Function = FPFunction, Inputs = [0.3,900], MaxIter = 6, Algorithm = :Simple)
-    NewGuessAnderson = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :Anderson)
-    NewGuessVEA = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :VEA)
-    NewGuessMPE = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :MPE)
-    NewGuessAitken = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :Aitken)
+* Vector of the next guess for the fixed point
 """
 function fixed_point_new_input(
-    Inputs::AbstractArray{T,2},
-    Outputs::AbstractArray{T,2},
-    Algorithm::Symbol=:Anderson;
-    MaxM::Integer=10,
-    SimpleStartIndex::Integer=1,
-    ExtrapolationPeriod::Integer=1,
-    Dampening::S=1.0,
-    Dampening_With_Input::Bool=false,
-    ConditionNumberThreshold::R=1000.0,
-    PrintReports::Bool=false,
-    ReplaceInvalids::Symbol=:NoAction,
-) where {R<:Real} where {S<:Number} where {T<:Number}
-    CompletedIters = size(Outputs)[2]
-    simple_iterate = Outputs[:, CompletedIters]
-    proposed_input = repeat([NaN], size(simple_iterate)[1])
-    if Algorithm == :Simple
-        proposed_input = simple_iterate
-    elseif Algorithm == :Anderson
-        if CompletedIters < 2
-            if (PrintReports)
-                print("                           Used:", lpad(0, 3), " lags. ")
-            end
-            proposed_input = simple_iterate
-        else
-            VectorLength = size(Outputs)[1]
-            M = min(MaxM-1, CompletedIters-1, VectorLength)
+    inputs::AbstractArray{T,2},
+    outputs::AbstractArray{T,2},
+    algorithm::FixedPointAlgorithm,
+    options::Dict
+) where {T<:Number}
+    # Get the raw proposed input from the algorithm-specific implementation
+    proposed_input = _compute_proposed_input(inputs, outputs, algorithm, options)
 
-            recent_Outputs = Outputs[:, (CompletedIters - M):CompletedIters]
-            recent_Inputs = Inputs[:, (CompletedIters - M):CompletedIters]
-            Resid = recent_Outputs .- recent_Inputs
-            DeltaOutputs = recent_Outputs[:, 2:(M + 1)] .- recent_Outputs[:, 1:M]
-            DeltaResids = Resid[:, 2:(M + 1)] .- Resid[:, 1:M]
-            LastResid = Resid[:, M + 1]
-            LastOutput = recent_Outputs[:, M + 1]
-            Coeffs = repeat([NaN], size(DeltaOutputs)[2])
-            ConditionNumber = NaN
-            while any(isnan.(Coeffs))
-                if isempty(DeltaResids)
-                    # This happens if there is convergence by constant increments and thus the
-                    #  most recent DeltaResids is all zeros. So we end up dropping all DeltaResids and get an error here.
-                    break
-                end
-                ConditionNumber = cond(DeltaResids)
-                if ConditionNumber > ConditionNumberThreshold
-                    M = M-1
-                    DeltaOutputs = DeltaOutputs[:, 2:(M + 1)]
-                    DeltaResids = DeltaResids[:, 2:(M + 1)]
-                    Coeffs = repeat([NaN], size(DeltaOutputs)[2])
-                    continue
-                end
-                # Handle complex numbers by using pinv instead of GLM.fit
-                if eltype(DeltaResids) <: Complex
-                    Coeffs = pinv(DeltaResids) * LastResid
-                else
-                    Fit = fit(LinearModel, hcat(DeltaResids), LastResid)
-                    Coeffs = Fit.pp.beta0
-                end
-                if any(isnan.(Coeffs))
-                    M = M-1
-                    if (M < 1.5)
-                        # This happens occasionally in test cases where the iteration is very close to a fixed point.
-                        if (PrintReports)
-                            print("                          Used:", lpad(0, 3), " lags. ")
-                        end
-                        break
-                    end
-                    DeltaOutputs = DeltaOutputs[:, 2:(M + 1)]
-                    DeltaResids = DeltaResids[:, 2:(M + 1)]
-                end
-            end
-            if isempty(Coeffs)
-                if (PrintReports)
-                    print(
-                        "Condition number is ",
-                        lpad("NaN", 5),
-                        ". Used:",
-                        lpad(0, 3),
-                        " lags. ",
-                    )
-                end
-                proposed_input = repeat([NaN], VectorLength)
-            else
-                if (PrintReports)
-                    print(
-                        "Condition number is ",
-                        lpad(round(ConditionNumber; sigdigits=2), 5),
-                        ". Used:",
-                        lpad(M+1, 3),
-                        " lags. ",
-                    )
-                end
-                proposed_input = LastOutput .- (Dampening .* vec(DeltaOutputs * Coeffs))
-            end
+    # Apply dampening and replacement strategies
+    return _apply_post_processing(inputs, outputs, proposed_input, options)
+end
+
+"""
+Internal function to compute the raw proposed input (before post-processing).
+This is where the algorithm-specific dispatch happens.
+"""
+_compute_proposed_input(inputs, outputs, ::Simple, options) = outputs[:, end]
+
+_compute_proposed_input(inputs, outputs, alg::Anderson, options) =
+    _anderson_acceleration(inputs, outputs, alg, options)
+
+_compute_proposed_input(inputs, outputs, ::Aitken, options) =
+    _aitken_acceleration(inputs, outputs, options)
+
+_compute_proposed_input(inputs, outputs, ::Newton, options) =
+    _newton_acceleration(inputs, outputs, options)
+
+_compute_proposed_input(inputs, outputs, alg::Union{MPE,RRE}, options) =
+    _polynomial_extrapolation(inputs, outputs, alg, options)
+
+_compute_proposed_input(inputs, outputs, alg::Union{VEA,SEA}, options) =
+    _epsilon_extrapolation(inputs, outputs, alg, options)
+
+# Algorithm-specific implementations
+function _anderson_acceleration(
+    inputs::AbstractArray{T,2},
+    outputs::AbstractArray{T,2},
+    alg::Anderson,
+    options
+) where {T<:Number}
+    completed_iters = size(outputs)[2]
+    simple_iterate = outputs[:, completed_iters]
+
+    if completed_iters < 2
+        if get(options, :print_reports, false)
+            print("                           Used:", lpad(0, 3), " lags. ")
         end
-    elseif Algorithm == :Aitken
-        if ((CompletedIters + SimpleStartIndex) % 3) == 0
-            # If we are in 3rd, 6th, 9th, 12th iterate from when we started Acceleration then we want to do a jumped Iterate,
-            # First we extract the guess that started this run of 3 iterates (x), the Function applied to it (fx) and the function applied to that (ffx)
-            x = Inputs[:, (CompletedIters - 1)]
-            fx = Outputs[:, (CompletedIters - 1)]
-            ffx = Outputs[:, CompletedIters]
-            # Now using the appropriate formula to make a new guess. Note that if a vector is input here it is used elementwise.
-            proposed_input = x .- ((fx .- x) .^ 2 ./ (ffx .- 2 .* fx .+ x))
-        else
-            # We just do a simple iterate. We do an attempt with the latest iterate.
-            proposed_input = simple_iterate
-        end
-    elseif Algorithm == :Newton
-        if ((CompletedIters + SimpleStartIndex) % 2 == 1) & (CompletedIters > 1)
-            # If we are in 3rd, 6th, 9th, 12th iterate from when we started Newton Acceleration then we want to do a Newton Iterate,
-            # First we extract the guess that started this run of 3 iterates (x), the Function applied to it (fx) and the function applied to that (ffx)
-            xk1 = Inputs[:, (CompletedIters - 1)]
-            fxk1 = Outputs[:, (CompletedIters - 1)]
-            gxk1 = fxk1 .- xk1
-            xk = Inputs[:, CompletedIters]
-            fxk = Outputs[:, CompletedIters]
-            gxk = fxk .- xk
-            #ffx = Outputs[,CompletedIters ]
-            # Now using the appropriate formula to make a new guess. Note that if a vector is input here it is used elementwise.
-            derivative = (gxk .- gxk1) ./ (xk .- xk1)
-            proposed_input = xk .- (gxk ./ derivative)
-        else
-            # We just do a simple iterate.
-            proposed_input = simple_iterate
-        end
-    elseif (Algorithm == :MPE) | (Algorithm == :RRE)
-        SimpleIteratesMatrix = put_together_without_jumps(Inputs, Outputs)
-        if (size(SimpleIteratesMatrix)[2] % ExtrapolationPeriod == 0)
-            proposed_input = PolynomialExtrapolation(SimpleIteratesMatrix, Algorithm)
-        else
-            # We just do a simple iterate.
-            proposed_input = simple_iterate
-        end
-    elseif (Algorithm == :VEA) | (Algorithm == :SEA)
-        SimpleIteratesMatrix = put_together_without_jumps(Inputs, Outputs)
-        if (size(SimpleIteratesMatrix)[2] % ExtrapolationPeriod) == 0
-            proposed_input = EpsilonExtrapolation(SimpleIteratesMatrix, Algorithm)
-        else
-            # We just do a simple iterate.
-            proposed_input = simple_iterate
-        end
-    else
-        error(
-            "The algorithm you tried to input is not valid. Choose from :Simple, :Anderson, :Aitken, :Newton, :MPE, :RRE, :VEA or :SEA. Note capitalisation must match.",
-        )
+        return simple_iterate
     end
-    # Now the replacement strategies - handle complex numbers properly
+
+    vector_length = size(outputs)[1]
+    M = min(alg.maxM - 1, completed_iters - 1, vector_length)
+
+    recent_outputs = outputs[:, (completed_iters - M):completed_iters]
+    recent_inputs = inputs[:, (completed_iters - M):completed_iters]
+    Resid = recent_outputs .- recent_inputs
+    DeltaOutputs = recent_outputs[:, 2:(M + 1)] .- recent_outputs[:, 1:M]
+    DeltaResids = Resid[:, 2:(M + 1)] .- Resid[:, 1:M]
+    LastResid = Resid[:, M + 1]
+    LastOutput = recent_outputs[:, M + 1]
+    Coeffs = repeat([NaN], size(DeltaOutputs)[2])
+    ConditionNumber = NaN
+
+    while any(isnan.(Coeffs))
+        if isempty(DeltaResids)
+            break
+        end
+        ConditionNumber = cond(DeltaResids)
+        if ConditionNumber > alg.condition_threshold
+            M = M - 1
+            DeltaOutputs = DeltaOutputs[:, 2:(M + 1)]
+            DeltaResids = DeltaResids[:, 2:(M + 1)]
+            Coeffs = repeat([NaN], size(DeltaOutputs)[2])
+            continue
+        end
+        # Handle complex numbers by using pinv instead of GLM.fit
+        if eltype(DeltaResids) <: Complex
+            Coeffs = pinv(DeltaResids) * LastResid
+        else
+            Fit = fit(LinearModel, hcat(DeltaResids), LastResid)
+            Coeffs = Fit.pp.beta0
+        end
+        if any(isnan.(Coeffs))
+            M = M - 1
+            if (M < 1.5)
+                if get(options, :print_reports, false)
+                    print("                          Used:", lpad(0, 3), " lags. ")
+                end
+                break
+            end
+            DeltaOutputs = DeltaOutputs[:, 2:(M + 1)]
+            DeltaResids = DeltaResids[:, 2:(M + 1)]
+        end
+    end
+
+    if isempty(Coeffs)
+        if get(options, :print_reports, false)
+            print(
+                "Condition number is ",
+                lpad("NaN", 5),
+                ". Used:",
+                lpad(0, 3),
+                " lags. ",
+            )
+        end
+        return repeat([NaN], vector_length)
+    else
+        if get(options, :print_reports, false)
+            print(
+                "Condition number is ",
+                lpad(round(ConditionNumber; sigdigits=2), 5),
+                ". Used:",
+                lpad(M + 1, 3),
+                " lags. ",
+            )
+        end
+        return LastOutput .- vec(DeltaOutputs * Coeffs)
+    end
+end
+
+function _aitken_acceleration(inputs, outputs, options)
+    completed_iters = size(outputs)[2]
+    simple_iterate = outputs[:, completed_iters]
+    simple_start_index = get(options, :simple_start_index, 1)
+
+    if ((completed_iters + simple_start_index) % 3) == 0
+        x = inputs[:, (completed_iters - 1)]
+        fx = outputs[:, (completed_iters - 1)]
+        ffx = outputs[:, completed_iters]
+        return x .- ((fx .- x) .^ 2 ./ (ffx .- 2 .* fx .+ x))
+    else
+        return simple_iterate
+    end
+end
+
+function _newton_acceleration(inputs, outputs, options)
+    completed_iters = size(outputs)[2]
+    simple_iterate = outputs[:, completed_iters]
+    simple_start_index = get(options, :simple_start_index, 1)
+
+    if ((completed_iters + simple_start_index) % 2 == 1) & (completed_iters > 1)
+        xk1 = inputs[:, (completed_iters - 1)]
+        fxk1 = outputs[:, (completed_iters - 1)]
+        gxk1 = fxk1 .- xk1
+        xk = inputs[:, completed_iters]
+        fxk = outputs[:, completed_iters]
+        gxk = fxk .- xk
+        derivative = (gxk .- gxk1) ./ (xk .- xk1)
+        return xk .- (gxk ./ derivative)
+    else
+        return simple_iterate
+    end
+end
+
+function _polynomial_extrapolation(inputs, outputs, alg, options)
+    completed_iters = size(outputs)[2]
+    simple_iterate = outputs[:, completed_iters]
+
+    simple_iterates_matrix = put_together_without_jumps(inputs, outputs)
+    if (size(simple_iterates_matrix)[2] % alg.extrapolation_period == 0)
+        return PolynomialExtrapolation(simple_iterates_matrix, algorithm_to_symbol(alg))
+    else
+        return simple_iterate
+    end
+end
+
+function _epsilon_extrapolation(inputs, outputs, alg, options)
+    completed_iters = size(outputs)[2]
+    simple_iterate = outputs[:, completed_iters]
+
+    simple_iterates_matrix = put_together_without_jumps(inputs, outputs)
+    if (size(simple_iterates_matrix)[2] % alg.extrapolation_period) == 0
+        return EpsilonExtrapolation(simple_iterates_matrix, algorithm_to_symbol(alg))
+    else
+        return simple_iterate
+    end
+end
+
+"""
+Apply post-processing: replacement strategies and dampening.
+"""
+function _apply_post_processing(
+    inputs::AbstractArray{T,2},
+    outputs::AbstractArray{T,2},
+    proposed_input::AbstractVector{T},
+    options::Dict
+) where {T<:Number}
+    completed_iters = size(outputs)[2]
+    simple_iterate = outputs[:, completed_iters]
+    replace_invalids = get(options, :replace_invalids, :NoAction)
+    dampening = get(options, :dampening, 1.0)
+    dampening_with_input = get(options, :dampening_with_input, false)
+
+    # Handle invalid entries (NaN, Inf, missing)
     if eltype(proposed_input) <: Complex
         dodgy_entries =
             (isnan.(real.(proposed_input)) .| isnan.(imag.(proposed_input))) .|
@@ -184,12 +219,16 @@ function fixed_point_new_input(
     end
 
     if sum(dodgy_entries) != 0
-        if ReplaceInvalids == :ReplaceElements
+        if replace_invalids == :ReplaceElements
             proposed_input[dodgy_entries] = simple_iterate[dodgy_entries]
-        elseif ReplaceInvalids == :ReplaceVector
+        elseif replace_invalids == :ReplaceVector
             proposed_input = simple_iterate
         end
     end
-    return @. (Dampening .* proposed_input) .+
-        ((1-Dampening) .* (Dampening_With_Input ? Inputs[:, end] : simple_iterate))
+
+    # Apply dampening
+    reference_point = dampening_with_input ? inputs[:, end] : simple_iterate
+    return @. (dampening * proposed_input) + ((1 - dampening) * reference_point)
 end
+
+# End of algorithm implementations

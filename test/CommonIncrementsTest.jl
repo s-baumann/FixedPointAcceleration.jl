@@ -19,7 +19,7 @@ using Test
     fp_anderson = fixed_point(
         funcfunc,
         Inputs;
-        Algorithm=:Anderson,
+        Anderson(),
         PrintReports=false,
         ReplaceInvalids=:ReplaceElements,
     )
@@ -27,7 +27,7 @@ using Test
     fp_aitken = fixed_point(
         funcfunc,
         Inputs;
-        Algorithm=:Aitken,
+        Aitken(),
         PrintReports=false,
         ReplaceInvalids=:ReplaceElements,
     )
@@ -35,7 +35,7 @@ using Test
     fp_newton = fixed_point(
         funcfunc,
         Inputs;
-        Algorithm=:Newton,
+        Newton(),
         PrintReports=false,
         ReplaceInvalids=:ReplaceElements,
     )
@@ -43,7 +43,7 @@ using Test
     fp_simple = fixed_point(
         funcfunc,
         Inputs;
-        Algorithm=:Simple,
+        Simple(),
         PrintReports=false,
         ReplaceInvalids=:ReplaceElements,
         ReportingSigFig=Integer(10),
@@ -52,7 +52,7 @@ using Test
     fp_SEA = fixed_point(
         funcfunc,
         Inputs;
-        Algorithm=:SEA,
+        SEA(),
         PrintReports=false,
         ReplaceInvalids=:ReplaceElements,
     )
@@ -60,7 +60,7 @@ using Test
     fp_VEA = fixed_point(
         funcfunc,
         Inputs;
-        Algorithm=:VEA,
+        VEA(),
         PrintReports=false,
         ReplaceInvalids=:ReplaceElements,
     )
@@ -68,7 +68,7 @@ using Test
     fp_RRE = fixed_point(
         funcfunc,
         Inputs;
-        Algorithm=:RRE,
+        RRE(),
         PrintReports=false,
         ReplaceInvalids=:ReplaceElements,
     )
@@ -76,7 +76,7 @@ using Test
     fp_MPE = fixed_point(
         funcfunc,
         Inputs;
-        Algorithm=:MPE,
+        MPE(),
         PrintReports=false,
         ReplaceInvalids=:ReplaceElements,
     )
