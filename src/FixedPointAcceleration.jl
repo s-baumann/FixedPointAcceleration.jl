@@ -3,7 +3,8 @@ using LinearAlgebra: cond, pinv
 using GLM: fit, LinearModel
 using Dates: now
 
-include("types.jl")
+include("options.jl")
+include("results.jl")
 include("function_execution.jl")
 include("utilities.jl")
 

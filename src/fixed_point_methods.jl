@@ -1,3 +1,12 @@
+mutable struct _IterationState{T,C}
+    inputs::Matrix{T}
+    outputs::Matrix{T}
+    convergence_vector::Vector{C}
+    simple_start_index::Int
+    other_output_val::Any
+    max_iterations::Int
+end
+
 """
     fixed_point(func, initial_guess, algorithm, options::FixedPointOptions = default_options())
 
@@ -100,19 +109,15 @@ function fixed_point(
     _maybe_report_initial(
         options, algorithm, length(convergence_vector), convergence_vector[end]
     )
-    result, _, _, _ = _iteration_loop!(
-        func,
+    state = _IterationState(
         inputs_mat,
         outputs_mat,
-        algorithm,
-        options,
         convergence_vector,
         simple_start_index,
-        output_type,
         other_output_val,
         max_iterations,
     )
-    return result
+    return _iteration_loop!(func, algorithm, options, state)
 end
 
 # === Refactored internal pipeline ===
@@ -227,22 +232,13 @@ function _maybe_report_initial(
 end
 
 function _iteration_loop!(
-    func::Function,
-    inputs_mat::Matrix{T},
-    outputs_mat::Matrix{T},
-    algorithm::FixedPointAlgorithm,
-    options::FixedPointOptions,
-    convergence_vector::Vector{<:Real},
-    simple_start_index::Int,
-    output_type,
-    other_output_val,
-    max_iterations::Int,
-) where {T<:Number}
-    convergence = convergence_vector[end]
-    iteration = length(convergence_vector) + 1
-    while convergence > options.convergence.threshold && iteration <= max_iterations
+    func::Function, algorithm::FixedPointAlgorithm, options::FixedPointOptions, state::_IterationState
+)
+    convergence = state.convergence_vector[end]
+    iteration = length(state.convergence_vector) + 1
+    while convergence > options.convergence.threshold && iteration <= state.max_iterations
         new_input = fixed_point_new_input(
-            inputs_mat, outputs_mat, algorithm, options, simple_start_index
+            state.inputs, state.outputs, algorithm, options, state.simple_start_index
         )
         if options.reporting.print_reports && !isa(algorithm, Anderson)
             print(lpad("", 42))
@@ -251,25 +247,23 @@ function _iteration_loop!(
             func, new_input; type_check=true, quiet_errors=options.stability.quiet_errors
         )
         if executed_func.error != :NoError
-            return (
-                FixedPointResults(
-                    inputs_mat,
-                    outputs_mat,
-                    :InvalidInputOrOutputOfIteration;
-                    convergence_vector=convergence_vector,
-                    failed_evaluation=executed_func,
-                    other_output_val=executed_func.other_output,
-                ),
-                inputs_mat,
-                outputs_mat,
-                other_output_val,
+            return FixedPointResults(
+                state.inputs,
+                state.outputs,
+                :InvalidInputOrOutputOfIteration;
+                convergence_vector=state.convergence_vector,
+                failed_evaluation=executed_func,
+                other_output_val=executed_func.other_output,
             )
         end
-        other_output_val = executed_func.other_output
-        inputs_mat = hcat(inputs_mat, executed_func.input)
-        outputs_mat = hcat(outputs_mat, convert(Vector{output_type}, executed_func.output))
+        state.other_output_val = executed_func.other_output
+        state.inputs = hcat(state.inputs, executed_func.input)
+        col_type = eltype(state.inputs)
+        state.outputs = hcat(
+            state.outputs, convert(Vector{col_type}, executed_func.output)
+        )
         convergence = options.convergence.metric(executed_func.input, executed_func.output)
-        push!(convergence_vector, convergence)
+        push!(state.convergence_vector, convergence)
         if options.reporting.print_reports
             println(
                 "Algorithm: ",
@@ -287,21 +281,12 @@ function _iteration_loop!(
         end
         iteration += 1
     end
-    final_status = if convergence < options.convergence.threshold
-        :ReachedConvergenceThreshold
-    else
-        :ReachedMaxIter
-    end
-    return (
-        FixedPointResults(
-            inputs_mat,
-            outputs_mat,
-            final_status;
-            convergence_vector=convergence_vector,
-            other_output_val=other_output_val,
-        ),
-        inputs_mat,
-        outputs_mat,
-        other_output_val,
+    final_status = convergence < options.convergence.threshold ? :ReachedConvergenceThreshold : :ReachedMaxIter
+    return FixedPointResults(
+        state.inputs,
+        state.outputs,
+        final_status;
+        convergence_vector=state.convergence_vector,
+        other_output_val=state.other_output_val,
     )
 end
