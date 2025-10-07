@@ -77,7 +77,7 @@ function execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool
             return FunctionEvaluationResult(x, tf_result, :OutputInfsDetected          , side_effect_to_report)
         end
     end
-    
+
     if (length(tf_result) != length(x))
         return FunctionEvaluationResult(x, tf_result, :LengthOfOutputNotSameAsInput, side_effect_to_report)
     elseif type_check & (!isa(tf_result[1], T))

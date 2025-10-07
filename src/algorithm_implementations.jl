@@ -142,13 +142,13 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
     end
     # Now the replacement strategies - handle complex numbers properly
     if eltype(proposed_input) <: Complex
-        dodgy_entries = (isnan.(real.(proposed_input)) .| isnan.(imag.(proposed_input))) .| 
-                       ismissing.(proposed_input) .| 
+        dodgy_entries = (isnan.(real.(proposed_input)) .| isnan.(imag.(proposed_input))) .|
+                       ismissing.(proposed_input) .|
                        (isinf.(real.(proposed_input)) .| isinf.(imag.(proposed_input)))
     else
         dodgy_entries = isnan.(proposed_input) .| ismissing.(proposed_input) .| isinf.(proposed_input)
     end
-    
+
     if sum(dodgy_entries) != 0
         if ReplaceInvalids == :ReplaceElements
             proposed_input[dodgy_entries] = simple_iterate[dodgy_entries]
