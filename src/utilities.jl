@@ -7,19 +7,29 @@ This function takes the previous inputs and outputs and assembles a matrix with 
 ### Returns
  * A matrix of inputs and outputs excluding jumps.
 """
-function put_together_without_jumps(Inputs::AbstractArray{T,2}, Outputs::AbstractArray{T,2}, AgreementThreshold::Float64 = 1e-10) where T<:Number
-  if (any(size(Inputs) != size(Outputs))) error("Inputs and Outputs matrices are not comformable.") end
-  size_of_dims = size(Inputs)
+function put_together_without_jumps(
+    Inputs::AbstractArray{T,2},
+    Outputs::AbstractArray{T,2},
+    AgreementThreshold::Float64=1e-10,
+) where {T<:Number}
+    if (any(size(Inputs) != size(Outputs)))
+        error("Inputs and Outputs matrices are not comformable.")
+    end
+    size_of_dims = size(Inputs)
 
-  if (size_of_dims[2] == 1) return(hcat(Inputs, Outputs)) end
-  Difference = (Inputs[:,2:(size_of_dims[2])] .- Outputs[:,1:(size_of_dims[2]-1)])
-  Sum_Of_Differences = sum(Difference, dims = 1)[1,:]
-  Agreements = abs.(Sum_Of_Differences) .< AgreementThreshold
-  if (all(Agreements))
-      return hcat(Inputs[:,1:(size_of_dims[2])], Outputs[:, size_of_dims[2]])
-  else
-      LocationsOfBreaks = findall(Agreements .== false)
-      LastBreak = LocationsOfBreaks[length(LocationsOfBreaks)]
-      return hcat(Inputs[:,(LastBreak+1):(size_of_dims[2])] , Outputs[:, size_of_dims[2]])
-  end
+    if (size_of_dims[2] == 1)
+        return (hcat(Inputs, Outputs))
+    end
+    Difference = (Inputs[:, 2:(size_of_dims[2])] .- Outputs[:, 1:(size_of_dims[2] - 1)])
+    Sum_Of_Differences = sum(Difference; dims=1)[1, :]
+    Agreements = abs.(Sum_Of_Differences) .< AgreementThreshold
+    if (all(Agreements))
+        return hcat(Inputs[:, 1:(size_of_dims[2])], Outputs[:, size_of_dims[2]])
+    else
+        LocationsOfBreaks = findall(Agreements .== false)
+        LastBreak = LocationsOfBreaks[length(LocationsOfBreaks)]
+        return hcat(
+            Inputs[:, (LastBreak + 1):(size_of_dims[2])], Outputs[:, size_of_dims[2]]
+        )
+    end
 end

@@ -25,30 +25,42 @@ This function takes the previous inputs and outputs from the fixed_point functio
     NewGuessMPE = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :MPE)
     NewGuessAitken = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :Aitken)
 """
-function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArray{T,2}, Algorithm::Symbol = :Anderson;
-                               MaxM::Integer = 10, SimpleStartIndex::Integer = 1, ExtrapolationPeriod::Integer = 1, Dampening::S = 1.0, Dampening_With_Input::Bool = false,
-                               ConditionNumberThreshold::R = 1000.0, PrintReports::Bool = false, ReplaceInvalids::Symbol = :NoAction) where R<:Real where S<:Number where T<:Number
+function fixed_point_new_input(
+    Inputs::AbstractArray{T,2},
+    Outputs::AbstractArray{T,2},
+    Algorithm::Symbol=:Anderson;
+    MaxM::Integer=10,
+    SimpleStartIndex::Integer=1,
+    ExtrapolationPeriod::Integer=1,
+    Dampening::S=1.0,
+    Dampening_With_Input::Bool=false,
+    ConditionNumberThreshold::R=1000.0,
+    PrintReports::Bool=false,
+    ReplaceInvalids::Symbol=:NoAction,
+) where {R<:Real} where {S<:Number} where {T<:Number}
     CompletedIters = size(Outputs)[2]
-    simple_iterate = Outputs[:,CompletedIters]
+    simple_iterate = Outputs[:, CompletedIters]
     proposed_input = repeat([NaN], size(simple_iterate)[1])
     if Algorithm == :Simple
-         proposed_input = simple_iterate
+        proposed_input = simple_iterate
     elseif Algorithm == :Anderson
         if CompletedIters < 2
-            if (PrintReports) print("                           Used:",  lpad(0, 3)," lags. ") end
+            if (PrintReports)
+                print("                           Used:", lpad(0, 3), " lags. ")
+            end
             proposed_input = simple_iterate
         else
-            VectorLength   = size(Outputs)[1]
-            M = min(MaxM-1,CompletedIters-1,VectorLength)
+            VectorLength = size(Outputs)[1]
+            M = min(MaxM-1, CompletedIters-1, VectorLength)
 
-            recent_Outputs  = Outputs[:, (CompletedIters-M):CompletedIters]
-            recent_Inputs   = Inputs[ :, (CompletedIters-M):CompletedIters]
-            Resid           = recent_Outputs .-  recent_Inputs
-            DeltaOutputs    = recent_Outputs[:,2:(M+1)] .- recent_Outputs[:,1:M]
-            DeltaResids     = Resid[:,2:(M+1)]   .- Resid[:,1:M]
-            LastResid       = Resid[:,M+1]
-            LastOutput      = recent_Outputs[:,M+1]
-            Coeffs          = repeat([NaN], size(DeltaOutputs)[2])
+            recent_Outputs = Outputs[:, (CompletedIters - M):CompletedIters]
+            recent_Inputs = Inputs[:, (CompletedIters - M):CompletedIters]
+            Resid = recent_Outputs .- recent_Inputs
+            DeltaOutputs = recent_Outputs[:, 2:(M + 1)] .- recent_Outputs[:, 1:M]
+            DeltaResids = Resid[:, 2:(M + 1)] .- Resid[:, 1:M]
+            LastResid = Resid[:, M + 1]
+            LastOutput = recent_Outputs[:, M + 1]
+            Coeffs = repeat([NaN], size(DeltaOutputs)[2])
             ConditionNumber = NaN
             while any(isnan.(Coeffs))
                 if isempty(DeltaResids)
@@ -59,34 +71,52 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
                 ConditionNumber = cond(DeltaResids)
                 if ConditionNumber > ConditionNumberThreshold
                     M = M-1
-                    DeltaOutputs= DeltaOutputs[:, 2:(M+1)]
-                    DeltaResids = DeltaResids[ :, 2:(M+1)]
-                    Coeffs      = repeat([NaN], size(DeltaOutputs)[2])
+                    DeltaOutputs = DeltaOutputs[:, 2:(M + 1)]
+                    DeltaResids = DeltaResids[:, 2:(M + 1)]
+                    Coeffs = repeat([NaN], size(DeltaOutputs)[2])
                     continue
                 end
                 # Handle complex numbers by using pinv instead of GLM.fit
                 if eltype(DeltaResids) <: Complex
                     Coeffs = pinv(DeltaResids) * LastResid
                 else
-                    Fit = fit(LinearModel,  hcat(DeltaResids), LastResid)
+                    Fit = fit(LinearModel, hcat(DeltaResids), LastResid)
                     Coeffs = Fit.pp.beta0
                 end
                 if any(isnan.(Coeffs))
                     M = M-1
                     if (M < 1.5)
                         # This happens occasionally in test cases where the iteration is very close to a fixed point.
-                        if (PrintReports) print("                          Used:",  lpad(0, 3)," lags. ") end
+                        if (PrintReports)
+                            print("                          Used:", lpad(0, 3), " lags. ")
+                        end
                         break
                     end
-                    DeltaOutputs = DeltaOutputs[:, 2:(M+1)]
-                    DeltaResids  = DeltaResids[ :, 2:(M+1)]
+                    DeltaOutputs = DeltaOutputs[:, 2:(M + 1)]
+                    DeltaResids = DeltaResids[:, 2:(M + 1)]
                 end
             end
             if isempty(Coeffs)
-                if (PrintReports) print("Condition number is ", lpad("NaN", 5),". Used:",  lpad(0, 3)," lags. ") end
+                if (PrintReports)
+                    print(
+                        "Condition number is ",
+                        lpad("NaN", 5),
+                        ". Used:",
+                        lpad(0, 3),
+                        " lags. ",
+                    )
+                end
                 proposed_input = repeat([NaN], VectorLength)
             else
-                if (PrintReports) print("Condition number is ", lpad(round(ConditionNumber, sigdigits = 2), 5),". Used:",  lpad(M+1, 3)," lags. ") end
+                if (PrintReports)
+                    print(
+                        "Condition number is ",
+                        lpad(round(ConditionNumber; sigdigits=2), 5),
+                        ". Used:",
+                        lpad(M+1, 3),
+                        " lags. ",
+                    )
+                end
                 proposed_input = LastOutput .- (Dampening .* vec(DeltaOutputs * Coeffs))
             end
         end
@@ -94,11 +124,11 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
         if ((CompletedIters + SimpleStartIndex) % 3) == 0
             # If we are in 3rd, 6th, 9th, 12th iterate from when we started Acceleration then we want to do a jumped Iterate,
             # First we extract the guess that started this run of 3 iterates (x), the Function applied to it (fx) and the function applied to that (ffx)
-            x = Inputs[: ,(CompletedIters -1)]
-            fx = Outputs[:,(CompletedIters -1)]
-            ffx = Outputs[:,CompletedIters]
+            x = Inputs[:, (CompletedIters - 1)]
+            fx = Outputs[:, (CompletedIters - 1)]
+            ffx = Outputs[:, CompletedIters]
             # Now using the appropriate formula to make a new guess. Note that if a vector is input here it is used elementwise.
-            proposed_input = x .- ((fx .- x).^2 ./ (ffx .- 2 .* fx .+ x))
+            proposed_input = x .- ((fx .- x) .^ 2 ./ (ffx .- 2 .* fx .+ x))
         else
             # We just do a simple iterate. We do an attempt with the latest iterate.
             proposed_input = simple_iterate
@@ -107,16 +137,16 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
         if ((CompletedIters + SimpleStartIndex) % 2 == 1) & (CompletedIters > 1)
             # If we are in 3rd, 6th, 9th, 12th iterate from when we started Newton Acceleration then we want to do a Newton Iterate,
             # First we extract the guess that started this run of 3 iterates (x), the Function applied to it (fx) and the function applied to that (ffx)
-            xk1  = Inputs[ :,(CompletedIters-1)]
-            fxk1 = Outputs[:,(CompletedIters-1)]
+            xk1 = Inputs[:, (CompletedIters - 1)]
+            fxk1 = Outputs[:, (CompletedIters - 1)]
             gxk1 = fxk1 .- xk1
-            xk   = Inputs[ :,CompletedIters]
-            fxk  = Outputs[:,CompletedIters]
-            gxk  = fxk .- xk
+            xk = Inputs[:, CompletedIters]
+            fxk = Outputs[:, CompletedIters]
+            gxk = fxk .- xk
             #ffx = Outputs[,CompletedIters ]
             # Now using the appropriate formula to make a new guess. Note that if a vector is input here it is used elementwise.
-            derivative = (gxk.-gxk1)./(xk .- xk1)
-            proposed_input   = xk .- (gxk./derivative)
+            derivative = (gxk .- gxk1) ./ (xk .- xk1)
+            proposed_input = xk .- (gxk ./ derivative)
         else
             # We just do a simple iterate.
             proposed_input = simple_iterate
@@ -124,7 +154,7 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
     elseif (Algorithm == :MPE) | (Algorithm == :RRE)
         SimpleIteratesMatrix = put_together_without_jumps(Inputs, Outputs)
         if (size(SimpleIteratesMatrix)[2] % ExtrapolationPeriod == 0)
-            proposed_input = PolynomialExtrapolation(SimpleIteratesMatrix,Algorithm)
+            proposed_input = PolynomialExtrapolation(SimpleIteratesMatrix, Algorithm)
         else
             # We just do a simple iterate.
             proposed_input = simple_iterate
@@ -138,15 +168,19 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
             proposed_input = simple_iterate
         end
     else
-        error("The algorithm you tried to input is not valid. Choose from :Simple, :Anderson, :Aitken, :Newton, :MPE, :RRE, :VEA or :SEA. Note capitalisation must match.")
+        error(
+            "The algorithm you tried to input is not valid. Choose from :Simple, :Anderson, :Aitken, :Newton, :MPE, :RRE, :VEA or :SEA. Note capitalisation must match.",
+        )
     end
     # Now the replacement strategies - handle complex numbers properly
     if eltype(proposed_input) <: Complex
-        dodgy_entries = (isnan.(real.(proposed_input)) .| isnan.(imag.(proposed_input))) .|
-                       ismissing.(proposed_input) .|
-                       (isinf.(real.(proposed_input)) .| isinf.(imag.(proposed_input)))
+        dodgy_entries =
+            (isnan.(real.(proposed_input)) .| isnan.(imag.(proposed_input))) .|
+            ismissing.(proposed_input) .|
+            (isinf.(real.(proposed_input)) .| isinf.(imag.(proposed_input)))
     else
-        dodgy_entries = isnan.(proposed_input) .| ismissing.(proposed_input) .| isinf.(proposed_input)
+        dodgy_entries =
+            isnan.(proposed_input) .| ismissing.(proposed_input) .| isinf.(proposed_input)
     end
 
     if sum(dodgy_entries) != 0
@@ -156,5 +190,6 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
             proposed_input = simple_iterate
         end
     end
-    return @. (Dampening .* proposed_input) .+ ((1-Dampening) .* (Dampening_With_Input ? Inputs[:,end] : simple_iterate))
+    return @. (Dampening .* proposed_input) .+
+        ((1-Dampening) .* (Dampening_With_Input ? Inputs[:, end] : simple_iterate))
 end

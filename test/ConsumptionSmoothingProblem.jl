@@ -1,5 +1,5 @@
 using Test
-    @testset "Test Consumption Smoothing" begin
+@testset "Test Consumption Smoothing" begin
     using SchumakerSpline
     using HCubature
     using Distributions
@@ -11,17 +11,34 @@ using Test
     periodic_income = 1.0
     shock_var = 1.0
     shock_process = LogNormal(0.0, shock_var)
-    BudgetStateSpace = vcat( collect(0:0.015:periodic_income), collect(1.05:0.05:(3*periodic_income)))
+    BudgetStateSpace = vcat(
+        collect(0:0.015:periodic_income), collect(1.05:0.05:(3 * periodic_income))
+    )
     InitialGuess = sqrt.(BudgetStateSpace)
 
-    function ValueGivenShock(Budget::Float64, epsilon::Float64, NextValueFunction::Schumaker)
-        opt = optimize(x ->  -1.0*(epsilon*(x^delta) + beta*evaluate(NextValueFunction, Budget - x + periodic_income)), 0.0, Budget)
+    function ValueGivenShock(
+        Budget::Float64, epsilon::Float64, NextValueFunction::Schumaker
+    )
+        opt = optimize(
+            x ->
+                -1.0*(
+                    epsilon*(x^delta) +
+                    beta*evaluate(NextValueFunction, Budget - x + periodic_income)
+                ),
+            0.0,
+            Budget,
+        )
         return -1.0 * opt.minimum
     end
 
     function ExpectedUtility(Budget::Float64, NextValueFunction::Schumaker)
         if Budget > 0.00001
-            integ = hcubature(epsilon-> ValueGivenShock(Budget, epsilon[1], NextValueFunction)* pdf(shock_process, epsilon[1]), [quantile(shock_process,0.0001)], [quantile(shock_process, 0.9999)])
+            integ = hcubature(
+                epsilon->ValueGivenShock(Budget, epsilon[1], NextValueFunction) *
+                         pdf(shock_process, epsilon[1]),
+                [quantile(shock_process, 0.0001)],
+                [quantile(shock_process, 0.9999)],
+            )
             return integ[1]
         else
             return beta * evaluate(NextValueFunction, periodic_income)
@@ -47,7 +64,9 @@ using Test
         end
     end
 
-    function invert_new_point(level::Real, previous_level::Real, previous_stepp::Real, previous_max_grad::Real)
+    function invert_new_point(
+        level::Real, previous_level::Real, previous_stepp::Real, previous_max_grad::Real
+    )
         rise = level - previous_level
         if isinf(previous_max_grad)
             return log(rise)
@@ -60,13 +79,22 @@ using Test
     function ShapeToBud(ShapeVec)
         lenlen = length(ShapeVec)
         BudgetValues = Array{Float64,1}(undef, lenlen)
-        if lenlen > 0 BudgetValues[1] = ShapeVec[1] end
-        if lenlen > 1 BudgetValues[2] = new_point(BudgetValues[1], 1.0,Inf,ShapeVec[2]) end
+        if lenlen > 0
+            BudgetValues[1] = ShapeVec[1]
+        end
+        if lenlen > 1
+            BudgetValues[2] = new_point(BudgetValues[1], 1.0, Inf, ShapeVec[2])
+        end
         if lenlen > 2
             for i in 3:lenlen
-                stepp = BudgetStateSpace[i] - BudgetStateSpace[i-1]
-                previous_grad = (BudgetValues[i-1]-BudgetValues[i-2])/(BudgetStateSpace[i-1] - BudgetStateSpace[i-2])
-                BudgetValues[i] = new_point(BudgetValues[i-1], stepp, previous_grad, ShapeVec[i])
+                stepp = BudgetStateSpace[i] - BudgetStateSpace[i - 1]
+                previous_grad =
+                    (
+                        BudgetValues[i - 1]-BudgetValues[i - 2]
+                    )/(BudgetStateSpace[i - 1] - BudgetStateSpace[i - 2])
+                BudgetValues[i] = new_point(
+                    BudgetValues[i - 1], stepp, previous_grad, ShapeVec[i]
+                )
             end
         end
         return BudgetValues
@@ -75,13 +103,22 @@ using Test
     function BudToShape(BudgetValues)
         lenlen = length(BudgetValues)
         new_shape_vec = Array{Float64,1}(undef, lenlen)
-        if lenlen > 0 new_shape_vec[1] = BudgetValues[1] end
-        if lenlen > 1 new_shape_vec[2] = invert_new_point(BudgetValues[2],BudgetValues[1], 1.0,Inf) end
+        if lenlen > 0
+            new_shape_vec[1] = BudgetValues[1]
+        end
+        if lenlen > 1
+            new_shape_vec[2] = invert_new_point(BudgetValues[2], BudgetValues[1], 1.0, Inf)
+        end
         if lenlen > 2
             for i in 3:lenlen
-                stepp = BudgetStateSpace[i] - BudgetStateSpace[i-1]
-                previous_grad = (BudgetValues[i-1]-BudgetValues[i-2])/(BudgetStateSpace[i-1] - BudgetStateSpace[i-2])
-                new_shape_vec[i] = invert_new_point(BudgetValues[i],BudgetValues[i-1], stepp, previous_grad)
+                stepp = BudgetStateSpace[i] - BudgetStateSpace[i - 1]
+                previous_grad =
+                    (
+                        BudgetValues[i - 1]-BudgetValues[i - 2]
+                    )/(BudgetStateSpace[i - 1] - BudgetStateSpace[i - 2])
+                new_shape_vec[i] = invert_new_point(
+                    BudgetValues[i], BudgetValues[i - 1], stepp, previous_grad
+                )
             end
         end
         return new_shape_vec
@@ -98,25 +135,69 @@ using Test
     end
 
     # Testing that the conversions work properly.
-    fp = fixed_point(OneIterateBudgetValues, InitialGuess; PrintReports = true, MaxIter = Integer(1))
+    fp = fixed_point(
+        OneIterateBudgetValues, InitialGuess; PrintReports=true, MaxIter=Integer(1)
+    )
     shape_guess = BudToShape(InitialGuess)
-    fp_reparam = fixed_point(Reparameterised_FP_Vector, shape_guess; PrintReports = true, MaxIter = Integer(1), ConvergenceMetric = shapeconvergence)
-    iterated = ShapeToBud(fp_reparam.Outputs_[:,1])
-    @test sum(abs.(fp.Outputs_[:,1] .- iterated) .> 1e-10)  == 0
+    fp_reparam = fixed_point(
+        Reparameterised_FP_Vector,
+        shape_guess;
+        PrintReports=true,
+        MaxIter=Integer(1),
+        ConvergenceMetric=shapeconvergence,
+    )
+    iterated = ShapeToBud(fp_reparam.Outputs_[:, 1])
+    @test sum(abs.(fp.Outputs_[:, 1] .- iterated) .> 1e-10) == 0
 
     # fixed point acceleration with the reparameterised version.
-    fp = fixed_point(OneIterateBudgetValues, InitialGuess; PrintReports = true, ConvergenceMetricThreshold = 1e-06)
+    fp = fixed_point(
+        OneIterateBudgetValues,
+        InitialGuess;
+        PrintReports=true,
+        ConvergenceMetricThreshold=1e-06,
+    )
     fpfp = fp.FixedPoint_
-    fp_ander = fixed_point(Reparameterised_FP_Vector, shape_guess; PrintReports = true, ReportingSigFig = Integer(10), ConvergenceMetricThreshold = 1e-06, ConvergenceMetric = shapeconvergence)
+    fp_ander = fixed_point(
+        Reparameterised_FP_Vector,
+        shape_guess;
+        PrintReports=true,
+        ReportingSigFig=Integer(10),
+        ConvergenceMetricThreshold=1e-06,
+        ConvergenceMetric=shapeconvergence,
+    )
     iterated = ShapeToBud(fp_ander.FixedPoint_)
-    @test sum(abs.(fpfp .- iterated) .> 1e-4)  == 0
-    fp_aitken = fixed_point(Reparameterised_FP_Vector, shape_guess; PrintReports = true, ReportingSigFig = Integer(10), ConvergenceMetricThreshold = 1e-06, Algorithm = Aitken, ConvergenceMetric = shapeconvergence)
+    @test sum(abs.(fpfp .- iterated) .> 1e-4) == 0
+    fp_aitken = fixed_point(
+        Reparameterised_FP_Vector,
+        shape_guess;
+        PrintReports=true,
+        ReportingSigFig=Integer(10),
+        ConvergenceMetricThreshold=1e-06,
+        Algorithm=Aitken,
+        ConvergenceMetric=shapeconvergence,
+    )
     iterated = ShapeToBud(fp_aitken.FixedPoint_)
-    @test sum(abs.(fpfp .- iterated) .> 1e-4)  == 0
-    fp_newton = fixed_point(Reparameterised_FP_Vector, shape_guess; PrintReports = true, ReportingSigFig = Integer(10), ConvergenceMetricThreshold = 1e-06, Algorithm = FixedPointAcceleration.Newton, ConvergenceMetric = shapeconvergence)
+    @test sum(abs.(fpfp .- iterated) .> 1e-4) == 0
+    fp_newton = fixed_point(
+        Reparameterised_FP_Vector,
+        shape_guess;
+        PrintReports=true,
+        ReportingSigFig=Integer(10),
+        ConvergenceMetricThreshold=1e-06,
+        Algorithm=FixedPointAcceleration.Newton,
+        ConvergenceMetric=shapeconvergence,
+    )
     iterated = ShapeToBud(fp_newton.FixedPoint_)
-    @test sum(abs.(fpfp .- iterated) .> 1e-4)  == 0
-    fp_sea = fixed_point(Reparameterised_FP_Vector, shape_guess; PrintReports = true, ReportingSigFig = Integer(10), ConvergenceMetricThreshold = 1e-06, Algorithm = SEA,  ConvergenceMetric = shapeconvergence)
+    @test sum(abs.(fpfp .- iterated) .> 1e-4) == 0
+    fp_sea = fixed_point(
+        Reparameterised_FP_Vector,
+        shape_guess;
+        PrintReports=true,
+        ReportingSigFig=Integer(10),
+        ConvergenceMetricThreshold=1e-06,
+        Algorithm=SEA,
+        ConvergenceMetric=shapeconvergence,
+    )
     iterated = ShapeToBud(fp_sea.FixedPoint_)
-    @test sum(abs.(fpfp .- iterated) .> 1e-4)  == 0
+    @test sum(abs.(fpfp .- iterated) .> 1e-4) == 0
 end

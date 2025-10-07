@@ -15,21 +15,70 @@ using Test
         output[2] = x[2] + (2.3-x[2])/2.0
         return output
     end
-    Inputs = [19.0,10.0]
-    fp_anderson = fixed_point(funcfunc, Inputs; Algorithm = :Anderson, PrintReports = false, ReplaceInvalids = :ReplaceElements)
+    Inputs = [19.0, 10.0]
+    fp_anderson = fixed_point(
+        funcfunc,
+        Inputs;
+        Algorithm=:Anderson,
+        PrintReports=false,
+        ReplaceInvalids=:ReplaceElements,
+    )
     @test fp_anderson.TerminationCondition_ == :ReachedConvergenceThreshold
-    fp_aitken = fixed_point(funcfunc, Inputs; Algorithm = :Aitken, PrintReports = false, ReplaceInvalids = :ReplaceElements)
+    fp_aitken = fixed_point(
+        funcfunc,
+        Inputs;
+        Algorithm=:Aitken,
+        PrintReports=false,
+        ReplaceInvalids=:ReplaceElements,
+    )
     @test fp_aitken.TerminationCondition_ == :ReachedConvergenceThreshold
-    fp_newton = fixed_point(funcfunc, Inputs; Algorithm = :Newton, PrintReports = false, ReplaceInvalids = :ReplaceElements)
+    fp_newton = fixed_point(
+        funcfunc,
+        Inputs;
+        Algorithm=:Newton,
+        PrintReports=false,
+        ReplaceInvalids=:ReplaceElements,
+    )
     @test fp_newton.TerminationCondition_ == :ReachedConvergenceThreshold
-    fp_simple = fixed_point(funcfunc, Inputs; Algorithm = :Simple, PrintReports = false, ReplaceInvalids = :ReplaceElements, ReportingSigFig =  Integer(10))
+    fp_simple = fixed_point(
+        funcfunc,
+        Inputs;
+        Algorithm=:Simple,
+        PrintReports=false,
+        ReplaceInvalids=:ReplaceElements,
+        ReportingSigFig=Integer(10),
+    )
     @test fp_simple.TerminationCondition_ == :ReachedConvergenceThreshold
-    fp_SEA = fixed_point(funcfunc, Inputs; Algorithm = :SEA, PrintReports = false, ReplaceInvalids = :ReplaceElements)
+    fp_SEA = fixed_point(
+        funcfunc,
+        Inputs;
+        Algorithm=:SEA,
+        PrintReports=false,
+        ReplaceInvalids=:ReplaceElements,
+    )
     @test fp_SEA.TerminationCondition_ == :ReachedConvergenceThreshold
-    fp_VEA = fixed_point(funcfunc, Inputs; Algorithm = :VEA, PrintReports = false, ReplaceInvalids = :ReplaceElements)
+    fp_VEA = fixed_point(
+        funcfunc,
+        Inputs;
+        Algorithm=:VEA,
+        PrintReports=false,
+        ReplaceInvalids=:ReplaceElements,
+    )
     @test fp_VEA.TerminationCondition_ == :ReachedConvergenceThreshold
-    fp_RRE = fixed_point(funcfunc, Inputs; Algorithm = :RRE, PrintReports = false, ReplaceInvalids = :ReplaceElements)
+    fp_RRE = fixed_point(
+        funcfunc,
+        Inputs;
+        Algorithm=:RRE,
+        PrintReports=false,
+        ReplaceInvalids=:ReplaceElements,
+    )
     @test fp_RRE.TerminationCondition_ == :ReachedMaxIter # This one fails because it keeps proposing bad ideas.
-    fp_MPE = fixed_point(funcfunc, Inputs; Algorithm = :MPE, PrintReports = false, ReplaceInvalids = :ReplaceElements)
+    fp_MPE = fixed_point(
+        funcfunc,
+        Inputs;
+        Algorithm=:MPE,
+        PrintReports=false,
+        ReplaceInvalids=:ReplaceElements,
+    )
     @test fp_MPE.TerminationCondition_ == :ReachedConvergenceThreshold
 end

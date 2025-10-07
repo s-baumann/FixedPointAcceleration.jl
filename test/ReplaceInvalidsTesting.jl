@@ -15,16 +15,16 @@ using Test
         output[2] = x[2] + (2.3-x[2])/2.0
         return output
     end
-    Inputs = [19.0,10.0]
-    fp = fixed_point(funcfunc, Inputs; Algorithm = :Aitken)
+    Inputs = [19.0, 10.0]
+    fp = fixed_point(funcfunc, Inputs; Algorithm=:Aitken)
     @test fp.FailedEvaluation_.Error_ == :InputInfsDetected
     @test fp.FailedEvaluation_.Input_[1] == -Inf
     @test !isinf(fp.FailedEvaluation_.Input_[2])
     # Now fixing with replace element
-    fp = fixed_point(funcfunc, Inputs; Algorithm = :Aitken, ReplaceInvalids = :ReplaceElements)
+    fp = fixed_point(funcfunc, Inputs; Algorithm=:Aitken, ReplaceInvalids=:ReplaceElements)
     @test fp.TerminationCondition_ == :ReachedConvergenceThreshold
     # Now fixing with replace element
-    fp2 = fixed_point(funcfunc, Inputs; Algorithm = :Aitken, ReplaceInvalids = :ReplaceVector)
+    fp2 = fixed_point(funcfunc, Inputs; Algorithm=:Aitken, ReplaceInvalids=:ReplaceVector)
     @test fp2.TerminationCondition_ == :ReachedConvergenceThreshold
     @test fp.Iterations_ != fp2.Iterations_
 end
