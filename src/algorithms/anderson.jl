@@ -40,7 +40,6 @@ get_extrapolation_period(::Anderson) = 1
 is_polynomial_method(::Anderson) = false
 is_epsilon_method(::Anderson) = false
 
-
 # Algorithm implementation
 """
 Compute the next input using Anderson acceleration.

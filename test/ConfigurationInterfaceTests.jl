@@ -33,10 +33,7 @@ using Test
 
         # Test custom configuration
         custom_opts = FixedPointOptions(
-            threshold = 1e-8,
-            max_iterations = 50,
-            dampening = 0.8,
-            print_reports = false
+            threshold=1e-8, max_iterations=50, dampening=0.8, print_reports=false
         )
         @test custom_opts.convergence.threshold == 1e-8
         @test custom_opts.convergence.max_iterations == 50
@@ -48,24 +45,24 @@ using Test
         # Test new interface with default options
         result1 = fixed_point(g, [0.3, 0.9], Anderson(), default_options())
         @test result1 isa FixedPointResults
-        @test !ismissing(result1.FixedPoint_)
-        @test result1.TerminationCondition_ == :ReachedConvergenceThreshold
+        @test !ismissing(result1.fixed_point)
+        @test result1.termination_condition == :ReachedConvergenceThreshold
 
         # Test with preset options
         result2 = fixed_point(g, [0.3, 0.9], Anderson(), robust_options())
         @test result2 isa FixedPointResults
-        @test !ismissing(result2.FixedPoint_)
+        @test !ismissing(result2.fixed_point)
 
         # Test with custom options
         custom_opts = FixedPointOptions(threshold=1e-8, max_iterations=30)
         result3 = fixed_point(g, [0.3, 0.9], Anderson(), custom_opts)
         @test result3 isa FixedPointResults
-        @test result3.Iterations_ <= 30  # Should respect max_iterations
+        @test result3.iterations <= 30  # Should respect max_iterations
 
         # Test continuing from previous results
         result4 = fixed_point(g, result1, Simple(), robust_options())
         @test result4 isa FixedPointResults
-        @test result4.Iterations_ >= result1.Iterations_  # Should have more iterations
+        @test result4.iterations >= result1.iterations  # Should have more iterations
     end
 
     @testset "Backward Compatibility" begin
@@ -73,15 +70,19 @@ using Test
         opts_old_equiv = FixedPointOptions(max_iterations=20, print_reports=false)
         result_old = fixed_point(g, [0.3, 0.9], Anderson(), opts_old_equiv)
         @test result_old isa FixedPointResults
-        @test !ismissing(result_old.FixedPoint_)
-        @test result_old.Iterations_ <= 20
+        @test !ismissing(result_old.fixed_point)
+        @test result_old.iterations <= 20
 
         # Results should be equivalent between old and new interfaces
-        result_new = fixed_point(g, [0.3, 0.9], Anderson(),
-                                FixedPointOptions(max_iterations=20, print_reports=false))
+        result_new = fixed_point(
+            g,
+            [0.3, 0.9],
+            Anderson(),
+            FixedPointOptions(max_iterations=20, print_reports=false),
+        )
 
         # Should get same convergence (within numerical tolerance)
-        @test isapprox(result_old.FixedPoint_, result_new.FixedPoint_, rtol=1e-10)
+        @test isapprox(result_old.fixed_point, result_new.fixed_point, rtol=1e-10)
     end
 end
 end

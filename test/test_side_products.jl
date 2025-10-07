@@ -92,12 +92,20 @@ using Test
 
     InitialGuess = [0.5, 7.5, 2.0, 0.0, 2.0, -5.0, 7.5, 2.0, 0.0, 10.0, 0.5]
     fp_anderson = fixed_point(
-        x -> update_theta(x, dd), InitialGuess, Anderson(), FixedPointOptions(print_reports=true)
+        x -> update_theta(x, dd),
+        InitialGuess,
+        Anderson(),
+        FixedPointOptions(print_reports=true),
     )
-    @test isa(fp_anderson.Other_Output_, NamedTuple)
+    @test isa(fp_anderson.other_output, NamedTuple)
 
     # Testing the case with one iterate.
-    fp_anderson = fixed_point(x -> update_theta(x, dd), InitialGuess, Simple(), FixedPointOptions(max_iterations=1))
-    @test isa(fp_anderson.Other_Output_, NamedTuple)
+    fp_anderson = fixed_point(
+        x -> update_theta(x, dd),
+        InitialGuess,
+        Simple(),
+        FixedPointOptions(max_iterations=1),
+    )
+    @test isa(fp_anderson.other_output, NamedTuple)
 end
 end

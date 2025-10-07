@@ -19,7 +19,6 @@ get_extrapolation_period(::Newton) = 1
 is_polynomial_method(::Newton) = false
 is_epsilon_method(::Newton) = false
 
-
 # Algorithm implementation
 """
 Compute the next input using Newton acceleration.

@@ -43,8 +43,6 @@ Check if the algorithm uses epsilon extrapolation.
 """
 function is_epsilon_method end
 
-
-
 # Default implementations
 needs_extrapolation_period(::FixedPointAlgorithm) = false
 get_extrapolation_period(::FixedPointAlgorithm) = 1

@@ -12,20 +12,20 @@ using Test
     # Anderson tries to use a negative value for both x entries which results in
     # the square root of a negative number. We can switch to simple
     # iterations for a while to fix this.
-    @test fp.TerminationCondition_ == :InvalidInputOrOutputOfIteration
-    @test fp.FailedEvaluation_.Error_ == :ErrorExecutingFunction
+    @test fp.termination_condition == :InvalidInputOrOutputOfIteration
+    @test fp.failed_evaluation.error == :ErrorExecutingFunction
     opts_7 = FixedPointOptions(max_iterations=7)
     fp = fixed_point(simple_vector_function, fp, Simple(), opts_7)
-    @test fp.TerminationCondition_ == :ReachedMaxIter
+    @test fp.termination_condition == :ReachedMaxIter
     fp = fixed_point(simple_vector_function, fp, Anderson())
-    @test fp.TerminationCondition_ == :ReachedConvergenceThreshold
+    @test fp.termination_condition == :ReachedConvergenceThreshold
 
     # Testing Input of NaN
     fp = fixed_point(simple_vector_function, [NaN, 900], Simple(), opts_quiet)
-    @test fp.FailedEvaluation_.Error_ == :InputNAsDetected
+    @test fp.failed_evaluation.error == :InputNAsDetected
     # Testing Input of Inf
     fp = fixed_point(simple_vector_function, [-Inf, 900], Simple(), opts_quiet)
-    @test fp.FailedEvaluation_.Error_ == :InputInfsDetected
+    @test fp.failed_evaluation.error == :InputInfsDetected
 
     # Testing Output of Nan
     function funcfunc1(x::Array{Float64,1})
@@ -36,7 +36,7 @@ using Test
     end
     Inputs = [4.0, 1.0]
     fp = fixed_point(funcfunc1, Inputs, Anderson(), opts_quiet)
-    @test fp.FailedEvaluation_.Error_ == :OutputNAsDetected
+    @test fp.failed_evaluation.error == :OutputNAsDetected
     # Testing Output of Missing
     function funcfunc2(x::Array{Float64,1})
         if abs(x[1] - 4.0) < 1e-12
@@ -46,7 +46,7 @@ using Test
     end
     Inputs = [4.0, 1.0]
     fp = fixed_point(funcfunc2, Inputs, Anderson(), opts_quiet)
-    @test fp.FailedEvaluation_.Error_ == :OutputMissingsDetected
+    @test fp.failed_evaluation.error == :OutputMissingsDetected
     # Testing Output of Inf
     function funcfunc3(x::Array{Float64,1})
         if abs(x[1] - 4.0) < 1e-12
@@ -56,7 +56,7 @@ using Test
     end
     Inputs = [4.0, 1.0]
     fp = fixed_point(funcfunc3, Inputs, Anderson(), opts_quiet)
-    @test fp.FailedEvaluation_.Error_ == :OutputInfsDetected
+    @test fp.failed_evaluation.error == :OutputInfsDetected
     # Testing Output of wrong size
     function funcfunc4(x::Array{Float64,1})
         if abs(x[1] - 4.0) < 1e-12
@@ -66,7 +66,7 @@ using Test
     end
     Inputs = [4.0, 1.0]
     fp = fixed_point(funcfunc4, Inputs, Anderson(), opts_quiet)
-    @test fp.FailedEvaluation_.Error_ == :LengthOfOutputNotSameAsInput
+    @test fp.failed_evaluation.error == :LengthOfOutputNotSameAsInput
 
     # Testing Output of wrong type
     function funcfunc5(x::Array{Float64,1})
@@ -74,7 +74,7 @@ using Test
     end
     Inputs = [4.0, 1.0]
     fp = fixed_point(funcfunc5, Inputs, Anderson(), opts_quiet)
-    @test fp.FailedEvaluation_.Error_ == :FunctionIsNotTypeStable
+    @test fp.failed_evaluation.error == :FunctionIsNotTypeStable
 end
 
 end

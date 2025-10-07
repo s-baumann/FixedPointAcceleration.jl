@@ -1,4 +1,5 @@
-module Automatic Differentiation
+module Automatic
+Differentiation
 
 using Test
 @testset "Automatic Differentiation" begin

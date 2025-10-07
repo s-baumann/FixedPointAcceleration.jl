@@ -34,7 +34,6 @@ get_extrapolation_period(alg::RRE) = alg.extrapolation_period
 is_polynomial_method(::RRE) = true
 is_epsilon_method(::RRE) = false
 
-
 # Algorithm implementation
 """
 Compute the next input using Reduced Rank Extrapolation.
@@ -58,7 +57,8 @@ function _rre_extrapolation(iterates::AbstractArray{R,2}) where {R<:Number}
     total_columns = size(iterates)[2]
     first_column = iterates[:, 1]
     differences = iterates[:, 2:total_columns] - iterates[:, 1:(total_columns - 1)]
-    second_differences = differences[:, 2:(total_columns - 1)] - differences[:, 1:(total_columns - 2)]
+    second_differences =
+        differences[:, 2:(total_columns - 1)] - differences[:, 1:(total_columns - 2)]
     first_difference = differences[:, 1]
     differences = differences[:, 1:(total_columns - 2)]
     inverse_second_differences = pinv(second_differences)

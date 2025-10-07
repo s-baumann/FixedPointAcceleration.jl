@@ -23,7 +23,6 @@ get_extrapolation_period(::Aitken) = 1
 is_polynomial_method(::Aitken) = false
 is_epsilon_method(::Aitken) = false
 
-
 # Algorithm implementation
 """
 Compute the next input using Aitken acceleration.

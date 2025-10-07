@@ -34,7 +34,6 @@ get_extrapolation_period(alg::MPE) = alg.extrapolation_period
 is_polynomial_method(::MPE) = true
 is_epsilon_method(::MPE) = false
 
-
 # Algorithm implementation
 """
 Compute the next input using Minimal Polynomial Extrapolation.
@@ -56,7 +55,8 @@ Perform Minimal Polynomial Extrapolation on a matrix of iterates.
 """
 function _mpe_extrapolation(iterates::AbstractArray{R,2}) where {R<:Number}
     total_columns = size(iterates)[2]
-    old_differences = iterates[:, 2:(total_columns - 1)] .- iterates[:, 1:(total_columns - 2)]
+    old_differences =
+        iterates[:, 2:(total_columns - 1)] .- iterates[:, 1:(total_columns - 2)]
     last_difference = iterates[:, total_columns] .- iterates[:, (total_columns - 1)]
     inverse_old_differences = pinv(old_differences)
     c_vector = -inverse_old_differences * last_difference

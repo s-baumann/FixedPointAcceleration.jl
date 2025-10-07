@@ -35,7 +35,6 @@ get_extrapolation_period(alg::VEA) = alg.extrapolation_period
 is_polynomial_method(::VEA) = false
 is_epsilon_method(::VEA) = true
 
-
 # Algorithm implementation
 """
 Compute the next input using Vector Epsilon Algorithm.

@@ -16,36 +16,36 @@ using Test
 
         # Test with different algorithms
         fp_simple = fixed_point(func, Inputs, Simple())
-        @test fp_simple.Convergence_ < 1e-10
-        @test abs(fp_simple.FixedPoint_[1] - (0.0 + 0.5im)) < 1e-10
+        @test fp_simple.convergence < 1e-10
+        @test abs(fp_simple.fixed_point[1] - (0.0 + 0.5im)) < 1e-10
 
         fp_anderson = fixed_point(func, Inputs, Anderson())
-        @test fp_anderson.Convergence_ < 1e-10
-        @test abs(fp_anderson.FixedPoint_[1] - (0.0 + 0.5im)) < 1e-10
+        @test fp_anderson.convergence < 1e-10
+        @test abs(fp_anderson.fixed_point[1] - (0.0 + 0.5im)) < 1e-10
 
         fp_aitken = fixed_point(func, Inputs, Aitken())
-        @test fp_aitken.Convergence_ < 1e-10
-        @test abs(fp_aitken.FixedPoint_[1] - (0.0 + 0.5im)) < 1e-10
+        @test fp_aitken.convergence < 1e-10
+        @test abs(fp_aitken.fixed_point[1] - (0.0 + 0.5im)) < 1e-10
 
         fp_newton = fixed_point(func, Inputs, Newton())
-        @test fp_newton.Convergence_ < 1e-10
-        @test abs(fp_newton.FixedPoint_[1] - (0.0 + 0.5im)) < 1e-10
+        @test fp_newton.convergence < 1e-10
+        @test abs(fp_newton.fixed_point[1] - (0.0 + 0.5im)) < 1e-10
 
         fp_VEA = fixed_point(func, Inputs, VEA())
-        @test fp_VEA.Convergence_ < 1e-10
-        @test abs(fp_VEA.FixedPoint_[1] - (0.0 + 0.5im)) < 1e-10
+        @test fp_VEA.convergence < 1e-10
+        @test abs(fp_VEA.fixed_point[1] - (0.0 + 0.5im)) < 1e-10
 
         fp_SEA = fixed_point(func, Inputs, SEA())
-        @test fp_SEA.Convergence_ < 1e-10
-        @test abs(fp_SEA.FixedPoint_[1] - (0.0 + 0.5im)) < 1e-10
+        @test fp_SEA.convergence < 1e-10
+        @test abs(fp_SEA.fixed_point[1] - (0.0 + 0.5im)) < 1e-10
 
         fp_MPE = fixed_point(func, Inputs, MPE())
-        @test fp_MPE.Convergence_ < 1e-10
-        @test abs(fp_MPE.FixedPoint_[1] - (0.0 + 0.5im)) < 1e-10
+        @test fp_MPE.convergence < 1e-10
+        @test abs(fp_MPE.fixed_point[1] - (0.0 + 0.5im)) < 1e-10
 
         fp_RRE = fixed_point(func, Inputs, RRE())
-        @test fp_RRE.Convergence_ < 1e-10
-        @test abs(fp_RRE.FixedPoint_[1] - (0.0 + 0.5im)) < 1e-10
+        @test fp_RRE.convergence < 1e-10
+        @test abs(fp_RRE.fixed_point[1] - (0.0 + 0.5im)) < 1e-10
     end
 
     @testset "Complex Vector Functions" begin
@@ -54,14 +54,14 @@ using Test
         Inputs = [1.0 + 0.2im, 0.5 - 0.3im]
 
         fp_simple = fixed_point(func, Inputs, Simple())
-        @test fp_simple.Convergence_ < 1e-10
+        @test fp_simple.convergence < 1e-10
 
         fp_anderson = fixed_point(func, Inputs, Anderson())
-        @test fp_anderson.Convergence_ < 1e-10
+        @test fp_anderson.convergence < 1e-10
 
         # Test that the fixed point satisfies f(x) = x
-        if !ismissing(fp_anderson.FixedPoint_)
-            residual = func(fp_anderson.FixedPoint_) .- fp_anderson.FixedPoint_
+        if !ismissing(fp_anderson.fixed_point)
+            residual = func(fp_anderson.fixed_point) .- fp_anderson.fixed_point
             @test maximum(abs.(residual)) < 1e-10
         end
     end
@@ -70,8 +70,8 @@ using Test
         # Test with single complex number input (not vector)
         func(x) = [0.8 * x[1] + 0.1im]
         result = fixed_point(func, 1.0 + 0.5im, Anderson())
-        @test result.Convergence_ < 1e-10
-        @test !ismissing(result.FixedPoint_)
+        @test result.convergence < 1e-10
+        @test !ismissing(result.fixed_point)
     end
 
     @testset "Complex with Real Output" begin
@@ -80,12 +80,12 @@ using Test
         Inputs = [2.0 + 0.5im]
 
         result = fixed_point(func, Inputs, Simple(), opts_100)
-        @test result.Convergence_ < 1e-8  # Should converge
+        @test result.convergence < 1e-8  # Should converge
 
-        if !ismissing(result.FixedPoint_)
+        if !ismissing(result.fixed_point)
             # Fixed point should be 0.1 / (1 - 0.8) = 0.5
             expected = 0.5 + 0.0im
-            @test abs(result.FixedPoint_[1] - expected) < 1e-8
+            @test abs(result.fixed_point[1] - expected) < 1e-8
         end
     end
 
@@ -95,11 +95,11 @@ using Test
         Inputs = [0.5 + 0.1im]
 
         result = fixed_point(func, Inputs, Anderson(), opts_100)
-        @test result.Convergence_ < 1e-8  # Slightly relaxed tolerance for trig functions
+        @test result.convergence < 1e-8  # Slightly relaxed tolerance for trig functions
 
         # Verify it's actually a fixed point
-        if !ismissing(result.FixedPoint_)
-            residual = abs(func(result.FixedPoint_)[1] - result.FixedPoint_[1])
+        if !ismissing(result.fixed_point)
+            residual = abs(func(result.fixed_point)[1] - result.fixed_point[1])
             @test residual < 1e-8
         end
     end
@@ -110,12 +110,12 @@ using Test
         Inputs = [1.0 + 1.0im]
 
         result = fixed_point(func, Inputs, Simple())
-        @test result.Convergence_ < 1e-10
+        @test result.convergence < 1e-10
 
         # The fixed point should be (0.2 + 0.3im) / (1 - 0.7) = (0.2 + 0.3im) / 0.3
         expected_fp = (0.2 + 0.3im) / 0.3
-        if !ismissing(result.FixedPoint_)
-            @test abs(result.FixedPoint_[1] - expected_fp) < 1e-9  # Slightly relaxed tolerance
+        if !ismissing(result.fixed_point)
+            @test abs(result.fixed_point[1] - expected_fp) < 1e-9  # Slightly relaxed tolerance
         end
     end
 
@@ -128,17 +128,15 @@ using Test
         # This should handle complex sqrt properly
         result = fixed_point(problematic_func, [-1.0 + 0.0im], Simple(), opts_10)
         # Should not crash - either converge or reach max iterations
-        @test result.TerminationCondition_ in [
+        @test result.termination_condition in [
             :ReachedConvergenceThreshold, :ReachedMaxIter, :InvalidInputOrOutputOfIteration
         ]
 
         # Test with function that returns Inf
         inf_func(x) = [Inf + 0.0im]
         opts_5_quiet = FixedPointOptions(max_iterations=5, quiet_errors=true)
-        result_inf = fixed_point(
-            inf_func, [1.0 + 0.0im], Simple(), opts_5_quiet
-        )
-        @test result_inf.TerminationCondition_ == :InvalidInputOrOutputOfIteration
+        result_inf = fixed_point(inf_func, [1.0 + 0.0im], Simple(), opts_5_quiet)
+        @test result_inf.termination_condition == :InvalidInputOrOutputOfIteration
     end
 
     @testset "Complex Convergence Metrics" begin
@@ -149,13 +147,13 @@ using Test
         result = fixed_point(func, Inputs, Anderson())
 
         # Convergence should be real-valued even for complex inputs
-        @test isa(result.Convergence_, Real)
-        @test result.Convergence_ >= 0  # Convergence metrics should be non-negative
+        @test isa(result.convergence, Real)
+        @test result.convergence >= 0  # Convergence metrics should be non-negative
 
         # ConvergenceVector should contain real values
-        if !ismissing(result.ConvergenceVector_)
-            @test all(isa.(result.ConvergenceVector_, Real))
-            @test all(result.ConvergenceVector_ .>= 0)
+        if !ismissing(result.convergence_vector)
+            @test all(isa.(result.convergence_vector, Real))
+            @test all(result.convergence_vector .>= 0)
         end
     end
 
@@ -165,15 +163,15 @@ using Test
 
         # Start with real input
         result1 = fixed_point(func, [1.0], Anderson())
-        @test result1.Convergence_ < 1e-10
+        @test result1.convergence < 1e-10
 
         # Start with complex input
         result2 = fixed_point(func, [1.0 + 0.0im], Anderson())
-        @test result2.Convergence_ < 1e-10
+        @test result2.convergence < 1e-10
 
         # Results should be equivalent
-        if !ismissing(result1.FixedPoint_) && !ismissing(result2.FixedPoint_)
-            @test abs(result1.FixedPoint_[1] - result2.FixedPoint_[1]) < 1e-10
+        if !ismissing(result1.fixed_point) && !ismissing(result2.fixed_point)
+            @test abs(result1.fixed_point[1] - result2.fixed_point[1]) < 1e-10
         end
     end
 
@@ -184,14 +182,14 @@ using Test
         Inputs = [1.0 + 0.2im, 0.5 - 0.1im]
 
         result = fixed_point(func, Inputs, Anderson(maxM=3), opts_silent)
-        @test result.Convergence_ < 1e-10
+        @test result.convergence < 1e-10
 
         # Test that Anderson method converges faster than simple iteration
         result_simple = fixed_point(func, Inputs, Simple(), opts_100)
 
         # Anderson should typically use fewer iterations
-        if !ismissing(result.FixedPoint_) && !ismissing(result_simple.FixedPoint_)
-            @test result.Iterations_ <= result_simple.Iterations_
+        if !ismissing(result.fixed_point) && !ismissing(result_simple.fixed_point)
+            @test result.iterations <= result_simple.iterations
         end
     end
 end

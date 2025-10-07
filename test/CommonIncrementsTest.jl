@@ -19,40 +19,63 @@ using Test
     end
     Inputs = [19.0, 10.0]
     fp_anderson = fixed_point(
-        funcfunc, Inputs, Anderson(), FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements)
+        funcfunc,
+        Inputs,
+        Anderson(),
+        FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements),
     )
-    @test fp_anderson.TerminationCondition_ == :ReachedConvergenceThreshold
+    @test fp_anderson.termination_condition == :ReachedConvergenceThreshold
     fp_aitken = fixed_point(
-        funcfunc, Inputs, Aitken(), FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements)
+        funcfunc,
+        Inputs,
+        Aitken(),
+        FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements),
     )
-    @test fp_aitken.TerminationCondition_ == :ReachedConvergenceThreshold
+    @test fp_aitken.termination_condition == :ReachedConvergenceThreshold
     fp_newton = fixed_point(
-        funcfunc, Inputs, Newton(), FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements)
+        funcfunc,
+        Inputs,
+        Newton(),
+        FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements),
     )
-    @test fp_newton.TerminationCondition_ == :ReachedConvergenceThreshold
+    @test fp_newton.termination_condition == :ReachedConvergenceThreshold
     fp_simple = fixed_point(
         funcfunc,
         Inputs,
         Simple(),
-        FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements, reporting_sig_figs=10)
+        FixedPointOptions(
+            quiet_errors=true, replace_invalids=:ReplaceElements, reporting_sig_figs=10
+        ),
     )
-    @test fp_simple.TerminationCondition_ == :ReachedConvergenceThreshold
+    @test fp_simple.termination_condition == :ReachedConvergenceThreshold
     fp_SEA = fixed_point(
-        funcfunc, Inputs, SEA(), FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements)
+        funcfunc,
+        Inputs,
+        SEA(),
+        FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements),
     )
-    @test fp_SEA.TerminationCondition_ == :ReachedConvergenceThreshold
+    @test fp_SEA.termination_condition == :ReachedConvergenceThreshold
     fp_VEA = fixed_point(
-        funcfunc, Inputs, VEA(), FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements)
+        funcfunc,
+        Inputs,
+        VEA(),
+        FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements),
     )
-    @test fp_VEA.TerminationCondition_ == :ReachedConvergenceThreshold
+    @test fp_VEA.termination_condition == :ReachedConvergenceThreshold
     fp_RRE = fixed_point(
-        funcfunc, Inputs, RRE(), FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements)
+        funcfunc,
+        Inputs,
+        RRE(),
+        FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements),
     )
-    @test fp_RRE.TerminationCondition_ == :ReachedMaxIter # This one fails because it keeps proposing bad ideas.
+    @test fp_RRE.termination_condition == :ReachedMaxIter # This one fails because it keeps proposing bad ideas.
     fp_MPE = fixed_point(
-        funcfunc, Inputs, MPE(), FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements)
+        funcfunc,
+        Inputs,
+        MPE(),
+        FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements),
     )
-    @test fp_MPE.TerminationCondition_ == :ReachedConvergenceThreshold
+    @test fp_MPE.termination_condition == :ReachedConvergenceThreshold
 end
 
 end

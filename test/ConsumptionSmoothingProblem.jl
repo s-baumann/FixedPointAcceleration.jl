@@ -138,32 +138,25 @@ using Test
 
     # Testing that the conversions work properly.
     opts_1_print = FixedPointOptions(max_iterations=1, print_reports=true)
-    fp = fixed_point(
-        OneIterateBudgetValues, InitialGuess, Simple(), opts_1_print
-    )
+    fp = fixed_point(OneIterateBudgetValues, InitialGuess, Simple(), opts_1_print)
     shape_guess = BudToShape(InitialGuess)
     opts_custom_conv = FixedPointOptions(
-        max_iterations=1,
-        print_reports=true,
-        metric=shapeconvergence
+        max_iterations=1, print_reports=true, metric=shapeconvergence
     )
     fp_reparam = fixed_point(
-        Reparameterised_FP_Vector,
-        shape_guess,
-        Simple(),
-        opts_custom_conv
+        Reparameterised_FP_Vector, shape_guess, Simple(), opts_custom_conv
     )
-    iterated = ShapeToBud(fp_reparam.Outputs_[:, 1])
-    @test sum(abs.(fp.Outputs_[:, 1] .- iterated) .> 1e-10) == 0
+    iterated = ShapeToBud(fp_reparam.outputs[:, 1])
+    @test sum(abs.(fp.outputs[:, 1] .- iterated) .> 1e-10) == 0
 
     # fixed point acceleration with the reparameterised version.
     fp = fixed_point(
         OneIterateBudgetValues,
         InitialGuess,
         Anderson(),
-        FixedPointOptions(quiet_errors=false, threshold=1e-06)
+        FixedPointOptions(quiet_errors=false, threshold=1e-06),
     )
-    fpfp = fp.FixedPoint_
+    fpfp = fp.fixed_point
     fp_ander = fixed_point(
         Reparameterised_FP_Vector,
         shape_guess,
@@ -172,10 +165,10 @@ using Test
             quiet_errors=false,
             threshold=1e-06,
             metric=shapeconvergence,
-            reporting_sig_figs=10
-        )
+            reporting_sig_figs=10,
+        ),
     )
-    iterated = ShapeToBud(fp_ander.FixedPoint_)
+    iterated = ShapeToBud(fp_ander.fixed_point)
     @test sum(abs.(fpfp .- iterated) .> 1e-4) == 0
     fp_aitken = fixed_point(
         Reparameterised_FP_Vector,
@@ -185,10 +178,10 @@ using Test
             quiet_errors=false,
             threshold=1e-06,
             metric=shapeconvergence,
-            reporting_sig_figs=10
-        )
+            reporting_sig_figs=10,
+        ),
     )
-    iterated = ShapeToBud(fp_aitken.FixedPoint_)
+    iterated = ShapeToBud(fp_aitken.fixed_point)
     @test sum(abs.(fpfp .- iterated) .> 1e-4) == 0
     fp_newton = fixed_point(
         Reparameterised_FP_Vector,
@@ -198,10 +191,10 @@ using Test
             quiet_errors=false,
             threshold=1e-06,
             metric=shapeconvergence,
-            reporting_sig_figs=10
-        )
+            reporting_sig_figs=10,
+        ),
     )
-    iterated = ShapeToBud(fp_newton.FixedPoint_)
+    iterated = ShapeToBud(fp_newton.fixed_point)
     @test sum(abs.(fpfp .- iterated) .> 1e-4) == 0
     fp_sea = fixed_point(
         Reparameterised_FP_Vector,
@@ -211,10 +204,10 @@ using Test
             quiet_errors=false,
             threshold=1e-06,
             metric=shapeconvergence,
-            reporting_sig_figs=10
-        )
+            reporting_sig_figs=10,
+        ),
     )
-    iterated = ShapeToBud(fp_sea.FixedPoint_)
+    iterated = ShapeToBud(fp_sea.fixed_point)
     @test sum(abs.(fpfp .- iterated) .> 1e-4) == 0
 end
 

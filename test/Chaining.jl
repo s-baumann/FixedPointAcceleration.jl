@@ -18,8 +18,8 @@ using Test
     fp_chain = fixed_point(func1, fp_chain, VEA(), opts_100)
 
     fp_nochain = fixed_point(func1, Inputs, VEA(), opts_100)
-    @test fp_chain.Iterations_ == fp_nochain.Iterations_
-    @test all(abs.(fp_nochain.Inputs_ .- fp_chain.Inputs_) .< 1e-14)
+    @test fp_chain.iterations == fp_nochain.iterations
+    @test all(abs.(fp_nochain.inputs .- fp_chain.inputs) .< 1e-14)
 
     func2(x) = [0.5*sqrt(abs(x[1] + x[2])), 1.5*x[1] + 0.5*x[2]]
     Inputs = [1.1, 2.2]
@@ -30,7 +30,7 @@ using Test
     fp_chain = fixed_point(func2, fp_chain, RRE(), opts_100)
 
     fp_nochain = fixed_point(func2, Inputs, RRE(), opts_100)
-    @test fp_chain.Iterations_ == fp_nochain.Iterations_
-    @test all(abs.(fp_nochain.Inputs_ .- fp_chain.Inputs_) .< 1e-14)
+    @test fp_chain.iterations == fp_nochain.iterations
+    @test all(abs.(fp_nochain.inputs .- fp_chain.inputs) .< 1e-14)
 end
 end

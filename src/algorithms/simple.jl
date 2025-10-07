@@ -19,7 +19,6 @@ get_extrapolation_period(::Simple) = 1
 is_polynomial_method(::Simple) = false
 is_epsilon_method(::Simple) = false
 
-
 # Algorithm implementation
 """
 Compute the next input using simple iteration.

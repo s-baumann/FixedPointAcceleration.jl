@@ -35,7 +35,6 @@ get_extrapolation_period(alg::SEA) = alg.extrapolation_period
 is_polynomial_method(::SEA) = false
 is_epsilon_method(::SEA) = true
 
-
 # Algorithm implementation
 """
 Compute the next input using Scalar Epsilon Algorithm.
