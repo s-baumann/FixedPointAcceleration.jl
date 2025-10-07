@@ -26,8 +26,8 @@ This function takes the previous inputs and outputs from the fixed_point functio
     NewGuessAitken = fixed_point_new_input(A[:Inputs], A[:Outputs], Algorithm = :Aitken)
 """
 function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArray{T,2}, Algorithm::Symbol = :Anderson;
-                               MaxM::Integer = 10, SimpleStartIndex::Integer = 1, ExtrapolationPeriod::Integer = 1, Dampening::S = AbstractFloat(1), Dampening_With_Input::Bool = false,
-                               ConditionNumberThreshold::R = AbstractFloat(1000), PrintReports::Bool = false, ReplaceInvalids::Symbol = :NoAction) where R<:Real where S<:Real where T<:Real
+                               MaxM::Integer = 10, SimpleStartIndex::Integer = 1, ExtrapolationPeriod::Integer = 1, Dampening::S = 1.0, Dampening_With_Input::Bool = false,
+                               ConditionNumberThreshold::R = 1000.0, PrintReports::Bool = false, ReplaceInvalids::Symbol = :NoAction) where R<:Real where S<:Number where T<:Number
     CompletedIters = size(Outputs)[2]
     simple_iterate = Outputs[:,CompletedIters]
     proposed_input = repeat([NaN], size(simple_iterate)[1])
@@ -50,7 +50,7 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
             LastOutput      = recent_Outputs[:,M+1]
             Coeffs          = repeat([NaN], size(DeltaOutputs)[2])
             ConditionNumber = NaN
-            while sum(isnan.(Coeffs)) > 0
+            while any(isnan.(Coeffs))
                 if isempty(DeltaResids)
                     # This happens if there is convergence by constant increments and thus the
                     #  most recent DeltaResids is all zeros. So we end up dropping all DeltaResids and get an error here.
@@ -64,9 +64,14 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
                     Coeffs      = repeat([NaN], size(DeltaOutputs)[2])
                     continue
                 end
-                Fit = fit(LinearModel,  hcat(DeltaResids), LastResid)
-                Coeffs = Fit.pp.beta0
-                if sum(isnan.(Coeffs)) > 0
+                # Handle complex numbers by using pinv instead of GLM.fit
+                if eltype(DeltaResids) <: Complex
+                    Coeffs = pinv(DeltaResids) * LastResid
+                else
+                    Fit = fit(LinearModel,  hcat(DeltaResids), LastResid)
+                    Coeffs = Fit.pp.beta0
+                end
+                if any(isnan.(Coeffs))
                     M = M-1
                     if (M < 1.5)
                         # This happens occasionally in test cases where the iteration is very close to a fixed point.
@@ -135,8 +140,15 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
     else
         error("The algorithm you tried to input is not valid. Choose from :Simple, :Anderson, :Aitken, :Newton, :MPE, :RRE, :VEA or :SEA. Note capitalisation must match.")
     end
-    # Now the replacement strategies
-    dodgy_entries = isnan.(proposed_input) .| ismissing.(proposed_input) .| isinf.(proposed_input)
+    # Now the replacement strategies - handle complex numbers properly
+    if eltype(proposed_input) <: Complex
+        dodgy_entries = (isnan.(real.(proposed_input)) .| isnan.(imag.(proposed_input))) .| 
+                       ismissing.(proposed_input) .| 
+                       (isinf.(real.(proposed_input)) .| isinf.(imag.(proposed_input)))
+    else
+        dodgy_entries = isnan.(proposed_input) .| ismissing.(proposed_input) .| isinf.(proposed_input)
+    end
+    
     if sum(dodgy_entries) != 0
         if ReplaceInvalids == :ReplaceElements
             proposed_input[dodgy_entries] = simple_iterate[dodgy_entries]

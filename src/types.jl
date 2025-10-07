@@ -5,18 +5,18 @@
  * `Output_` - The output of the  function. May be `missing` if function could not complete without error.
  * `Error_` - A symbol representing what error occured.
 """
-struct FunctionEvaluationResult{T<:Real,R}
+struct FunctionEvaluationResult{T<:Number,R}
     Input_::Vector{T}
     Output_::Union{Missing,Vector{Missing},Vector{Union{Missing,R}},Vector{R}}
     Other_Output_::Union{Missing,NamedTuple}
     Error_::Symbol
-    function FunctionEvaluationResult(Input::Vector{T}, Output_::Missing, Error_::Symbol, Other_Output_::Union{Missing,NamedTuple} = missing) where T<:Real
+    function FunctionEvaluationResult(Input::Vector{T}, Output_::Missing, Error_::Symbol, Other_Output_::Union{Missing,NamedTuple} = missing) where T<:Number
         return new{T,T}(Input, Output_, Other_Output_, Error_)
     end
-    function FunctionEvaluationResult(Input::Vector{T}, Output::Vector{R}, Error_::Symbol, Other_Output_::Union{Missing,NamedTuple} = missing) where T<:Real where R<:Union{Missing,<:Real}
+    function FunctionEvaluationResult(Input::Vector{T}, Output::Vector{R}, Error_::Symbol, Other_Output_::Union{Missing,NamedTuple} = missing) where T<:Number where R<:Union{Missing,<:Number}
         if R === Missing
             return new{T,T}(Input, Output, Other_Output_, Error_)
-        elseif R <: Real
+        elseif R <: Number
             return new{T,R}(Input, convert(Array{Union{Missing,R},1}, Output), Other_Output_, Error_)
         else
             return new{T,nonmissingtype(R)}(Input, Output, Other_Output_, Error_)
@@ -38,20 +38,20 @@ end
   * `Inputs_` - What were all of the inputs tried
   * `Outputs_` - What were all the corresponding outputs.
 """
-struct FixedPointResults{R<:Real}
+struct FixedPointResults{R<:Number}
     FixedPoint_::Union{Missing,Vector{R}}
     Other_Output_::Union{Missing,NamedTuple}
-    Convergence_::Union{Missing,R}          #
+    Convergence_::Union{Missing,Real}          #
     TerminationCondition_::Symbol
     Iterations_::Integer
-    ConvergenceVector_::Union{Missing,Array{R,1}}
+    ConvergenceVector_::Union{Missing,Array{<:Real,1}}
     FailedEvaluation_::Union{Missing,FunctionEvaluationResult}
     Inputs_::Array{R,2}
     Outputs_::Array{R,2}
     function FixedPointResults(Inputs_::Array{R,2}, Outputs_::Array{R,2}, TerminationCondition_::Symbol;
-                               ConvergenceVector_::Union{Missing,Array{R,1}} = missing,
+                               ConvergenceVector_::Union{Missing,Array{<:Real,1}} = missing,
                                FailedEvaluation_::Union{Missing,FunctionEvaluationResult} = missing,
-                               Other_Output::Union{Missing,NamedTuple} = missing) where R<:Real
+                               Other_Output::Union{Missing,NamedTuple} = missing) where R<:Number
         Iterations_ = size(Outputs_)[2]
         FixedPoint_ = missing
         Convergence_ = missing

@@ -7,7 +7,7 @@ This function takes the previous inputs and outputs and assembles a matrix with 
 ### Returns
  * A matrix of inputs and outputs excluding jumps.
 """
-function put_together_without_jumps(Inputs::AbstractArray{T,2}, Outputs::AbstractArray{T,2}, AgreementThreshold::Float64 = 1e-10) where T<:Real
+function put_together_without_jumps(Inputs::AbstractArray{T,2}, Outputs::AbstractArray{T,2}, AgreementThreshold::Float64 = 1e-10) where T<:Number
   if (any(size(Inputs) != size(Outputs))) error("Inputs and Outputs matrices are not comformable.") end
   size_of_dims = size(Inputs)
 

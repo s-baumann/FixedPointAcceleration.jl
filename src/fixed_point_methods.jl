@@ -61,7 +61,7 @@ A function for finding the fixed point of another function
 """
 function fixed_point(func::Function, previous_FixedPointResults::FixedPointResults;
                     Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
-                    ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0), Dampening_With_Input::Bool = false,
+                    ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Number = 1.0, Dampening_With_Input::Bool = false,
                     PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false)
     Inputs = previous_FixedPointResults.Inputs_
     Outputs = previous_FixedPointResults.Outputs_
@@ -73,18 +73,18 @@ end
 
 function fixed_point(func::Function, Inputs::Array{T, 1};
                     Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
-                    ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0), Dampening_With_Input::Bool = false,
-                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false) where T<:Real
-    Inputs2 = Array{Float64, 2}(undef,size(Inputs)[1],1)
+                    ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Number = 1.0, Dampening_With_Input::Bool = false,
+                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false) where T<:Number
+    Inputs2 = Array{T, 2}(undef,size(Inputs)[1],1)
     Inputs2[:,1] = Inputs
     return fixed_point(func, Inputs2; Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
                        MaxIter = MaxIter, MaxM = MaxM, ExtrapolationPeriod = ExtrapolationPeriod, Dampening = Dampening, Dampening_With_Input = Dampening_With_Input, PrintReports = PrintReports, ReportingSigFig = ReportingSigFig,
                        ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold, quiet_errors = quiet_errors)
 end
 
-function fixed_point(func::Function, Inputs::Real;
+function fixed_point(func::Function, Inputs::Number;
                     Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
-                    ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0), Dampening_With_Input::Bool = false,
+                    ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Number = 1.0, Dampening_With_Input::Bool = false,
                     PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false)
     Inputs2 = Array{typeof(Inputs), 2}(undef,1,1)
     Inputs2[1,1] = Inputs
@@ -93,10 +93,10 @@ function fixed_point(func::Function, Inputs::Real;
                        ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold, quiet_errors = quiet_errors)
 end
 
-function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{<:Real,2} = Array{T,2}(undef,size(Inputs)[1],0),
+function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{<:Number,2} = Array{T,2}(undef,size(Inputs)[1],0),
                     Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
-                    ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0), Dampening_With_Input::Bool = false,
-                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false, other_outputs::Union{Missing,NamedTuple} = missing) where T<:Real
+                    ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Number = 1.0, Dampening_With_Input::Bool = false,
+                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false, other_outputs::Union{Missing,NamedTuple} = missing) where T<:Number
     # This code first tests if the input point is a fixed point. Then if it is not a while loop runs to try to find a fixed point.
     if (ConditionNumberThreshold < 1) error("ConditionNumberThreshold must be at least 1.")  end
     SimpleStartIndex = Integer(size(Outputs)[2])
@@ -137,7 +137,9 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{<:Real,
     end
     # First running through the last column of Inputs to test if we already have a fixed point.
     iter = Integer(size(Outputs)[2])
-    ConvergenceVector = Array{output_type,1}(undef,iter)
+    # Convergence metrics should always return real numbers, even for complex inputs
+    convergence_type = output_type <: Complex ? real(output_type) : output_type
+    ConvergenceVector = Array{convergence_type,1}(undef,iter)
     for i in 1:iter
         ConvergenceVector[i] = ConvergenceMetric(Inputs[:,i], Outputs[:,i])
     end

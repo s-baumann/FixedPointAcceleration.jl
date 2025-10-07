@@ -6,7 +6,7 @@ This function performs Minimal Polynomial extrapolation (MPE) or Reduced Rank Ex
 ### Returns
  * A `Vector` containing the extrapolated vector.
 """
-function PolynomialExtrapolation(Iterates::AbstractArray{R,2}, Algorithm::Symbol) where R<:Real
+function PolynomialExtrapolation(Iterates::AbstractArray{R,2}, Algorithm::Symbol) where R<:Number
     if (Algorithm == :MPE)
         TotalColumnsOfIterates = size(Iterates)[2]
         OldDifferences         = Iterates[:,2:(TotalColumnsOfIterates-1)] .- Iterates[:,1:(TotalColumnsOfIterates-2)]
@@ -38,7 +38,7 @@ This is a helper function for EpsilonExtrapolation
 ### Returns
  *  A `Vector` with the extrapolated vector.
 """
-function EpsilonExtrapolation(Iterates::AbstractArray{R,2}, Algorithm::Symbol) where R<:Real
+function EpsilonExtrapolation(Iterates::AbstractArray{R,2}, Algorithm::Symbol) where R<:Number
     # The function cannot do anything to a one column input so will return input unchanged.
     if (size(Iterates)[2] == 1) return Iterates end
     if (size(Iterates)[2] % 2 == 0) Iterates = Iterates[:,2:size(Iterates)[2]] end
@@ -55,8 +55,14 @@ function EpsilonExtrapolation(Iterates::AbstractArray{R,2}, Algorithm::Symbol) w
     end
     # The function can get NAs from the inversion (ie if differenceMatrix contains a zero
     # for SEA then there is division by zero). To avert this we try with 2 less columns.
-    if (any(isnan.(Mat)) | any(ismissing.(Mat)))
-        Mat = EpsilonExtrapolation(Iterates[:,3:size(Iterates)[2]],Algorithm)
+    if eltype(Mat) <: Complex
+        if (any(isnan.(real.(Mat))) | any(isnan.(imag.(Mat))) | any(ismissing.(Mat)))
+            Mat = EpsilonExtrapolation(Iterates[:,3:size(Iterates)[2]],Algorithm)
+        end
+    else
+        if (any(isnan.(Mat)) | any(ismissing.(Mat)))
+            Mat = EpsilonExtrapolation(Iterates[:,3:size(Iterates)[2]],Algorithm)
+        end
     end
     return Mat[:,1]
 end
@@ -69,7 +75,7 @@ This is a helper function for EpsilonExtrapolation
 ### Returns
  * A `Vector` of the result of inverting each (column) vector in a mmatrix.
 """
-function EpsilonExtrapolationVectorOfInverses(DifferenceMatrix::AbstractArray{T,2}, Algorithm::Symbol) where T<:Real
+function EpsilonExtrapolationVectorOfInverses(DifferenceMatrix::AbstractArray{T,2}, Algorithm::Symbol) where T<:Number
     if (size(DifferenceMatrix)[1] == 1) | (Algorithm == :SEA)
         return 1 ./ DifferenceMatrix
     else
