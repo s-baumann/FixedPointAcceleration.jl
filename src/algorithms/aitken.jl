@@ -27,10 +27,11 @@ is_epsilon_method(::Aitken) = false
 """
 Compute the next input using Aitken acceleration.
 """
-function _compute_proposed_input(inputs, outputs, ::Aitken, options)
+function _compute_proposed_input(
+    inputs, outputs, ::Aitken, options::FixedPointOptions, simple_start_index::Int
+)
     completed_iters = size(outputs)[2]
     simple_iterate = outputs[:, completed_iters]
-    simple_start_index = get(options, :simple_start_index, 1)
 
     if ((completed_iters + simple_start_index) % 3) == 0
         x = inputs[:, (completed_iters - 1)]

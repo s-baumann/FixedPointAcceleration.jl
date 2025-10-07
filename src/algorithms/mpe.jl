@@ -38,7 +38,9 @@ is_epsilon_method(::MPE) = false
 """
 Compute the next input using Minimal Polynomial Extrapolation.
 """
-function _compute_proposed_input(inputs, outputs, alg::MPE, options)
+function _compute_proposed_input(
+    inputs, outputs, alg::MPE, options::FixedPointOptions, simple_start_index::Int
+)
     completed_iters = size(outputs)[2]
     simple_iterate = outputs[:, completed_iters]
 

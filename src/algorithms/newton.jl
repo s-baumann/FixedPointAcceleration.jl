@@ -23,10 +23,11 @@ is_epsilon_method(::Newton) = false
 """
 Compute the next input using Newton acceleration.
 """
-function _compute_proposed_input(inputs, outputs, ::Newton, options)
+function _compute_proposed_input(
+    inputs, outputs, ::Newton, options::FixedPointOptions, simple_start_index::Int
+)
     completed_iters = size(outputs)[2]
     simple_iterate = outputs[:, completed_iters]
-    simple_start_index = get(options, :simple_start_index, 1)
 
     if ((completed_iters + simple_start_index) % 2 == 1) & (completed_iters > 1)
         xk1 = inputs[:, (completed_iters - 1)]

@@ -38,7 +38,9 @@ is_epsilon_method(::RRE) = false
 """
 Compute the next input using Reduced Rank Extrapolation.
 """
-function _compute_proposed_input(inputs, outputs, alg::RRE, options)
+function _compute_proposed_input(
+    inputs, outputs, alg::RRE, options::FixedPointOptions, simple_start_index::Int
+)
     completed_iters = size(outputs)[2]
     simple_iterate = outputs[:, completed_iters]
 

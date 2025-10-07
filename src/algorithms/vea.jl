@@ -39,7 +39,9 @@ is_epsilon_method(::VEA) = true
 """
 Compute the next input using Vector Epsilon Algorithm.
 """
-function _compute_proposed_input(inputs, outputs, alg::VEA, options)
+function _compute_proposed_input(
+    inputs, outputs, alg::VEA, options::FixedPointOptions, simple_start_index::Int
+)
     completed_iters = size(outputs)[2]
     simple_iterate = outputs[:, completed_iters]
 

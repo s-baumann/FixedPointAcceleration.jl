@@ -39,7 +39,9 @@ is_epsilon_method(::SEA) = true
 """
 Compute the next input using Scalar Epsilon Algorithm.
 """
-function _compute_proposed_input(inputs, outputs, alg::SEA, options)
+function _compute_proposed_input(
+    inputs, outputs, alg::SEA, options::FixedPointOptions, simple_start_index::Int
+)
     completed_iters = size(outputs)[2]
     simple_iterate = outputs[:, completed_iters]
 

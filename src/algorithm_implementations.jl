@@ -6,29 +6,22 @@ The actual implementations are in the individual algorithm files.
 function _compute_proposed_input end
 
 """
-    fixed_point_new_input(inputs, outputs, algorithm::FixedPointAlgorithm, options::Dict)
+    fixed_point_new_input(inputs, outputs, algorithm, options, simple_start_index)
 
-Modern dispatch-based interface for computing the next input in fixed point iteration.
-
-### Inputs
-* `inputs` - N×A matrix of previous inputs
-* `outputs` - N×A matrix of corresponding outputs
-* `algorithm` - Algorithm instance (e.g., Anderson(), Simple(), etc.)
-* `options` - Dictionary containing algorithm options
-
-### Returns
-* Vector of the next guess for the fixed point
+Compute the next input using the provided algorithm and global `FixedPointOptions`.
+Avoids per-iteration `Dict` creation by passing the structured options and the
+changing `simple_start_index` explicitly.
 """
 function fixed_point_new_input(
     inputs::AbstractArray{T,2},
     outputs::AbstractArray{T,2},
     algorithm::FixedPointAlgorithm,
-    options::Dict,
+    options::FixedPointOptions,
+    simple_start_index::Int,
 ) where {T<:Number}
-    # Get the raw proposed input from the algorithm-specific implementation
-    proposed_input = _compute_proposed_input(inputs, outputs, algorithm, options)
-
-    # Apply dampening and replacement strategies
+    proposed_input = _compute_proposed_input(
+        inputs, outputs, algorithm, options, simple_start_index
+    )
     return _apply_post_processing(inputs, outputs, proposed_input, options)
 end
 
@@ -39,13 +32,13 @@ function _apply_post_processing(
     inputs::AbstractArray{T,2},
     outputs::AbstractArray{T,2},
     proposed_input::AbstractVector{T},
-    options::Dict,
+    options::FixedPointOptions,
 ) where {T<:Number}
     completed_iters = size(outputs)[2]
     simple_iterate = outputs[:, completed_iters]
-    replace_invalids = get(options, :replace_invalids, :NoAction)
-    dampening = get(options, :dampening, 1.0)
-    dampening_with_input = get(options, :dampening_with_input, false)
+    replace_invalids = options.stability.replace_invalids
+    dampening = options.stability.dampening
+    dampening_with_input = options.stability.dampening_with_input
 
     # Handle invalid entries (NaN, Inf, missing)
     if eltype(proposed_input) <: Complex

@@ -23,6 +23,8 @@ is_epsilon_method(::Simple) = false
 """
 Compute the next input using simple iteration.
 """
-function _compute_proposed_input(inputs, outputs, ::Simple, options)
+function _compute_proposed_input(
+    inputs, outputs, ::Simple, options::FixedPointOptions, simple_start_index::Int
+)
     return outputs[:, end]
 end

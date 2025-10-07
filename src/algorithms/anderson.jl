@@ -45,13 +45,17 @@ is_epsilon_method(::Anderson) = false
 Compute the next input using Anderson acceleration.
 """
 function _compute_proposed_input(
-    inputs::AbstractArray{T,2}, outputs::AbstractArray{T,2}, alg::Anderson, options
+    inputs::AbstractArray{T,2},
+    outputs::AbstractArray{T,2},
+    alg::Anderson,
+    options::FixedPointOptions,
+    simple_start_index::Int,
 ) where {T<:Number}
     completed_iters = size(outputs)[2]
     simple_iterate = outputs[:, completed_iters]
 
     if completed_iters < 2
-        if get(options, :print_reports, false)
+        if options.reporting.print_reports
             print("                           Used:", lpad(0, 3), " lags. ")
         end
         return simple_iterate
@@ -92,7 +96,7 @@ function _compute_proposed_input(
         if any(isnan.(Coeffs))
             M = M - 1
             if (M < 1.5)
-                if get(options, :print_reports, false)
+                if options.reporting.print_reports
                     print("                          Used:", lpad(0, 3), " lags. ")
                 end
                 break
@@ -103,12 +107,12 @@ function _compute_proposed_input(
     end
 
     if isempty(Coeffs)
-        if get(options, :print_reports, false)
+        if options.reporting.print_reports
             print("Condition number is ", lpad("NaN", 5), ". Used:", lpad(0, 3), " lags. ")
         end
         return repeat([NaN], vector_length)
     else
-        if get(options, :print_reports, false)
+        if options.reporting.print_reports
             print(
                 "Condition number is ",
                 lpad(round(ConditionNumber; sigdigits=2), 5),
