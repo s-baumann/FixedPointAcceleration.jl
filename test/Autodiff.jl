@@ -1,3 +1,5 @@
+module Automatic Differentiation
+
 using Test
 @testset "Automatic Differentiation" begin
     using ForwardDiff
@@ -12,4 +14,6 @@ using Test
     ML_estimation(params)
     grads = ForwardDiff.gradient(ML_estimation, params)
     @test isa(grads, Array{Float64,1})
+end
+
 end

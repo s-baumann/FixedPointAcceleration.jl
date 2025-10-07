@@ -27,26 +27,27 @@ using Test
     @test fp_anderson.Convergence_ < 1e-10
 
     # And finally printing a couple of them to test printing.
-    fp_anderson2 = fixed_point(func, Inputs, Anderson(); PrintReports=true)
+    print_opts = FixedPointOptions(print_reports=true)
+    fp_anderson2 = fixed_point(func, Inputs, Anderson(), print_opts)
     @test fp_anderson2.Convergence_ < 1e-10
-    fp_simple2 = fixed_point(func, Inputs, Simple(); PrintReports=true)
+    fp_simple2 = fixed_point(func, Inputs, Simple(), print_opts)
     @test fp_simple2.Convergence_ < 1e-10
 
     # Testing function that returns a missing
     f1(x) = [missing, missing]
-    fp_simple3 = fixed_point(f1, Inputs, Simple(); PrintReports=true)
+    fp_simple3 = fixed_point(f1, Inputs, Simple(), print_opts)
     @test fp_simple3.TerminationCondition_ == :InvalidInputOrOutputOfIteration
     f2(x) = [1, missing]
-    fp_simple4 = fixed_point(f2, Inputs, Simple(); PrintReports=true)
+    fp_simple4 = fixed_point(f2, Inputs, Simple(), print_opts)
     @test fp_simple4.TerminationCondition_ == :InvalidInputOrOutputOfIteration
 
     # Testing the outputting of a tuple
     f3(x) = (a=[1.0, 1.0], b=:goodProgressInFunction)
     @test_throws ErrorException(
         "This function returned a @NamedTuple{a::Vector{Float64}, b::Symbol}. The Fixedpoint function can only return a vector or a tuple of which the first entry is the vector for which a fixedpoint is sought and the second is a namedtuple (the contents of which are output for the user but are not used in fixed point acceleration).",
-    ) fixed_point(f3, Inputs, Simple(); PrintReports=true)
+    ) fixed_point(f3, Inputs, Simple(), print_opts)
     # And doing side effects properly.
     f4(x) = ([1.0, 1.0], (b=:goodProgressInFunction,))
-    fp_simple5 = fixed_point(f4, Inputs, Simple(); PrintReports=true)
+    fp_simple5 = fixed_point(f4, Inputs, Simple(), print_opts)
     @test fp_simple5.Convergence_ < 1e-10
 end

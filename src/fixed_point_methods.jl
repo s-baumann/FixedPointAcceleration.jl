@@ -1,162 +1,32 @@
 """
-    fixed_point(func::Function, initial_guess, algorithm::FixedPointAlgorithm = Anderson();
-                ConvergenceMetric::Function = (input, output) -> maximum(abs.(output .- input)),
-                ConvergenceMetricThreshold::Real = 1e-10,
-                MaxIter::Integer = 1000,
-                Dampening::Real = 1.0,
-                Dampening_With_Input::Bool = false,
-                PrintReports::Bool = false,
-                ReportingSigFig::Integer = 10,
-                ReplaceInvalids::Symbol = :NoAction,
-                quiet_errors::Bool = false)
-
-    fixed_point(func::Function, previous_results::FixedPointResults, algorithm::FixedPointAlgorithm = Anderson();
-                ConvergenceMetric::Function = (input, output) -> maximum(abs.(output .- input)),
-                ConvergenceMetricThreshold::Real = 1e-10,
-                MaxIter::Integer = 1000,
-                Dampening::Real = 1.0,
-                Dampening_With_Input::Bool = false,
-                PrintReports::Bool = false,
-                ReportingSigFig::Integer = 10,
-                ReplaceInvalids::Symbol = :NoAction,
-                quiet_errors::Bool = false)
-
-    fixed_point(func::Function, inputs::Matrix, outputs::Matrix, algorithm::FixedPointAlgorithm = Anderson();
-                ConvergenceMetric::Function = (input, output) -> maximum(abs.(output .- input)),
-                ConvergenceMetricThreshold::Real = 1e-10,
-                MaxIter::Integer = 1000,
-                Dampening::Real = 1.0,
-                Dampening_With_Input::Bool = false,
-                PrintReports::Bool = false,
-                ReportingSigFig::Integer = 10,
-                ReplaceInvalids::Symbol = :NoAction,
-                quiet_errors::Bool = false,
-                other_outputs::Union{Missing,NamedTuple} = missing)
+    fixed_point(func, initial_guess, algorithm, options::FixedPointOptions = default_options())
 
 Find the fixed point of a function using various acceleration algorithms.
 
-### Inputs
- *  `func` - The function for which a fixed point is sought. Must take and return a vector of the same size.
- *  `initial_guess` - Initial guess for the fixed point. Can be a scalar, vector, or matrix.
- *  `algorithm` - Algorithm instance (e.g., `Anderson()`, `Simple()`, `MPE(extrapolation_period=4)`).
- *  `previous_results` - Continue from previous `FixedPointResults`.
- *  `inputs` - N×A matrix of previous inputs (advanced usage).
- *  `outputs` - N×A matrix of corresponding outputs (advanced usage).
- *  `ConvergenceMetric` - Function that measures convergence (input, output) -> scalar.
- *  `ConvergenceMetricThreshold` - Threshold for convergence (default: 1e-10).
- *  `MaxIter` - Maximum number of iterations (default: 1000).
- *  `Dampening` - Dampening parameter (default: 1.0, no dampening).
- *  `Dampening_With_Input` - Apply dampening to input vs output (default: false).
- *  `PrintReports` - Print iteration progress (default: false).
- *  `ReportingSigFig` - Significant figures for progress reports (default: 10).
- *  `ReplaceInvalids` - How to handle NaN/Inf: `:NoAction`, `:ReplaceElements`, `:ReplaceVector`.
- *  `quiet_errors` - Return partial results on error instead of throwing (default: false).
- *  `other_outputs` - Additional outputs to pass through (advanced usage).
-### Returns
- * A `FixedPointResults` struct containing the fixed_point, the Inputs and corresponding Outputs, and convergence values (which are computed under the "ConvergenceMetric").
-   The list will also include a "Finish" statement describing why it has finished. This is often going to be due to either MaxIter or ConvergenceMetricThreshold being
-   reached. It may also terminate due to an error in generating a new input guess or using the function with that guess. If this occurs the function will terminate early
-   and the "Finish" statement will describe the issue. In this event there will also be additional objects returned in the list "NewInputVector" and possibly
-   "NewOutputVector" that are useful in debugging the issue.
-### Examples
-    # Simple scalar function
-    f(x) = cos(x)
-    result = fixed_point(f, 0.3, Aitken(); Dampening = 0.5)
+# Arguments
+- `func::Function`: The function for which a fixed point is sought
+- `initial_guess`: Initial guess for the fixed point (scalar, vector, or matrix)
+- `algorithm::FixedPointAlgorithm`: Algorithm instance (e.g., Anderson(), Simple())
+- `options::FixedPointOptions`: Configuration options (optional, defaults to default_options())
 
-    # Vector function with Anderson acceleration
-    g(x) = [0.5*sqrt(abs(x[1] + x[2])), 1.5*x[1] + 0.5*x[2]]
-    result = fixed_point(g, [0.3, 900.0], Anderson(maxM=5))
+# Examples
+```julia
+# Use default options
+result = fixed_point(f, 0.3, Aitken())
 
-    # MPE with custom extrapolation period
-    result = fixed_point(g, [0.3, 900.0], MPE(extrapolation_period=4))
+# Use preset options
+result = fixed_point(f, 0.3, Aitken(), robust_options())
 
-    # Continue from previous results with different algorithm
-    result2 = fixed_point(f, result, Simple())
-
-    # Run for fixed iterations regardless of convergence
-    result3 = fixed_point(g, [0.3, 900.0], Simple(); MaxIter=4, ConvergenceMetricThreshold=-1.0)
+# Custom configuration
+opts = FixedPointOptions(threshold=1e-12, print_reports=true)
+result = fixed_point(g, [0.3, 900.0], Anderson(), opts)
+```
 """
-# Main interface: continue from previous results
-function fixed_point(
-    func::Function,
-    previous_results::FixedPointResults,
-    algorithm::FixedPointAlgorithm=Anderson();
-    ConvergenceMetric::Function=(input, output) -> maximum(abs.(output .- input)),
-    ConvergenceMetricThreshold::Real=1e-10,
-    MaxIter::Integer=1000,
-    Dampening::Real=1.0,
-    Dampening_With_Input::Bool=false,
-    PrintReports::Bool=false,
-    ReportingSigFig::Integer=10,
-    ReplaceInvalids::Symbol=:NoAction,
-    quiet_errors::Bool=false,
-)
-    return fixed_point(
-        func,
-        previous_results.Inputs_,
-        previous_results.Outputs_,
-        algorithm;
-        ConvergenceMetric=ConvergenceMetric,
-        ConvergenceMetricThreshold=ConvergenceMetricThreshold,
-        MaxIter=MaxIter,
-        Dampening=Dampening,
-        Dampening_With_Input=Dampening_With_Input,
-        PrintReports=PrintReports,
-        ReportingSigFig=ReportingSigFig,
-        ReplaceInvalids=ReplaceInvalids,
-        quiet_errors=quiet_errors,
-        other_outputs=previous_results.Other_Output_,
-    )
-end
-
-# Main interface: vector input
-function fixed_point(
-    func::Function,
-    initial_guess::AbstractVector{T},
-    algorithm::FixedPointAlgorithm=Anderson();
-    ConvergenceMetric::Function=(input, output) -> maximum(abs.(output .- input)),
-    ConvergenceMetricThreshold::Real=1e-10,
-    MaxIter::Integer=1000,
-    Dampening::Real=1.0,
-    Dampening_With_Input::Bool=false,
-    PrintReports::Bool=false,
-    ReportingSigFig::Integer=10,
-    ReplaceInvalids::Symbol=:NoAction,
-    quiet_errors::Bool=false,
-) where {T<:Number}
-    inputs_matrix = reshape(initial_guess, length(initial_guess), 1)
-    outputs_matrix = Array{T,2}(undef, size(inputs_matrix)[1], 0)
-    return fixed_point(
-        func,
-        inputs_matrix,
-        outputs_matrix,
-        algorithm;
-        ConvergenceMetric=ConvergenceMetric,
-        ConvergenceMetricThreshold=ConvergenceMetricThreshold,
-        MaxIter=MaxIter,
-        Dampening=Dampening,
-        Dampening_With_Input=Dampening_With_Input,
-        PrintReports=PrintReports,
-        ReportingSigFig=ReportingSigFig,
-        ReplaceInvalids=ReplaceInvalids,
-        quiet_errors=quiet_errors,
-    )
-end
-
-# Main interface: scalar input
 function fixed_point(
     func::Function,
     initial_guess::Number,
-    algorithm::FixedPointAlgorithm=Anderson();
-    ConvergenceMetric::Function=(input, output) -> maximum(abs.(output .- input)),
-    ConvergenceMetricThreshold::Real=1e-10,
-    MaxIter::Integer=1000,
-    Dampening::Real=1.0,
-    Dampening_With_Input::Bool=false,
-    PrintReports::Bool=false,
-    ReportingSigFig::Integer=10,
-    ReplaceInvalids::Symbol=:NoAction,
-    quiet_errors::Bool=false,
+    algorithm::FixedPointAlgorithm,
+    options::FixedPointOptions = default_options()
 )
     inputs_matrix = Array{typeof(initial_guess),2}(undef, 1, 1)
     inputs_matrix[1, 1] = initial_guess
@@ -165,21 +35,79 @@ function fixed_point(
         func,
         inputs_matrix,
         outputs_matrix,
+        algorithm,
+        options
+    )
+end
+
+function fixed_point(
+    func::Function,
+    initial_guess::AbstractVector{T},
+    algorithm::FixedPointAlgorithm,
+    options::FixedPointOptions = default_options()
+) where {T<:Number}
+    inputs_matrix = reshape(initial_guess, length(initial_guess), 1)
+    outputs_matrix = Array{T,2}(undef, size(inputs_matrix)[1], 0)
+    return fixed_point(
+        func,
+        inputs_matrix,
+        outputs_matrix,
+        algorithm,
+        options
+    )
+end
+
+"""
+    fixed_point(func, previous_results, algorithm, options::FixedPointOptions = default_options())
+
+Continue from previous results.
+"""
+function fixed_point(
+    func::Function,
+    previous_results::FixedPointResults,
+    algorithm::FixedPointAlgorithm,
+    options::FixedPointOptions = default_options()
+)
+    return fixed_point(
+        func,
+        previous_results.Inputs_,
+        previous_results.Outputs_,
+        algorithm,
+        options
+    )
+end
+
+"""
+    fixed_point(func, inputs_matrix, outputs_matrix, algorithm, options::FixedPointOptions = default_options())
+
+Core matrix interface for advanced usage.
+"""
+function fixed_point(
+    func::Function,
+    inputs_matrix::AbstractMatrix,
+    outputs_matrix::AbstractMatrix,
+    algorithm::FixedPointAlgorithm,
+    options::FixedPointOptions = default_options()
+)
+    return _fixed_point_core(
+        func,
+        inputs_matrix,
+        outputs_matrix,
         algorithm;
-        ConvergenceMetric=ConvergenceMetric,
-        ConvergenceMetricThreshold=ConvergenceMetricThreshold,
-        MaxIter=MaxIter,
-        Dampening=Dampening,
-        Dampening_With_Input=Dampening_With_Input,
-        PrintReports=PrintReports,
-        ReportingSigFig=ReportingSigFig,
-        ReplaceInvalids=ReplaceInvalids,
-        quiet_errors=quiet_errors,
+        ConvergenceMetric = options.convergence.metric,
+        ConvergenceMetricThreshold = options.convergence.threshold,
+        MaxIter = options.convergence.max_iterations,
+        Dampening = options.stability.dampening,
+        Dampening_With_Input = options.stability.dampening_with_input,
+        ReplaceInvalids = options.stability.replace_invalids,
+        quiet_errors = options.stability.quiet_errors,
+        PrintReports = options.reporting.print_reports,
+        ReportingSigFig = options.reporting.reporting_sig_figs
     )
 end
 
 # Core implementation: matrix-based (advanced usage)
-function fixed_point(
+function _fixed_point_core(
     func::Function,
     inputs::AbstractMatrix{T},
     outputs::AbstractMatrix{<:Number},
@@ -193,13 +121,13 @@ function fixed_point(
     ReportingSigFig::Integer=10,
     ReplaceInvalids::Symbol=:NoAction,
     quiet_errors::Bool=false,
-    other_outputs::Union{Missing,NamedTuple}=missing,
 ) where {T<:Number}
     # Core fixed point iteration algorithm
     # Copy inputs to avoid mutating the original
     Inputs = copy(inputs)
     Outputs = copy(outputs)
     SimpleStartIndex = Integer(size(Outputs)[2])
+    other_outputs = missing  # For compatibility
     if isempty(Outputs)
         if size(Inputs)[2] > 1
             @warn(

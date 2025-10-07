@@ -135,16 +135,21 @@ using Test
     end
 
     # Testing that the conversions work properly.
+    opts_1_print = FixedPointOptions(max_iterations=1, print_reports=true)
     fp = fixed_point(
-        OneIterateBudgetValues, InitialGuess; PrintReports=true, MaxIter=Integer(1)
+        OneIterateBudgetValues, InitialGuess, Simple(), opts_1_print
     )
     shape_guess = BudToShape(InitialGuess)
+    opts_custom_conv = FixedPointOptions(
+        max_iterations=1,
+        print_reports=true,
+        convergence_metric=shapeconvergence
+    )
     fp_reparam = fixed_point(
         Reparameterised_FP_Vector,
-        shape_guess;
-        PrintReports=true,
-        MaxIter=Integer(1),
-        ConvergenceMetric=shapeconvergence,
+        shape_guess,
+        Simple(),
+        opts_custom_conv
     )
     iterated = ShapeToBud(fp_reparam.Outputs_[:, 1])
     @test sum(abs.(fp.Outputs_[:, 1] .- iterated) .> 1e-10) == 0
@@ -152,51 +157,60 @@ using Test
     # fixed point acceleration with the reparameterised version.
     fp = fixed_point(
         OneIterateBudgetValues,
-        InitialGuess;
-        PrintReports=true,
-        ConvergenceMetricThreshold=1e-06,
+        InitialGuess,
+        Anderson(),
+        FixedPointOptions(quiet_errors=false, convergence_threshold=1e-06)
     )
     fpfp = fp.FixedPoint_
     fp_ander = fixed_point(
         Reparameterised_FP_Vector,
-        shape_guess;
-        PrintReports=true,
-        ReportingSigFig=Integer(10),
-        ConvergenceMetricThreshold=1e-06,
-        ConvergenceMetric=shapeconvergence,
+        shape_guess,
+        Anderson(),
+        FixedPointOptions(
+            quiet_errors=false,
+            convergence_threshold=1e-06,
+            convergence_function=shapeconvergence,
+            reporting_sig_figs=10
+        )
     )
     iterated = ShapeToBud(fp_ander.FixedPoint_)
     @test sum(abs.(fpfp .- iterated) .> 1e-4) == 0
     fp_aitken = fixed_point(
         Reparameterised_FP_Vector,
-        shape_guess;
-        PrintReports=true,
-        ReportingSigFig=Integer(10),
-        ConvergenceMetricThreshold=1e-06,
-        Algorithm=Aitken,
-        ConvergenceMetric=shapeconvergence,
+        shape_guess,
+        Aitken(),
+        FixedPointOptions(
+            quiet_errors=false,
+            convergence_threshold=1e-06,
+            convergence_function=shapeconvergence,
+            reporting_sig_figs=10
+        )
     )
     iterated = ShapeToBud(fp_aitken.FixedPoint_)
     @test sum(abs.(fpfp .- iterated) .> 1e-4) == 0
     fp_newton = fixed_point(
         Reparameterised_FP_Vector,
-        shape_guess;
-        PrintReports=true,
-        ReportingSigFig=Integer(10),
-        ConvergenceMetricThreshold=1e-06,
-        Algorithm=FixedPointAcceleration.Newton,
-        ConvergenceMetric=shapeconvergence,
+        shape_guess,
+        Newton(),
+        FixedPointOptions(
+            quiet_errors=false,
+            convergence_threshold=1e-06,
+            convergence_function=shapeconvergence,
+            reporting_sig_figs=10
+        )
     )
     iterated = ShapeToBud(fp_newton.FixedPoint_)
     @test sum(abs.(fpfp .- iterated) .> 1e-4) == 0
     fp_sea = fixed_point(
         Reparameterised_FP_Vector,
-        shape_guess;
-        PrintReports=true,
-        ReportingSigFig=Integer(10),
-        ConvergenceMetricThreshold=1e-06,
-        Algorithm=SEA,
-        ConvergenceMetric=shapeconvergence,
+        shape_guess,
+        SEA(),
+        FixedPointOptions(
+            quiet_errors=false,
+            convergence_threshold=1e-06,
+            convergence_function=shapeconvergence,
+            reporting_sig_figs=10
+        )
     )
     iterated = ShapeToBud(fp_sea.FixedPoint_)
     @test sum(abs.(fpfp .- iterated) .> 1e-4) == 0

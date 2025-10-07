@@ -21,10 +21,12 @@ using Test
     @test fp.FailedEvaluation_.Input_[1] == -Inf
     @test !isinf(fp.FailedEvaluation_.Input_[2])
     # Now fixing with replace element
-    fp = fixed_point(funcfunc, Inputs, Aitken(); ReplaceInvalids=:ReplaceElements)
+    opts_replace = FixedPointOptions(replace_invalids=:ReplaceElements)
+    fp = fixed_point(funcfunc, Inputs, Aitken(), opts_replace)
     @test fp.TerminationCondition_ == :ReachedConvergenceThreshold
     # Now fixing with replace element
-    fp2 = fixed_point(funcfunc, Inputs, Aitken(); ReplaceInvalids=:ReplaceVector)
+    opts_replace_vector = FixedPointOptions(replace_invalids=:ReplaceVector)
+    fp2 = fixed_point(funcfunc, Inputs, Aitken(), opts_replace_vector)
     @test fp2.TerminationCondition_ == :ReachedConvergenceThreshold
     @test fp.Iterations_ != fp2.Iterations_
 end

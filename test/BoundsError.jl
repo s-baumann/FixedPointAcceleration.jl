@@ -1,26 +1,30 @@
+module test_BoundsError
+
 using Test
 @testset "Test bounds" begin
     using FixedPointAcceleration
     # Testing Error Evaluating Function
     simple_vector_function(x) = [0.5*sqrt(x[1] + x[2]), 1.5*x[1] + 0.5*x[2]]
     Inputs = [0.3, 900]
-    fp = fixed_point(simple_vector_function, Inputs, Anderson(), quiet_errors=true)
+    opts_quiet = FixedPointOptions(quiet_errors=true)
+    fp = fixed_point(simple_vector_function, Inputs, Anderson(), opts_quiet)
     # Inspecting this fp reveals an error after the 3rd iteration because
     # Anderson tries to use a negative value for both x entries which results in
     # the square root of a negative number. We can switch to simple
     # iterations for a while to fix this.
     @test fp.TerminationCondition_ == :InvalidInputOrOutputOfIteration
     @test fp.FailedEvaluation_.Error_ == :ErrorExecutingFunction
-    fp = fixed_point(simple_vector_function, fp, Simple(); MaxIter=Integer(7))
+    opts_7 = FixedPointOptions(max_iterations=7)
+    fp = fixed_point(simple_vector_function, fp, Simple(), opts_7)
     @test fp.TerminationCondition_ == :ReachedMaxIter
     fp = fixed_point(simple_vector_function, fp, Anderson())
     @test fp.TerminationCondition_ == :ReachedConvergenceThreshold
 
     # Testing Input of NaN
-    fp = fixed_point(simple_vector_function, [NaN, 900], quiet_errors=true)
+    fp = fixed_point(simple_vector_function, [NaN, 900], Simple(), opts_quiet)
     @test fp.FailedEvaluation_.Error_ == :InputNAsDetected
     # Testing Input of Inf
-    fp = fixed_point(simple_vector_function, [-Inf, 900], quiet_errors=true)
+    fp = fixed_point(simple_vector_function, [-Inf, 900], Simple(), opts_quiet)
     @test fp.FailedEvaluation_.Error_ == :InputInfsDetected
 
     # Testing Output of Nan
@@ -31,7 +35,7 @@ using Test
         return sqrt.(x)
     end
     Inputs = [4.0, 1.0]
-    fp = fixed_point(funcfunc1, Inputs, Anderson(), quiet_errors=true)
+    fp = fixed_point(funcfunc1, Inputs, Anderson(), opts_quiet)
     @test fp.FailedEvaluation_.Error_ == :OutputNAsDetected
     # Testing Output of Missing
     function funcfunc2(x::Array{Float64,1})
@@ -41,7 +45,7 @@ using Test
         return sqrt.(x)
     end
     Inputs = [4.0, 1.0]
-    fp = fixed_point(funcfunc2, Inputs, Anderson(), quiet_errors=true)
+    fp = fixed_point(funcfunc2, Inputs, Anderson(), opts_quiet)
     @test fp.FailedEvaluation_.Error_ == :OutputMissingsDetected
     # Testing Output of Inf
     function funcfunc3(x::Array{Float64,1})
@@ -51,7 +55,7 @@ using Test
         return sqrt.(x)
     end
     Inputs = [4.0, 1.0]
-    fp = fixed_point(funcfunc3, Inputs, Anderson(), quiet_errors=true)
+    fp = fixed_point(funcfunc3, Inputs, Anderson(), opts_quiet)
     @test fp.FailedEvaluation_.Error_ == :OutputInfsDetected
     # Testing Output of wrong size
     function funcfunc4(x::Array{Float64,1})
@@ -61,7 +65,7 @@ using Test
         return sqrt.(x)
     end
     Inputs = [4.0, 1.0]
-    fp = fixed_point(funcfunc4, Inputs, Anderson(), quiet_errors=true)
+    fp = fixed_point(funcfunc4, Inputs, Anderson(), opts_quiet)
     @test fp.FailedEvaluation_.Error_ == :LengthOfOutputNotSameAsInput
 
     # Testing Output of wrong type
@@ -69,6 +73,8 @@ using Test
         return Array{Int,1}([5, 4])
     end
     Inputs = [4.0, 1.0]
-    fp = fixed_point(funcfunc5, Inputs, Anderson(), quiet_errors=true)
+    fp = fixed_point(funcfunc5, Inputs, Anderson(), opts_quiet)
     @test fp.FailedEvaluation_.Error_ == :FunctionIsNotTypeStable
+end
+
 end

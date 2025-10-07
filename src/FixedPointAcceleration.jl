@@ -30,4 +30,8 @@ export FixedPointAlgorithm, Simple, Anderson, Aitken, Newton, MPE, RRE, VEA, SEA
 export algorithm_name
 export needs_extrapolation_period,
     get_extrapolation_period, is_polynomial_method, is_epsilon_method
+
+# Export configuration types and presets
+export ConvergenceOptions, StabilityOptions, ReportingOptions, FixedPointOptions
+export default_options, robust_options, fast_options, debug_options
 end
