@@ -1,12 +1,3 @@
-mutable struct _IterationState{T,C}
-    inputs::Matrix{T}
-    outputs::Matrix{T}
-    convergence_vector::Vector{C}
-    simple_start_index::Int
-    other_output_val::Any
-    max_iterations::Int
-end
-
 """
     fixed_point(func, initial_guess, algorithm, options::FixedPointOptions = default_options())
 
@@ -84,39 +75,25 @@ function fixed_point(
     options::FixedPointOptions,
 ) where {T<:Number}
     inputs_mat, outputs_mat, simple_start_index = _prepare_inputs_outputs(inputs, outputs)
-    inputs_mat, outputs_mat, output_type, other_output_val, max_iter_adjust, simple_start_index, failure = _initial_evaluation!(
-        func, inputs_mat, outputs_mat, options
-    )
-    !isnothing(failure) && return failure
-    max_iterations = options.convergence.max_iterations + max_iter_adjust
-    convergence_vector = _compute_initial_convergence(
-        inputs_mat, outputs_mat, options, output_type
-    )
-    if convergence_vector[end] < options.convergence.threshold
-        if options.reporting.print_reports
-            println(
-                "The last column of inputs matrix is already a fixed point under input convergence metric and convergence threshold",
-            )
-        end
-        return FixedPointResults(
-            inputs_mat,
-            outputs_mat,
-            :ReachedConvergenceThreshold;
-            convergence_vector=convergence_vector,
-            other_output_val=other_output_val,
-        )
+    state = _initial_evaluation!(func, inputs_mat, outputs_mat, options)
+
+    # Check if there was a failure during initial evaluation
+    if state.other_output_val isa FixedPointResults
+        return state.other_output_val
     end
+
+    # Check if already converged
+    if state.convergence_vector[end] < options.threshold
+        if options.print_reports
+            @warn "The last column of inputs matrix is already a fixed point under input convergence metric and convergence threshold"
+        end
+        return FixedPointResults(state, :ReachedConvergenceThreshold)
+    end
+
     _maybe_report_initial(
-        options, algorithm, length(convergence_vector), convergence_vector[end]
+        options, algorithm, length(state.convergence_vector), state.convergence_vector[end]
     )
-    state = _IterationState(
-        inputs_mat,
-        outputs_mat,
-        convergence_vector,
-        simple_start_index,
-        other_output_val,
-        max_iterations,
-    )
+
     return _iteration_loop!(func, algorithm, options, state)
 end
 
@@ -150,52 +127,68 @@ function _initial_evaluation!(
     outputs_mat::Matrix{R},
     options::FixedPointOptions,
 ) where {T<:Number,R<:Number}
-    # Returns (updated_inputs, updated_outputs, output_type, other_output, max_iterations_adjust, simple_start_index_adjust, failure_result|nothing)
+    # Always returns _IterationState - type stable
     simple_start_index = size(outputs_mat, 2)
     max_iterations_adjust = 0
     simple_start_index_adjust = 0
     other_output_val = missing
     output_type = promote_type(T, eltype(outputs_mat))
+    failure_result = nothing
+
     if isempty(outputs_mat)
         executed_func = execute_function_safely(
-            func, inputs_mat[:, 1]; quiet_errors=options.stability.quiet_errors
+            func, inputs_mat[:, 1]; quiet_errors=options.quiet_errors
         )
         other_output_val = executed_func.other_output
         if executed_func.error != :NoError
-            return (
+            # Store failure result to be handled by caller
+            failure_result = FixedPointResults(
                 inputs_mat,
                 outputs_mat,
-                output_type,
-                other_output_val,
-                max_iterations_adjust,
-                simple_start_index_adjust,
-                FixedPointResults(
-                    inputs_mat,
-                    outputs_mat,
-                    :InvalidInputOrOutputOfIteration;
-                    failed_evaluation=executed_func,
-                    other_output_val=other_output_val,
-                ),
+                :InvalidInputOrOutputOfIteration;
+                failed_evaluation=executed_func,
+                other_output_val=other_output_val,
+            )
+            # Create a dummy convergence vector to avoid errors
+            convergence_vector = [Inf]
+        else
+            output_type = promote_type(typeof(inputs_mat[1]), typeof(executed_func.output[1]))
+            converted_outputs = convert.(Ref(output_type), executed_func.output)
+            outputs_mat = hcat(outputs_mat, converted_outputs)
+            inputs_mat = convert.(Ref(output_type), inputs_mat)
+            # Compute initial convergence
+            convergence_vector = _compute_initial_convergence(
+                inputs_mat, outputs_mat, options, output_type
             )
         end
-        output_type = promote_type(typeof(inputs_mat[1]), typeof(executed_func.output[1]))
-        converted_outputs = convert.(Ref(output_type), executed_func.output)
-        outputs_mat = hcat(outputs_mat, converted_outputs)
-        inputs_mat = convert.(Ref(output_type), inputs_mat)
     else
         max_iterations_adjust = size(outputs_mat, 2)
         simple_start_index_adjust =
             -size(put_together_without_jumps(inputs_mat, outputs_mat), 2)
+        # Compute initial convergence
+        convergence_vector = _compute_initial_convergence(
+            inputs_mat, outputs_mat, options, output_type
+        )
     end
-    return (
+
+    max_iterations = options.max_iterations + max_iterations_adjust
+
+    # Construct and return the iteration state
+    state = _IterationState(
         inputs_mat,
         outputs_mat,
-        output_type,
-        other_output_val,
-        max_iterations_adjust,
+        convergence_vector,
         simple_start_index + simple_start_index_adjust,
-        nothing,
+        other_output_val,
+        max_iterations,
     )
+
+    # Store failure result in the state for the caller to check
+    if !isnothing(failure_result)
+        state.other_output_val = failure_result
+    end
+
+    return state
 end
 
 function _compute_initial_convergence(
@@ -204,7 +197,7 @@ function _compute_initial_convergence(
     iteration = size(outputs_mat, 2)
     convergence_type = output_type <: Complex ? real(output_type) : output_type
     convergence_vector = Vector{convergence_type}(undef, iteration)
-    metric = options.convergence.metric
+    metric = options.metric
     for i in 1:iteration
         convergence_vector[i] = metric(inputs_mat[:, i], outputs_mat[:, i])
     end
@@ -214,7 +207,7 @@ end
 function _maybe_report_initial(
     options::FixedPointOptions, algorithm::FixedPointAlgorithm, iteration::Int, convergence
 )
-    if options.reporting.print_reports
+    if options.print_reports
         println(
             "                                          Algorithm: ",
             lpad(algorithm_name(algorithm), 8),
@@ -222,8 +215,8 @@ function _maybe_report_initial(
             lpad(iteration, 5),
             ". Convergence: ",
             lpad(
-                round(convergence; sigdigits=options.reporting.reporting_sig_figs),
-                options.reporting.reporting_sig_figs + 4,
+                round(convergence; sigdigits=options.reporting_sig_figs),
+                options.reporting_sig_figs + 4,
             ),
             ". Time: ",
             now(),
@@ -236,15 +229,15 @@ function _iteration_loop!(
 )
     convergence = state.convergence_vector[end]
     iteration = length(state.convergence_vector) + 1
-    while convergence > options.convergence.threshold && iteration <= state.max_iterations
+    while convergence > options.threshold && iteration <= state.max_iterations
         new_input = fixed_point_new_input(
             state.inputs, state.outputs, algorithm, options, state.simple_start_index
         )
-        if options.reporting.print_reports && !isa(algorithm, Anderson)
+        if options.print_reports && !isa(algorithm, Anderson)
             print(lpad("", 42))
         end
         executed_func = execute_function_safely(
-            func, new_input; type_check=true, quiet_errors=options.stability.quiet_errors
+            func, new_input; type_check=true, quiet_errors=options.quiet_errors
         )
         if executed_func.error != :NoError
             return FixedPointResults(
@@ -262,26 +255,13 @@ function _iteration_loop!(
         state.outputs = hcat(
             state.outputs, convert(Vector{col_type}, executed_func.output)
         )
-        convergence = options.convergence.metric(executed_func.input, executed_func.output)
+        convergence = options.metric(executed_func.input, executed_func.output)
         push!(state.convergence_vector, convergence)
-        if options.reporting.print_reports
-            println(
-                "Algorithm: ",
-                lpad(algorithm_name(algorithm), 8),
-                ". Iteration: ",
-                lpad(iteration, 5),
-                ". Convergence: ",
-                lpad(
-                    round(convergence; sigdigits=options.reporting.reporting_sig_figs),
-                    options.reporting.reporting_sig_figs + 4,
-                ),
-                ". Time: ",
-                now(),
-            )
-        end
+
+        _maybe_report_initial(options, algorithm, iteration, convergence)
         iteration += 1
     end
-    final_status = convergence < options.convergence.threshold ? :ReachedConvergenceThreshold : :ReachedMaxIter
+    final_status = convergence < options.threshold ? :ReachedConvergenceThreshold : :ReachedMaxIter
     return FixedPointResults(
         state.inputs,
         state.outputs,

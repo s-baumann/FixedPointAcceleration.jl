@@ -3,7 +3,6 @@ Anderson acceleration algorithm implementation.
 """
 
 using LinearAlgebra: cond, pinv
-using GLM: fit, LinearModel
 
 """
     Anderson(; maxM=10, condition_threshold=1e3)
@@ -55,7 +54,7 @@ function _compute_proposed_input(
     simple_iterate = outputs[:, completed_iters]
 
     if completed_iters < 2
-        if options.reporting.print_reports
+        if options.print_reports
             print("                           Used:", lpad(0, 3), " lags. ")
         end
         return simple_iterate
@@ -86,7 +85,6 @@ function _compute_proposed_input(
             Coeffs = repeat([NaN], size(DeltaOutputs)[2])
             continue
         end
-        # Handle complex numbers by using pinv instead of GLM.fit
         if eltype(DeltaResids) <: Complex
             Coeffs = pinv(DeltaResids) * LastResid
         else
@@ -96,7 +94,7 @@ function _compute_proposed_input(
         if any(isnan.(Coeffs))
             M = M - 1
             if (M < 1.5)
-                if options.reporting.print_reports
+                if options.print_reports
                     print("                          Used:", lpad(0, 3), " lags. ")
                 end
                 break
@@ -107,12 +105,12 @@ function _compute_proposed_input(
     end
 
     if isempty(Coeffs)
-        if options.reporting.print_reports
+        if options.print_reports
             print("Condition number is ", lpad("NaN", 5), ". Used:", lpad(0, 3), " lags. ")
         end
         return repeat([NaN], vector_length)
     else
-        if options.reporting.print_reports
+        if options.print_reports
             print(
                 "Condition number is ",
                 lpad(round(ConditionNumber; sigdigits=2), 5),

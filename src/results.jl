@@ -1,3 +1,12 @@
+mutable struct _IterationState{T,C}
+    inputs::Matrix{T}
+    outputs::Matrix{T}
+    convergence_vector::Vector{C}
+    simple_start_index::Int
+    other_output_val::Any
+    max_iterations::Int
+end
+
 """
  This contains the results from a function evaluation in the FixedPointAcceleration framework.
  It containing the following fields:
@@ -94,4 +103,14 @@ struct FixedPointResults{R<:Number}
             outputs_mat,
         )
     end
+end
+
+function FixedPointResults(state::_IterationState, termination_condition::Symbol)
+    return FixedPointResults(
+        state.inputs,
+        state.outputs,
+        :ReachedConvergenceThreshold;
+        convergence_vector=state.convergence_vector,
+        other_output_val=state.other_output_val,
+    )
 end

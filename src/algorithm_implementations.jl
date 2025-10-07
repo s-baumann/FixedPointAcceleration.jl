@@ -36,9 +36,9 @@ function _apply_post_processing(
 ) where {T<:Number}
     completed_iters = size(outputs)[2]
     simple_iterate = outputs[:, completed_iters]
-    replace_invalids = options.stability.replace_invalids
-    dampening = options.stability.dampening
-    dampening_with_input = options.stability.dampening_with_input
+    replace_invalids = options.replace_invalids
+    dampening = options.dampening
+    dampening_with_input = options.dampening_with_input
 
     # Handle invalid entries (NaN, Inf, missing)
     if eltype(proposed_input) <: Complex

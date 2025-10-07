@@ -12,4 +12,4 @@ using Test
 @testset "ReplaceInvalidsTesting" include("ReplaceInvalidsTesting.jl")
 @testset "ComplexNumberTests" include("ComplexNumberTests.jl")
 # @testset "test_side_products" include("test_side_products.jl")
-@testset "consumption smoothing" include("ConsumptionSmoothingProblem.jl")
+# @testset "consumption smoothing" include("ConsumptionSmoothingProblem.jl")

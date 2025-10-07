@@ -1,6 +1,5 @@
 module FixedPointAcceleration
 using LinearAlgebra: cond, pinv
-using GLM: fit, LinearModel
 using Dates: now
 
 include("options.jl")
@@ -20,19 +19,15 @@ include("algorithms/vea.jl")
 include("algorithms/sea.jl")
 include("algorithm_implementations.jl")  # This includes all the algorithm files
 
-include("fixed_point_methods.jl")
+include("fixed_point.jl")
 
-export fixed_point, fixed_point_new_input # Main functionality.
-export FunctionEvaluationResult, FixedPointResults # Structs.
-export put_together_without_jumps, execute_function_safely # Auxillery functions. Mainly exported for testing.
+export fixed_point # Main functionality.
 
 # Export algorithm types
-export FixedPointAlgorithm, Simple, Anderson, Aitken, Newton, MPE, RRE, VEA, SEA
-export algorithm_name
-export needs_extrapolation_period,
-    get_extrapolation_period, is_polynomial_method, is_epsilon_method
+export Simple, Anderson, Aitken, Newton, MPE, RRE, VEA, SEA
 
 # Export configuration types and presets
-export ConvergenceOptions, StabilityOptions, ReportingOptions, FixedPointOptions
+export FixedPointOptions
 export default_options, robust_options, fast_options, debug_options
+
 end
