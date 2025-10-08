@@ -17,7 +17,4 @@ include("step.jl")
 export solve, solve!, FixedPointConfig, FixedPointSolution
 export Simple, Anderson, Aitken, MPE, RRE, VEA, SEA
 
-include("old/FixedPointAcceleration.jl")
-export OldImplementation
-
 end

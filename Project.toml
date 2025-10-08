@@ -1,12 +1,11 @@
 name = "FixedPointAccelerationNext"
 uuid = "c67435d8-732b-4f7a-8832-233f5d4bb960"
-authors = ["Orjan Ameye <orjan.ameye@hotmail.com","Stuart Baumann <stuart@stuartbaumann.com>"]
+authors = ["Orjan Ameye <orjan.ameye@hotmail.com", "Stuart Baumann <stuart@stuartbaumann.com>"]
 version = "1.0.2"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [compat]
@@ -15,8 +14,8 @@ DataFrames = "1.8.0"
 DataStructures = "0.19.1"
 Dates = "1"
 Distributions = "0.25.122"
+FixedPointAcceleration = "1.0.2"
 ForwardDiff = "1.2.1"
-GLM = "1.9.0"
 LinearAlgebra = "1"
 Optim = "1.13.2"
 Random = "1.11.0"
@@ -30,6 +29,7 @@ julia = "1.10"
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+FixedPointAcceleration = "817d07cb-a79a-5c30-9a31-890123675176"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
@@ -39,4 +39,4 @@ TestItemRunner = "f8b46487-2199-4994-9208-9a1283c18c0a"
 TestItems = "1c621080-faea-4a02-84b6-bbd5e436b8fe"
 
 [targets]
-test = ["Aqua", "Test", "Distributions", "Optim", "ForwardDiff", "Random", "SchumakerSpline", "DataFrames", "TestItems", "TestItemRunner"]
+test = ["Aqua", "Test", "Distributions", "Optim", "ForwardDiff", "Random", "SchumakerSpline", "DataFrames", "TestItems", "TestItemRunner", "FixedPointAcceleration"]

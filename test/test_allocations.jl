@@ -1,5 +1,6 @@
 using Test, FixedPointAccelerationNext
-using FixedPointAccelerationNext: solve, FixedPointConfig, Anderson, Simple, MPE, RRE, VEA, SEA
+using FixedPointAccelerationNext:
+    solve, FixedPointConfig, Anderson, Simple, MPE, RRE, VEA, SEA
 using LinearAlgebra: norm
 
 # NOTE: These tests are intentionally coarse. They serve as regression guards

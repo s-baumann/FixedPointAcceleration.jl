@@ -255,7 +255,9 @@ function accelerate_poly(
 end
 
 # Unified accelerate interface for polynomial methods with built-in acceleration decision
-function accelerate(method::Union{RRE,MPE}, st::IterationState, cfg::FixedPointConfig, ws=nothing)
+function accelerate(
+    method::Union{RRE,MPE}, st::IterationState, cfg::FixedPointConfig, ws=nothing
+)
     # Check if we should accelerate (embedded logic from _should_accelerate)
     ksimple = length(st.history_simple_x)
     should_accel = (ksimple % method.period) == 0 && ksimple >= _min_history(method)
@@ -265,7 +267,11 @@ function accelerate(method::Union{RRE,MPE}, st::IterationState, cfg::FixedPointC
     end
 
     # Proceed with acceleration
-    return ws === nothing ? accelerate_poly(method, st, cfg) : accelerate_poly(method, st, cfg, ws)
+    return if ws === nothing
+        accelerate_poly(method, st, cfg)
+    else
+        accelerate_poly(method, st, cfg, ws)
+    end
 end
 
 # Trait system for minimum history requirements

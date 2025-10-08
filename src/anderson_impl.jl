@@ -1,5 +1,4 @@
 
-
 # Unified accelerate interface - workspace variants handled by dispatch
 accelerate(method::Simple, st::IterationState, cfg::FixedPointConfig, ::Nothing) = st.fx
 

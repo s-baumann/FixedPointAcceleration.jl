@@ -4,8 +4,9 @@ struct IterationCallbacks{F1,F2,F3}
     finalize_x!::F3
 end
 
-history_capacity(cfg::FixedPointConfig) =
+function history_capacity(cfg::FixedPointConfig)
     cfg.history_window == -1 ? cfg.max_iters + 1 : max(cfg.history_window, 1)
+end
 
 function _init_history_buffer(cap::Int, v::Vector{T}) where {T}
     buf = CircularBuffer{Vector{T}}(cap)

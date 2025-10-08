@@ -8,14 +8,10 @@ function accelerate(method::SEA, st::IterationState, cfg::FixedPointConfig, ws::
 end
 
 """Workspace variants: reuse workspace matrix to avoid rebuilding iterate matrix allocations."""
-function accelerate(
-    method::VEA, st::IterationState, cfg::FixedPointConfig, ws::Workspace
-)
+function accelerate(method::VEA, st::IterationState, cfg::FixedPointConfig, ws::Workspace)
     return _epsilon_accelerate_ws(method.period, st, ws; vector=true)
 end
-function accelerate(
-    method::SEA, st::IterationState, cfg::FixedPointConfig, ws::Workspace
-)
+function accelerate(method::SEA, st::IterationState, cfg::FixedPointConfig, ws::Workspace)
     return _epsilon_accelerate_ws(method.period, st, ws; vector=false)
 end
 

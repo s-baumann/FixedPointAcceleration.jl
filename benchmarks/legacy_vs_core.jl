@@ -14,7 +14,7 @@ println("Legacy vs new comparison | N=$(N) samples=$(samples)")
 
 function make_contraction(n::Int)
     d = 0.60 .+ 0.32 .* rand(n)
-    A = Diagonal(d) |> Matrix
+    A = Matrix(Diagonal(d))
     b = randn(n)
     f(x) = A * x .+ b
     x0 = zeros(n)
@@ -41,10 +41,7 @@ comparisons = [
     (:RRE, :RRE, RRE(; period=3)),
 ]
 
-    legacy_res = fixed_point(
-        f, copy(x0); Algorithm=:RRE, MaxM=6, ExtrapolationPeriod=3
-    )
-
+legacy_res = fixed_point(f, copy(x0); Algorithm=:RRE, MaxM=6, ExtrapolationPeriod=3)
 
 suite = BenchmarkGroup()
 
@@ -59,8 +56,10 @@ for (name, legacy_alg, new_method) in comparisons
     stats[(:new, name)] = SolverStats(new_sol.iterations, new_sol.residual_norm)
 
     group = BenchmarkGroup()
-    group["legacy"] = @benchmarkable fixed_point($f, x; Algorithm=$legacy_alg, MaxM=6, ExtrapolationPeriod=3) setup = (x = copy($x0))
-    group["new"] = @benchmarkable solve($f, x; method=$new_method, cfg=$cfg) setup = (
+    group["legacy"] = @benchmarkable fixed_point(
+        $f, x; Algorithm=($legacy_alg), MaxM=6, ExtrapolationPeriod=3
+    ) setup = (x = copy($x0))
+    group["new"] = @benchmarkable solve($f, x; method=($new_method), cfg=($cfg)) setup = (
         x = copy($x0)
     )
     suite[string(name)] = group

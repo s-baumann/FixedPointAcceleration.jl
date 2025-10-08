@@ -37,10 +37,7 @@ end
 
 # Synchronize simple history after a successful polynomial (MPE/RRE) acceleration
 function sync_poly_history!(
-    ::AbstractAccelerationMethod,
-    st::IterationState,
-    cfg::FixedPointConfig,
-    do_accel::Bool,
+    ::AbstractAccelerationMethod, st::IterationState, cfg::FixedPointConfig, do_accel::Bool
 )
     return nothing
 end

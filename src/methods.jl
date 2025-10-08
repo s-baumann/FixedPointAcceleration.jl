@@ -51,8 +51,6 @@ struct SEA <: AbstractAccelerationMethod
     end
 end
 
-
-
 # Trait system for relaxation behavior
 abstract type RelaxationTrait end
 struct UsesRelaxation <: RelaxationTrait end

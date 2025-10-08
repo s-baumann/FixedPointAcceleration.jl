@@ -3,9 +3,7 @@ using ForwardDiff
 using FixedPointAccelerationNext
 using FixedPointAccelerationNext: solve, FixedPointConfig, Simple
 
-function model_func(
-    x::AbstractVector{T}, params::AbstractVector{T}
-) where {T<:Real}
+function model_func(x::AbstractVector{T}, params::AbstractVector{T}) where {T<:Real}
     return [params[1] * sqrt(abs(x[1] + x[2])), 1.5 * x[1] + params[2] * x[2]]
 end
 
