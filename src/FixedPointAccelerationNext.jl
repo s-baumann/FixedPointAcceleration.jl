@@ -1,8 +1,8 @@
 module FixedPointAccelerationNext
 using Dates: now
 
-using DataStructures: CircularBuffer, capacity
-using LinearAlgebra: qr, norm, pinv, qr!, QRPivoted, norm, svd, Diagonal
+using DataStructures: CircularBuffer
+using LinearAlgebra: qr, pinv, svd, Diagonal
 
 include("config.jl")
 include("state.jl")
