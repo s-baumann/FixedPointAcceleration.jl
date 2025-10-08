@@ -24,21 +24,7 @@ function solve(
         return FixedPointSolution(st.x, rnorm, 0, :Converged, method, st.history_x)
     end
 
-    prev_best = Ref(rnorm)
-    prev_best_iter = Ref(0)
-    for iter in 1:cfg.max_iters
-        status, new_rnorm = _step!(
-            f, st, method, cfg, ws, iter, prev_best, prev_best_iter, rnorm
-        )
-
-        if status === :FunctionSizeMismatch
-            return FixedPointSolution(st.x, rnorm, iter - 1, status, method, st.history_x)
-        elseif status === :Converged || status === :Diverged || status === :Stalled
-            return FixedPointSolution(st.x, new_rnorm, iter, status, method, st.history_x)
-        end
-        rnorm = new_rnorm
-    end
-    return FixedPointSolution(st.x, rnorm, cfg.max_iters, :MaxIters, method, st.history_x)
+    return _run_iterations!(st, method, cfg, ws, rnorm)
 end
 
 
@@ -51,7 +37,7 @@ function solve!(
 ) where {E}
     fx = similar(x)
     f!(fx, x)
-    st = IterationState{E}(x, fx)
+    st = init_state!(x, fx, f!)
 
     ws = init_workspace(E, st, method)
     rnorm = cfg.metric(st.x, st.fx)
@@ -62,17 +48,28 @@ function solve!(
         return FixedPointSolution(st.x, rnorm, 0, :Converged, method, st.history_x)
     end
 
-    prev_best = Ref(rnorm)
-    prev_best_iter = Ref(0)
+    return _run_iterations!(st, method, cfg, ws, rnorm)
+end
 
+
+function _run_iterations!(
+    st::IterationState,
+    method::AbstractAccelerationMethod,
+    cfg::FixedPointConfig,
+    ws,
+    rnorm::Real,
+)
+    tracker = ProgressTracker{typeof(rnorm)}(rnorm, 0)
     for iter in 1:cfg.max_iters
-        status, new_rnorm = _step_inplace!(
-            f!, x, fx, st, method, cfg, ws, iter, prev_best, prev_best_iter, rnorm
-        )
-        if status === :Converged || status === :Diverged || status === :Stalled
+        status, new_rnorm, tracker = step!(st, method, cfg, ws, iter, tracker, rnorm)
+
+        if status === :FunctionSizeMismatch
+            return FixedPointSolution(st.x, rnorm, iter - 1, status, method, st.history_x)
+        elseif status === :Continue
+            rnorm = new_rnorm
+        else
             return FixedPointSolution(st.x, new_rnorm, iter, status, method, st.history_x)
         end
-        rnorm = new_rnorm
     end
     return FixedPointSolution(st.x, rnorm, cfg.max_iters, :MaxIters, method, st.history_x)
 end
