@@ -1,29 +1,18 @@
-#!/usr/bin/env julia
-# Comparison benchmark: legacy API vs unified core API across selected methods.
-# Focuses on iteration counts and simple wall-clock (elapsed) times for a set of
-# representative contraction problems.
-# Usage:
-#   julia --project=benchmarks benchmarks/legacy_vs_core2.jl
-# Optional ENV:
-#   FPA_COMPARE_DIM=200
-#   FPA_COMPARE_REPEATS=5
-#   FPA_COMPARE_SEED=123
-
 using Random
 using LinearAlgebra
+using BenchmarkTools
 using FixedPointAcceleration
 using Printf
 
-seed = parse(Int, get(ENV, "FPA_COMPARE_SEED", "123"));
+seed = 123
 Random.seed!(seed)
-N = parse(Int, get(ENV, "FPA_COMPARE_DIM", "200"))
-repeats = parse(Int, get(ENV, "FPA_COMPARE_REPEATS", "10"))
+N = 200
+samples = 10
 
-println("Legacy vs core comparison | N=$(N) repeats=$(repeats)")
+println("Legacy vs core comparison | N=$(N) samples=$(samples)")
 
-# Build a diagonal linear contraction with mild difficulty (spectral radius ~0.92)
-function make_contraction(n)
-    d = 0.60 .+ 0.32 .* rand(n)  # in (0.60, 0.92)
+function make_contraction(n::Int)
+    d = 0.60 .+ 0.32 .* rand(n)
     A = Diagonal(d)
     b = randn(n)
     f(x) = A * x .+ b
@@ -35,42 +24,13 @@ f, x0 = make_contraction(N)
 
 cfg = FixedPointConfig(; threshold=1e-10, max_iters=5_000)
 
-struct Row
-    family::Symbol      # :legacy or :core
-    method::Symbol      # algorithm name
+struct SolverStats
     iterations::Int
-    time_s::Float64
     residual::Float64
 end
 
-rows = Row[]
-
-# Helper to time a single solve (averaging repeats for smoother wall time)
-function time_core(f, x0; method, cfg)
-    best = Inf;
-    sol_best = nothing
-    for _ in 1:repeats
-        t = @elapsed begin
-            sol = solve(f, x0; method=method, cfg=cfg)
-            sol_best = sol
-        end
-        best = t < best ? t : best
-    end
-    return sol_best, best
-end
-
-function time_legacy(f, x0; algorithm)
-    best = Inf;
-    sol_best = nothing
-    for _ in 1:repeats
-        t = @elapsed begin
-            res = fixed_point(f, x0, algorithm)
-            sol_best = res
-        end
-        best = t < best ? t : best
-    end
-    return sol_best, best
-end
+stats = Dict{Tuple{Symbol, Symbol}, SolverStats}()
+median_times = Dict{Tuple{Symbol, Symbol}, Float64}()
 
 using FixedPointAcceleration.OldImplementation:
     fixed_point,
@@ -80,7 +40,6 @@ using FixedPointAcceleration.OldImplementation:
     MPE as LegacyMPE,
     RRE as LegacyRRE
 
-# Legacy methods vs corresponding new core methods.
 comparisons = [
     (:Simple, LegacySimple(), Simple()),
     (:Anderson, LegacyAnderson(; maxM=6), Anderson(; m=6)),
@@ -89,41 +48,68 @@ comparisons = [
     (:RRE, LegacyRRE(; extrapolation_period=3), RRE(; period=3)),
 ]
 
+suite = BenchmarkGroup()
+
 for (name, legacy_alg, core_method) in comparisons
-    legacy_res, legacy_time = time_legacy(f, x0; algorithm=legacy_alg)
-    push!(
-        rows,
-        Row(
-            :legacy,
-            name,
-            legacy_res.iterations,
-            legacy_time,
-            legacy_res.convergence_vector[end],
-        ),
+    legacy_res = fixed_point(f, copy(x0), legacy_alg)
+    stats[(:legacy, name)] = SolverStats(
+        legacy_res.iterations,
+        legacy_res.convergence_vector[end],
     )
-    core_sol, core_time = time_core(f, x0; method=core_method, cfg=cfg)
-    push!(rows, Row(:core, name, core_sol.iterations, core_time, core_sol.residual_norm))
+    core_sol = solve(f, copy(x0); method=core_method, cfg=cfg)
+    stats[(:core, name)] = SolverStats(core_sol.iterations, core_sol.residual_norm)
+
+    group = BenchmarkGroup()
+    group["legacy"] = @benchmarkable fixed_point($f, x, $legacy_alg) setup=(x = copy($x0);)
+    group["core"] = @benchmarkable solve($f, x; method=$core_method, cfg=$cfg) setup=(x = copy($x0);)
+    suite[string(name)] = group
 end
 
-# Print summary
+results = BenchmarkTools.run(suite; samples=samples, evals=1, verbose=false)
+
+for (name, _, _) in comparisons
+    leg_trial = results[string(name)]["legacy"]
+    core_trial = results[string(name)]["core"]
+    median_times[(:legacy, name)] = BenchmarkTools.median(leg_trial).time / 1.0e9
+    median_times[(:core, name)] = BenchmarkTools.median(core_trial).time / 1.0e9
+end
+
 println(
-    rpad("Family", 8), rpad("Method", 10), rpad("Iter", 8), rpad("Time(s)", 12), "Residual"
+    rpad("Family", 8),
+    rpad("Method", 10),
+    rpad("Iter", 8),
+    rpad("Time(s)", 12),
+    "Residual",
 )
-for r in rows
-    println(
-        rpad(string(r.family), 8),
-        rpad(string(r.method), 10),
-        rpad(string(r.iterations), 8),
-        rpad(Printf.@sprintf("%.5f", r.time_s), 12),
-        Printf.@sprintf("%.3e", r.residual)
-    )
+
+for (name, _, _) in comparisons
+    for family in (:legacy, :core)
+        stat = stats[(family, name)]
+        t = median_times[(family, name)]
+        println(
+            rpad(string(family), 8),
+            rpad(string(name), 10),
+            rpad(string(stat.iterations), 8),
+            rpad(Printf.@sprintf("%.5f", t), 12),
+            Printf.@sprintf("%.3e", stat.residual),
+        )
+    end
 end
 
-# Simple relative comparison
 println("\nRelative iteration ratios (core / legacy):")
-for name in (:Simple, :Anderson, :Aitken, :MPE, :RRE)
-    leg = first(filter(row -> row.family == :legacy && row.method == name, rows))
-    cor = first(filter(row -> row.family == :core && row.method == name, rows))
+for (name, _, _) in comparisons
+    leg = stats[(:legacy, name)]
+    cor = stats[(:core, name)]
     ratio = cor.iterations / max(1, leg.iterations)
     println(rpad(string(name), 10), Printf.@sprintf("%.3f", ratio))
 end
+
+println("\nRelative median time ratios (core / legacy):")
+for (name, _, _) in comparisons
+    leg = median_times[(:legacy, name)]
+    cor = median_times[(:core, name)]
+    ratio = cor / max(1.0e-12, leg)
+    println(rpad(string(name), 10), Printf.@sprintf("%.3f", ratio))
+end
+
+display(results)
