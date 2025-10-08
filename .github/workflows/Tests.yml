@@ -2,8 +2,7 @@ name: Tests
 
 on:
   push:
-    branches:
-      - 'main'
+    branches: [master, main]
     paths:
       - '.github/workflows/Tests.yml'
       - 'src/**'
@@ -11,8 +10,7 @@ on:
       - 'test/**'
       - 'Project.toml'
   pull_request:
-    branches:
-      - 'main'
+    branches: [master, main]
     paths:
       - '.github/workflows/Tests.yml'
       - 'src/**'
