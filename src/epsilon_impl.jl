@@ -1,19 +1,19 @@
 
 """Compute epsilon accelerated proposal (fallback allocation version)."""
-function accelerate_epsilon(method::VEA, st::IterationState, cfg::FixedPointConfig)
+function accelerate(method::VEA, st::IterationState, cfg::FixedPointConfig, ws::Nothing)
     return _epsilon_accelerate(method.period, st; vector=true)
 end
-function accelerate_epsilon(method::SEA, st::IterationState, cfg::FixedPointConfig)
+function accelerate(method::SEA, st::IterationState, cfg::FixedPointConfig, ws::Nothing)
     return _epsilon_accelerate(method.period, st; vector=false)
 end
 
 """Workspace variants: reuse workspace matrix to avoid rebuilding iterate matrix allocations."""
-function accelerate_epsilon(
+function accelerate(
     method::VEA, st::IterationState, cfg::FixedPointConfig, ws::Workspace
 )
     return _epsilon_accelerate_ws(method.period, st, ws; vector=true)
 end
-function accelerate_epsilon(
+function accelerate(
     method::SEA, st::IterationState, cfg::FixedPointConfig, ws::Workspace
 )
     return _epsilon_accelerate_ws(method.period, st, ws; vector=false)
@@ -100,8 +100,4 @@ function _epsilon_accelerate_ws(
     # Use a view; transformation allocates internally but avoids rebuilding M
     Mview = view(ws.residuals, :, 1:total_cols)
     return _epsilon_transform(Mview; vector=vector)
-end
-
-function _accelerated_proposal(method::Union{VEA,SEA}, st::IterationState, cfg::FixedPointConfig, ws)
-    return ws === nothing ? accelerate_epsilon(method, st, cfg) : accelerate_epsilon(method, st, cfg, ws)
 end

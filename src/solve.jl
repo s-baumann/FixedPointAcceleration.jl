@@ -94,10 +94,30 @@ function _apply_relaxation(
     cfg::FixedPointConfig,
     do_accel::Bool,
 )
-    if method isa Simple || !do_accel
+    return _apply_relaxation(_relaxation_trait(method), method, proposed, st, cfg)
+end
+
+function _apply_relaxation(
+    ::UsesRelaxation,
+    method::AbstractAccelerationMethod,
+    proposed,
+    st::IterationState,
+    cfg::FixedPointConfig,
+)
+    if method isa Simple
         return proposed
     end
     ω = cfg.relaxation
     ref = cfg.relaxation_reference === :Input ? st.x : st.fx
     return @. ref + ω * (proposed - ref)
+end
+
+function _apply_relaxation(
+    ::NoRelaxation,
+    method::AbstractAccelerationMethod,
+    proposed,
+    st::IterationState,
+    cfg::FixedPointConfig,
+)
+    return proposed
 end

@@ -43,8 +43,9 @@ function build_proposal(
     method::AbstractAccelerationMethod, st::IterationState, cfg::FixedPointConfig, ws
 )
     st.residual = st.fx .- st.x
-    do_accel = _should_accelerate(method, st)
-    proposed = do_accel ? _accelerated_proposal(method, st, cfg, ws) : st.fx
+    proposed = accelerate(method, st, cfg, ws)
+    # Check if acceleration was actually applied (proposed != st.fx means acceleration was used)
+    do_accel = proposed !== st.fx
     return do_accel, proposed
 end
 

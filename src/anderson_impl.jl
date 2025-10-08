@@ -1,8 +1,35 @@
-function accelerate(::Simple, st::IterationState, cfg::FixedPointConfig)
-    return st.fx
+
+
+# Unified accelerate interface - workspace variants handled by dispatch
+accelerate(method::Simple, st::IterationState, cfg::FixedPointConfig, ::Nothing) = st.fx
+
+function accelerate(method::Aitken, st::IterationState, cfg::FixedPointConfig, ::Nothing)
+    # Need at least 2 previous (x, fx) pairs => 3 total evaluations
+    if length(st.history_x) < 3
+        return st.fx
+    end
+    f1 = st.history_fx[end - 2]
+    f2 = st.history_fx[end - 1]
+    f3 = st.history_fx[end]
+    # Apply elementwise Aitken Δ²: x - (Δx)^2 / (Δ² x)
+    Δ1 = f2 .- f1
+    Δ2 = f3 .- f2
+    denom = Δ2 .- Δ1
+    # Avoid division by zero / near-zero -> fallback to latest f(x). For complex, use eps of real type.
+    T = eltype(denom)
+    ϵ = T <: Real ? eps(T) : eps(float(real(T)))
+    mask = abs.(denom) .> 10 * ϵ
+    accelerated = similar(f3)
+    accelerated .= f3
+    accelerated[mask] = f1[mask] .- (Δ1[mask] .^ 2) ./ denom[mask]
+    return accelerated
 end
 
-function accelerate(method::Anderson, st::IterationState, cfg::FixedPointConfig)
+# function accelerate(method::Anderson, st::IterationState, cfg::FixedPointConfig, ws=nothing)
+#     return ws === nothing ? _anderson_fallback(method, st, cfg) : _anderson_workspace(method, st, cfg, ws)
+# end
+
+function accelerate(method::Anderson, st::IterationState, cfg::FixedPointConfig, ::Nothing)
     m = method.m
     k = length(st.history_x)
     if k < 2
@@ -25,29 +52,6 @@ function accelerate(method::Anderson, st::IterationState, cfg::FixedPointConfig)
     return proposed
 end
 
-function accelerate(::Aitken, st::IterationState, cfg::FixedPointConfig)
-    # Need at least 2 previous (x, fx) pairs => 3 total evaluations
-    if length(st.history_x) < 3
-        return st.fx
-    end
-    f1 = st.history_fx[end - 2]
-    f2 = st.history_fx[end - 1]
-    f3 = st.history_fx[end]
-    # Apply elementwise Aitken Δ²: x - (Δx)^2 / (Δ² x)
-    Δ1 = f2 .- f1
-    Δ2 = f3 .- f2
-    denom = Δ2 .- Δ1
-    # Avoid division by zero / near-zero -> fallback to latest f(x). For complex, use eps of real type.
-    T = eltype(denom)
-    ϵ = T <: Real ? eps(T) : eps(float(real(T)))
-    mask = abs.(denom) .> 10 * ϵ
-    accelerated = similar(f3)
-    accelerated .= f3
-    accelerated[mask] = f1[mask] .- (Δ1[mask] .^ 2) ./ denom[mask]
-    return accelerated
-end
-
-"""Workspace variant to avoid per-iteration allocations for Anderson."""
 function accelerate(
     method::Anderson, st::IterationState, cfg::FixedPointConfig, ws::Workspace{T}
 ) where {T}
@@ -100,13 +104,4 @@ function accelerate(
         ws.proposed[i] = fxs[end][i] - acc
     end
     return ws.proposed
-end
-
-function _accelerated_proposal(method::Aitken, st::IterationState, cfg::FixedPointConfig, ws)
-    return accelerate(method, st, cfg) # no workspace variant
-end
-
-_accelerated_proposal(method::Simple, st::IterationState, cfg::FixedPointConfig, ws) = st.fx
-function _accelerated_proposal(method::Anderson, st::IterationState, cfg::FixedPointConfig, ws)
-    return ws === nothing ? accelerate(method, st, cfg) : accelerate(method, st, cfg, ws)
 end

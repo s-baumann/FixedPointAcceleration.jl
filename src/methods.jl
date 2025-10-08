@@ -51,4 +51,24 @@ struct SEA <: AbstractAccelerationMethod
     end
 end
 
-_should_accelerate(::AbstractAccelerationMethod, st::IterationState) = true
+
+
+# Trait system for relaxation behavior
+abstract type RelaxationTrait end
+struct UsesRelaxation <: RelaxationTrait end
+struct NoRelaxation <: RelaxationTrait end
+
+# Default: most methods use relaxation
+_relaxation_trait(::AbstractAccelerationMethod) = UsesRelaxation()
+# Polynomial methods don't use relaxation
+_relaxation_trait(::Union{MPE,RRE}) = NoRelaxation()
+
+# Trait for methods that use periods
+abstract type PeriodTrait end
+struct HasPeriod <: PeriodTrait end
+struct NoPeriod <: PeriodTrait end
+
+# Default: no period
+_period_trait(::AbstractAccelerationMethod) = NoPeriod()
+# Methods with periods
+_period_trait(::Union{MPE,RRE,VEA,SEA}) = HasPeriod()

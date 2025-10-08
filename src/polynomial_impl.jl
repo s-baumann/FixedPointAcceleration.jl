@@ -254,31 +254,22 @@ function accelerate_poly(
     return ws.proposed
 end
 
-function _accelerated_proposal(
-    method::Union{RRE,MPE}, st::IterationState, cfg::FixedPointConfig, ws
-)
-    return if ws === nothing
-        accelerate_poly(method, st, cfg)
-    else
-        accelerate_poly(method, st, cfg, ws)
+# Unified accelerate interface for polynomial methods with built-in acceleration decision
+function accelerate(method::Union{RRE,MPE}, st::IterationState, cfg::FixedPointConfig, ws=nothing)
+    # Check if we should accelerate (embedded logic from _should_accelerate)
+    ksimple = length(st.history_simple_x)
+    should_accel = (ksimple % method.period) == 0 && ksimple >= _min_history(method)
+
+    if !should_accel
+        return st.fx  # Return st.fx to indicate no acceleration
     end
+
+    # Proceed with acceleration
+    return ws === nothing ? accelerate_poly(method, st, cfg) : accelerate_poly(method, st, cfg, ws)
 end
 
-function _should_accelerate(method::MPE, st::IterationState)
-    ksimple = length(st.history_simple_x)
-    return (ksimple % method.period) == 0 && ksimple >= 3
-end
-function _should_accelerate(method::RRE, st::IterationState)
-    ksimple = length(st.history_simple_x)
-    return (ksimple % method.period) == 0 && ksimple >= 4
-end
+# Trait system for minimum history requirements
+_min_history(::MPE) = 3
+_min_history(::RRE) = 4
 
-function _apply_relaxation(
-    method::Union{MPE,RRE},
-    proposed,
-    st::IterationState,
-    cfg::FixedPointConfig,
-    do_accel::Bool,
-)
-    return proposed
-end
+# Polynomial methods don't use relaxation - they return the proposed value directly
