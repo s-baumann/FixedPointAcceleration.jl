@@ -3,7 +3,6 @@ using Test
 
 using TestItems
 
-
 @testitem "quality assurance" begin
     include("Aqua.jl")
 end
@@ -24,14 +23,21 @@ end
     include("test_allocations.jl")
 end
 
+# @testitem "consumption smoothing" begin
+#     include("ConsumptionSmoothingProblem.jl")
+# end
+
+# @testitem "consumption smoothing old" begin
+#     include("ConsumptionSmoothingProblem_old.jl")
+# end
+
 using TestItemRunner
 
-@run_package_tests()
+@run_package_tests verbose=true
 
 # @testset "ComplexNumberTests" include("ComplexNumberTests.jl")
 # @testset "parity_old_new" include("test_parity_old_new.jl")
 # @testset "test_side_products" include("test_side_products.jl")
-# @testset "consumption smoothing" include("ConsumptionSmoothingProblem.jl")
 # @testset "input_output" include("TestPuttingInputsAndOutputsTogether.jl")
 # @testset "CommonIncrements" include("CommonIncrementsTest.jl")
 # @testset "Chaining" include("Chaining.jl")

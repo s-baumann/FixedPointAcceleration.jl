@@ -32,9 +32,7 @@ function evaluate_status!(
     return :Continue, tracker
 end
 
-function compute_simple_next!(
-    st::IterationState{E}
-) where {E}
+function compute_simple_next!(st::IterationState{E}) where {E}
     prev_simple = st.history_simple_x[end]
     simple_next = st.callbacks.f_apply_simple!(prev_simple)
     push!(st.history_simple_x, simple_next)
@@ -42,10 +40,7 @@ function compute_simple_next!(
 end
 
 function build_proposal(
-    method::AbstractAccelerationMethod,
-    st::IterationState,
-    cfg::FixedPointConfig,
-    ws,
+    method::AbstractAccelerationMethod, st::IterationState, cfg::FixedPointConfig, ws
 )
     st.residual = st.fx .- st.x
     do_accel = _should_accelerate(method, st)
@@ -87,31 +82,5 @@ function step!(
     compute_simple_next!(st)
     do_accel, proposed = build_proposal(method, st, cfg, ws)
     x_new = _apply_relaxation(method, proposed, st, cfg, do_accel)
-    return finalize_iteration!(
-        st,
-        method,
-        cfg,
-        iter,
-        x_new,
-        do_accel,
-        tracker,
-        rnorm_prev,
-    )
-end
-
-function update_history_window!(
-    method::AbstractAccelerationMethod,
-    cfg::FixedPointConfig,
-    st::IterationState,
-    do_accel::Bool,
-)
-    _sync_poly_history!(method, st, do_accel)
-    push_history!(st)
-    _enforce_history_window!(st, cfg)
-    return nothing
-end
-
-push_history!(st_local::IterationState) = begin
-    push!(st_local.history_x, st_local.x)
-    push!(st_local.history_fx, st_local.fx)
+    return finalize_iteration!(st, method, cfg, iter, x_new, do_accel, tracker, rnorm_prev)
 end

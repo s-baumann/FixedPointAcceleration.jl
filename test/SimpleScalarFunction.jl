@@ -45,7 +45,8 @@ using FixedPointAcceleration.OldImplementation:
     @test b.convergence < 1e-8 # If the above line throws then that is a test failure.
 
     # === New core (solve) parity tests ===
-    using FixedPointAcceleration: FixedPointConfig, solve, solve!, Simple, Anderson, Aitken, MPE, RRE, VEA, SEA
+    using FixedPointAcceleration:
+        FixedPointConfig, solve, solve!, Simple, Anderson, Aitken, MPE, RRE, VEA, SEA
     # Wrap scalar function as vector-valued 1D function for new core
     f_vec(x) = (y=similar(x); y[1]=cos(x[1]); y)
     cfg = FixedPointConfig(;

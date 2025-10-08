@@ -64,7 +64,8 @@ using FixedPointAcceleration.OldImplementation:
     @test fp_simple5.convergence < 1e-10
 
     # === New core (solve) parity tests (vector) ===
-    using FixedPointAcceleration: FixedPointConfig, solve, solve!, Simple, Anderson, Aitken, MPE, RRE, VEA, SEA
+    using FixedPointAcceleration:
+        FixedPointConfig, solve, solve!, Simple, Anderson, Aitken, MPE, RRE, VEA, SEA
     # Configuration for new core
     cfg = FixedPointConfig(;
         threshold=1e-10, max_iters=2_000, relaxation=1.0, relaxation_reference=:Simple

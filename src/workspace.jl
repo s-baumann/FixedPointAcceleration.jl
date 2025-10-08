@@ -35,7 +35,7 @@ function init_workspace(
     return init_workspace(T, length(st.x), max(length(st.history_x), 3))
 end
 
-function _enforce_history_window!(st::IterationState, cfg::FixedPointConfig)
+function enforce_history_window!(st::IterationState, cfg::FixedPointConfig)
     hw = cfg.history_window
     hw == -1 && return nothing
     if hw == 0
@@ -60,9 +60,30 @@ function _enforce_history_window!(st::IterationState, cfg::FixedPointConfig)
 end
 
 # Synchronize simple history after a successful polynomial (MPE/RRE) acceleration
-_sync_poly_history!(::AbstractAccelerationMethod, st::IterationState, do_accel::Bool) = nothing
-function _sync_poly_history!(::Union{MPE,RRE}, st::IterationState, do_accel::Bool)
+function sync_poly_history!(
+    ::AbstractAccelerationMethod, st::IterationState, do_accel::Bool
+)
+    nothing
+end
+function sync_poly_history!(::Union{MPE,RRE}, st::IterationState, do_accel::Bool)
     do_accel || return nothing
     st.history_simple_x[end] = copy(st.x)
     st.history_simple_x = [st.history_simple_x[end]]
+end
+
+function update_history_window!(
+    method::AbstractAccelerationMethod,
+    cfg::FixedPointConfig,
+    st::IterationState,
+    do_accel::Bool,
+)
+    sync_poly_history!(method, st, do_accel)
+    push_history!(st)
+    enforce_history_window!(st, cfg)
+    return nothing
+end
+
+push_history!(st_local::IterationState) = begin
+    push!(st_local.history_x, st_local.x)
+    push!(st_local.history_fx, st_local.fx)
 end

@@ -25,7 +25,9 @@ function init_state(x0::AbstractVector{T}, f::Function) where {T}
     r0 = maximum(abs.(residual))
     f_apply_current!(x::AbstractVector{T}) = f(x)
     f_apply_simple!(prev_simple::AbstractVector{T}) = f(prev_simple)
-    finalize_x!(st_local::IterationState{T}, x_new::AbstractVector{T}, fx_new::AbstractVector{T}) = begin
+    finalize_x!(
+        st_local::IterationState{T}, x_new::AbstractVector{T}, fx_new::AbstractVector{T}
+    ) = begin
         st_local.x = x_new
         st_local.fx = fx_new
         st_local.residual = fx_new .- x_new
@@ -47,13 +49,7 @@ function init_state(x0::AbstractVector{T}, f::Function) where {T}
     return st
 end
 
-
-function init_state!(
-    x::AbstractVector{T},
-    fx::AbstractVector{T},
-    f!::Function,
-) where {T}
-
+function init_state!(x::AbstractVector{T}, fx::AbstractVector{T}, f!::Function) where {T}
     f_apply_current!(x_candidate::AbstractVector{T}) = begin
         f!(fx, x_candidate)
         fx
@@ -64,9 +60,7 @@ function init_state!(
         tmp
     end
     finalize_x!(
-        st_local::IterationState{T},
-        x_new::AbstractVector{T},
-        fx_new::AbstractVector{T},
+        st_local::IterationState{T}, x_new::AbstractVector{T}, fx_new::AbstractVector{T}
     ) = begin
         x .= x_new
         st_local.x .= x

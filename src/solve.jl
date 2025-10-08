@@ -27,7 +27,6 @@ function solve(
     return _run_iterations!(st, method, cfg, ws, rnorm)
 end
 
-
 """In-place variant expecting `f!(out, x)` writing f(x) to out."""
 function solve!(
     f!::Function,
@@ -51,7 +50,6 @@ function solve!(
     return _run_iterations!(st, method, cfg, ws, rnorm)
 end
 
-
 function _run_iterations!(
     st::IterationState,
     method::AbstractAccelerationMethod,
@@ -74,7 +72,6 @@ function _run_iterations!(
     return FixedPointSolution(st.x, rnorm, cfg.max_iters, :MaxIters, method, st.history_x)
 end
 
-
 function _maybe_report(cfg::FixedPointConfig, method, iter::Int, rnorm)
     if cfg.report
         println(
@@ -89,7 +86,6 @@ function _maybe_report(cfg::FixedPointConfig, method, iter::Int, rnorm)
         )
     end
 end
-
 
 function _apply_relaxation(
     method::AbstractAccelerationMethod,
