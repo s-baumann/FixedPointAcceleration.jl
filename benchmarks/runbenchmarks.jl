@@ -1,4 +1,4 @@
 using BenchmarkTools
-using FixedPointAcceleration
+using FixedPointAccelerationNext
 
 include("legacy_vs_core.jl")

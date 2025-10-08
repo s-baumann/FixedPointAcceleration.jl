@@ -1,7 +1,7 @@
 using Test
 using ForwardDiff
-using FixedPointAcceleration
-using FixedPointAcceleration: solve, FixedPointConfig, Simple
+using FixedPointAccelerationNext
+using FixedPointAccelerationNext: solve, FixedPointConfig, Simple
 
 function model_func(
     x::AbstractVector{T}, params::AbstractVector{T}

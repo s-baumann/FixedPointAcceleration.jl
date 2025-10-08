@@ -1,4 +1,4 @@
-using FixedPointAcceleration, Test
+using FixedPointAccelerationNext, Test
 
 @testset "Test bounds" begin
     # Testing Error Evaluating Function

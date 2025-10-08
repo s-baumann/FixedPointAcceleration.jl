@@ -1,7 +1,7 @@
 using Random
 using LinearAlgebra
 using BenchmarkTools
-using FixedPointAcceleration
+using FixedPointAccelerationNext
 using Printf
 
 seed = 123
@@ -32,7 +32,7 @@ end
 stats = Dict{Tuple{Symbol, Symbol}, SolverStats}()
 median_times = Dict{Tuple{Symbol, Symbol}, Float64}()
 
-using FixedPointAcceleration.OldImplementation:
+using FixedPointAccelerationNext.OldImplementation:
     fixed_point,
     Simple as LegacySimple,
     Anderson as LegacyAnderson,

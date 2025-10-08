@@ -1,4 +1,4 @@
-module FixedPointAcceleration
+module FixedPointAccelerationNext
 using Dates: now
 
 using DataStructures: CircularBuffer, capacity

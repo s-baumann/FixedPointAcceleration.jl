@@ -1,6 +1,6 @@
-name = "FixedPointAcceleration"
-uuid = "817d07cb-a79a-5c30-9a31-890123675176"
-authors = ["Stuart Baumann <stuart@stuartbaumann.com>"]
+name = "FixedPointAccelerationNext"
+uuid = "c67435d8-732b-4f7a-8832-233f5d4bb960"
+authors = ["Orjan Ameye <orjan.ameye@hotmail.com","Stuart Baumann <stuart@stuartbaumann.com>"]
 version = "1.0.2"
 
 [deps]

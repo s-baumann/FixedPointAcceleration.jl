@@ -4,8 +4,8 @@ using HCubature
 using Distributions
 using Random
 using Optim
-using FixedPointAcceleration
-using FixedPointAcceleration: solve, FixedPointConfig, Simple, Anderson, Aitken, SEA
+using FixedPointAccelerationNext
+using FixedPointAccelerationNext: solve, FixedPointConfig, Simple, Anderson, Aitken, SEA
 
 delta = 0.2
 beta = 0.95

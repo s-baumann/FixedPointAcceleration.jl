@@ -1,4 +1,4 @@
-using FixedPointAcceleration
+using FixedPointAccelerationNext
 using Test
 
 using TestItems

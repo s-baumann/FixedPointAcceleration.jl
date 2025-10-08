@@ -1,5 +1,5 @@
-using Test, FixedPointAcceleration
-using FixedPointAcceleration.OldImplementation:
+using Test, FixedPointAccelerationNext
+using FixedPointAccelerationNext.OldImplementation:
     fixed_point,
     Simple as LegacySimple,
     Anderson as LegacyAnderson,
@@ -64,7 +64,7 @@ using FixedPointAcceleration.OldImplementation:
     @test fp_simple5.convergence < 1e-10
 
     # === New core (solve) parity tests (vector) ===
-    using FixedPointAcceleration:
+    using FixedPointAccelerationNext:
         FixedPointConfig, solve, solve!, Simple, Anderson, Aitken, MPE, RRE, VEA, SEA
     # Configuration for new core
     cfg = FixedPointConfig(;

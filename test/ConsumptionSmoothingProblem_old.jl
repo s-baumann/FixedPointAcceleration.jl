@@ -6,7 +6,7 @@ using HCubature
 using Distributions
 using Random
 using Optim
-using FixedPointAcceleration.OldImplementation:  fixed_point, FixedPointOptions, Simple, Anderson, Aitken, SEA
+using FixedPointAccelerationNext.OldImplementation:  fixed_point, FixedPointOptions, Simple, Anderson, Aitken, SEA
 
 delta = 0.2
 beta = 0.95
@@ -175,7 +175,7 @@ iterated = ShapeToBud(fp_aitken.fixed_point)
 fp_newton = fixed_point(
     Reparameterised_FP_Vector,
     shape_guess,
-    FixedPointAcceleration.Newton(),
+    FixedPointAccelerationNext.Newton(),
     FixedPointOptions(;
         quiet_errors=false, threshold=1e-06, metric=shapeconvergence, reporting_sig_figs=10
     ),

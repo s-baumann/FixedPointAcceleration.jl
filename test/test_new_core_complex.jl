@@ -1,6 +1,6 @@
 
-using Test, FixedPointAcceleration
-using FixedPointAcceleration:
+using Test, FixedPointAccelerationNext
+using FixedPointAccelerationNext:
     solve, solve!, FixedPointConfig, Simple, Anderson, Aitken, MPE, RRE, VEA, SEA
 using LinearAlgebra: norm
 
