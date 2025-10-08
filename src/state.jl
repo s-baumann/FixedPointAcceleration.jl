@@ -14,7 +14,7 @@ function _init_history_buffer(cap::Int, v::Vector{T}) where {T}
     return buf
 end
 
-mutable struct IterationState{T,R<:Real}
+mutable struct IterationState{T,R<:Real,CB}
     x::Vector{T}
     fx::Vector{T}
     residual::Vector{T}
@@ -23,7 +23,7 @@ mutable struct IterationState{T,R<:Real}
     history_simple_x::CircularBuffer{Vector{T}} # pure Picard iterates (f applied without acceleration)
     iter::Int
     initial_residual_norm::R
-    callbacks::IterationCallbacks
+    callbacks::CB
 end
 
 function init_state(x0::AbstractVector{T}, f::Function, history_cap::Int) where {T}
@@ -45,7 +45,7 @@ function init_state(x0::AbstractVector{T}, f::Function, history_cap::Int) where 
     end
     cb = IterationCallbacks(f_apply_current!, f_apply_simple!, finalize_x!)
 
-    st = IterationState{T,typeof(r0)}(
+    st = IterationState{T,typeof(r0),typeof(cb)}(
         x_copy,
         fx_copy,
         residual,
@@ -86,7 +86,7 @@ function init_state!(
     fx_copy = collect(fx)
     residual = fx_copy .- x_copy
     r0 = maximum(abs.(residual))
-    return IterationState{T,typeof(r0)}(
+    return IterationState{T,typeof(r0),typeof(cb)}(
         x_copy,
         fx_copy,
         residual,

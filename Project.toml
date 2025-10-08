@@ -1,6 +1,9 @@
 name = "FixedPointAccelerationNext"
 uuid = "c67435d8-732b-4f7a-8832-233f5d4bb960"
-authors = ["Orjan Ameye <orjan.ameye@hotmail.com", "Stuart Baumann <stuart@stuartbaumann.com>"]
+authors = [
+  "Orjan Ameye <orjan.ameye@hotmail.com",
+  "Stuart Baumann <stuart@stuartbaumann.com>",
+]
 version = "1.0.2"
 
 [deps]
@@ -10,6 +13,7 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [compat]
 Aqua = "0.8"
+CheckConcreteStructs = "0.1.0"
 DataFrames = "1.8.0"
 DataStructures = "0.19.1"
 Dates = "1"
@@ -29,6 +33,7 @@ julia = "1.10"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+CheckConcreteStructs = "73c92db5-9da6-4938-911a-6443a7e94a58"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 ExplicitImports = "7d51a73a-1435-4ff3-83d9-f097790105c7"
@@ -43,4 +48,19 @@ TestItemRunner = "f8b46487-2199-4994-9208-9a1283c18c0a"
 TestItems = "1c621080-faea-4a02-84b6-bbd5e436b8fe"
 
 [targets]
-test = ["Aqua", "Test", "Distributions", "Optim", "ForwardDiff", "Random", "SchumakerSpline", "DataFrames", "TestItems", "TestItemRunner", "FixedPointAcceleration", "JET", "ExplicitImports"]
+test = [
+  "Aqua",
+  "Test",
+  "Distributions",
+  "Optim",
+  "ForwardDiff",
+  "Random",
+  "SchumakerSpline",
+  "DataFrames",
+  "TestItems",
+  "TestItemRunner",
+  "FixedPointAcceleration",
+  "JET",
+  "ExplicitImports",
+  "CheckConcreteStructs",
+]

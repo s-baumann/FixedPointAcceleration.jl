@@ -21,3 +21,22 @@ end
     @test check_all_qualified_accesses_are_public(FixedPointAccelerationNext) == nothing
     @test check_no_self_qualified_accesses(FixedPointAccelerationNext) == nothing
 end
+
+@testset "CheckConcreteStructs" begin
+    using CheckConcreteStructs
+    all_concrete(FixedPointAccelerationNext.FixedPointConfig)
+    all_concrete(FixedPointAccelerationNext.FixedPointSolution)
+
+    all_concrete(FixedPointAccelerationNext.Simple)
+    all_concrete(FixedPointAccelerationNext.Anderson)
+    all_concrete(FixedPointAccelerationNext.Aitken)
+    all_concrete(FixedPointAccelerationNext.MPE)
+    all_concrete(FixedPointAccelerationNext.RRE)
+    all_concrete(FixedPointAccelerationNext.VEA)
+    all_concrete(FixedPointAccelerationNext.SEA)
+
+    all_concrete(FixedPointAccelerationNext.ProgressTracker)
+    all_concrete(FixedPointAccelerationNext.IterationState)
+    all_concrete(FixedPointAccelerationNext.Workspace)
+    all_concrete(FixedPointAccelerationNext.IterationCallbacks)
+end

@@ -14,18 +14,18 @@ struct FixedPointConfig{M,RT<:Real,TT<:Real}
 end
 
 function FixedPointConfig(;
-    metric::M = (x, fx) -> maximum(abs.(fx .- x)),
-    threshold::TT  = 1e-10,
-    max_iters::Integer = 1_000,
-    relaxation::RT  = 1.0,
-    relaxation_reference::Symbol = :Input,
-    replace_invalids::Symbol= :NoAction,
-    report::Bool = false,
-    sigfigs::Int = 10,
-    history_window::Int = -1,
-    stall_window::Int = 0,
-    stall_tolerance::Real = 1e-12,
-    divergence_factor::Real = 1e6,
+    metric::M=(x, fx) -> maximum(abs.(fx .- x)),
+    threshold::TT=1e-10,
+    max_iters::Integer=1_000,
+    relaxation::RT=1.0,
+    relaxation_reference::Symbol=:Input,
+    replace_invalids::Symbol=:NoAction,
+    report::Bool=false,
+    sigfigs::Int=10,
+    history_window::Int=-1,
+    stall_window::Int=0,
+    stall_tolerance::Real=1e-12,
+    divergence_factor::Real=1e6,
 ) where {M,RT<:Real,TT<:Real}
     Int(max_iters) > 0 || throw(ArgumentError("max_iters must be positive"))
     threshold >= zero(TT) || throw(ArgumentError("threshold must be ≥ 0"))
@@ -35,7 +35,7 @@ function FixedPointConfig(;
         throw(ArgumentError("relaxation_reference must be :Input or :Simple"))
     replace_invalids in (:NoAction, :ReplaceElements, :ReplaceVector) || throw(
         ArgumentError(
-            "replace_invalids must be :NoAction, :ReplaceElements, or :ReplaceVector",
+            "replace_invalids must be :NoAction, :ReplaceElements, or :ReplaceVector"
         ),
     )
     sigfigs > 0 || throw(ArgumentError("sigfigs must be positive"))
