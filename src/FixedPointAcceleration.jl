@@ -1,6 +1,7 @@
 module FixedPointAcceleration
 using Dates: now
 
+using DataStructures: CircularBuffer, capacity
 using LinearAlgebra: qr, norm, pinv, qr!, QRPivoted, norm, svd, Diagonal
 
 include("config.jl")

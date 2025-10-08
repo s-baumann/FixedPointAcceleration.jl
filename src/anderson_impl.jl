@@ -36,9 +36,8 @@ function accelerate(method::Anderson, st::IterationState, cfg::FixedPointConfig,
         return st.fx
     end
     w = min(m, k)
-    xs = st.history_x[(end - w + 1):end]
-    fxs = st.history_fx[(end - w + 1):end]
-    rs = map((x, fx) -> fx .- x, xs, fxs)
+    start_idx = k - w + 1
+    rs = [st.history_fx[start_idx + j - 1] .- st.history_x[start_idx + j - 1] for j in 1:w]
     w < 2 && return st.fx
     ΔR = hcat((rs[i + 1] .- rs[i] for i in 1:(w - 1))...)
     F = ΔR
@@ -47,6 +46,7 @@ function accelerate(method::Anderson, st::IterationState, cfg::FixedPointConfig,
     if any(isnan.(γ)) || any(isinf.(γ))
         return st.fx
     end
+    fxs = [st.history_fx[start_idx + j - 1] for j in 1:w]
     ΔF = hcat((fxs[i + 1] .- fxs[i] for i in 1:(w - 1))...)
     proposed = fxs[end] .- (ΔF * γ)
     return proposed
@@ -61,12 +61,13 @@ function accelerate(
         return st.fx
     end
     w = min(m, k)
-    xs = st.history_x[(end - w + 1):end]
-    fxs = st.history_fx[(end - w + 1):end]
+    start_idx = k - w + 1
+    fxs = [st.history_fx[start_idx + j - 1] for j in 1:w]
     n = length(st.x)
     # Fill residuals columns
     @inbounds for j in 1:w
-        xj = xs[j];
+        idx = start_idx + j - 1
+        xj = st.history_x[idx]
         fxj = fxs[j]
         for i in 1:n
             ws.residuals[i, j] = fxj[i] - xj[i]

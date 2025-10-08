@@ -4,19 +4,28 @@ struct IterationCallbacks{F1,F2,F3}
     finalize_x!::F3
 end
 
+history_capacity(cfg::FixedPointConfig) =
+    cfg.history_window == -1 ? cfg.max_iters + 1 : max(cfg.history_window, 1)
+
+function _init_history_buffer(cap::Int, v::Vector{T}) where {T}
+    buf = CircularBuffer{Vector{T}}(cap)
+    push!(buf, copy(v))
+    return buf
+end
+
 mutable struct IterationState{T}
     x::Vector{T}
     fx::Vector{T}
     residual::Vector{T}
-    history_x::Vector{Vector{T}}
-    history_fx::Vector{Vector{T}}
-    history_simple_x::Vector{Vector{T}} # pure Picard iterates (f applied without acceleration)
+    history_x::CircularBuffer{Vector{T}}
+    history_fx::CircularBuffer{Vector{T}}
+    history_simple_x::CircularBuffer{Vector{T}} # pure Picard iterates (f applied without acceleration)
     iter::Int
     initial_residual_norm::Float64
     callbacks::IterationCallbacks
 end
 
-function init_state(x0::AbstractVector{T}, f::Function) where {T}
+function init_state(x0::AbstractVector{T}, f::Function, history_cap::Int) where {T}
     fx0 = f(x0)
     length(fx0) == length(x0) || throw(ArgumentError("Function output length mismatch"))
     x_copy = collect(x0)
@@ -39,9 +48,9 @@ function init_state(x0::AbstractVector{T}, f::Function) where {T}
         x_copy,
         fx_copy,
         residual,
-        [copy(x_copy)],
-        [copy(fx_copy)],
-        [copy(x_copy)],
+        _init_history_buffer(history_cap, x_copy),
+        _init_history_buffer(history_cap, fx_copy),
+        _init_history_buffer(history_cap, x_copy),
         0,
         r0,
         cb,
@@ -49,7 +58,9 @@ function init_state(x0::AbstractVector{T}, f::Function) where {T}
     return st
 end
 
-function init_state!(x::AbstractVector{T}, fx::AbstractVector{T}, f!::Function) where {T}
+function init_state!(
+    x::AbstractVector{T}, fx::AbstractVector{T}, f!::Function, history_cap::Int
+) where {T}
     f_apply_current!(x_candidate::AbstractVector{T}) = begin
         f!(fx, x_candidate)
         fx
@@ -77,9 +88,9 @@ function init_state!(x::AbstractVector{T}, fx::AbstractVector{T}, f!::Function) 
         x_copy,
         fx_copy,
         residual,
-        [copy(x_copy)],
-        [copy(fx_copy)],
-        [copy(x_copy)],
+        _init_history_buffer(history_cap, x_copy),
+        _init_history_buffer(history_cap, fx_copy),
+        _init_history_buffer(history_cap, x_copy),
         0,
         maximum(abs.(residual)),
         cb,

@@ -35,40 +35,29 @@ function init_workspace(
     return init_workspace(T, length(st.x), max(length(st.history_x), 3))
 end
 
-function enforce_history_window!(st::IterationState, cfg::FixedPointConfig)
-    hw = cfg.history_window
-    hw == -1 && return nothing
-    if hw == 0
-        st.history_x = [st.history_x[end]]
-        st.history_fx = [st.history_fx[end]]
-        st.history_simple_x = [st.history_simple_x[end]]  # Ensure simple history is maintained
-    else
-        lenx = length(st.history_x)
-        if lenx > hw
-            start = lenx - hw + 1
-            start = start < 1 ? 1 : start
-            st.history_x = st.history_x[start:lenx]
-            st.history_fx = st.history_fx[start:lenx]
-        end
-        lens = length(st.history_simple_x)
-        if lens > hw
-            sstart = lens - hw + 1
-            sstart = sstart < 1 ? 1 : sstart
-            st.history_simple_x = st.history_simple_x[sstart:lens]
-        end
-    end
-end
-
 # Synchronize simple history after a successful polynomial (MPE/RRE) acceleration
 function sync_poly_history!(
-    ::AbstractAccelerationMethod, st::IterationState, do_accel::Bool
+    ::AbstractAccelerationMethod,
+    st::IterationState,
+    cfg::FixedPointConfig,
+    do_accel::Bool,
 )
-    nothing
+    return nothing
 end
-function sync_poly_history!(::Union{MPE,RRE}, st::IterationState, do_accel::Bool)
+
+function sync_poly_history!(
+    ::Union{MPE,RRE}, st::IterationState, cfg::FixedPointConfig, do_accel::Bool
+)
     do_accel || return nothing
-    st.history_simple_x[end] = copy(st.x)
-    st.history_simple_x = [st.history_simple_x[end]]
+    empty!(st.history_simple_x)
+    push!(st.history_simple_x, st.x)
+    return nothing
+end
+
+function push_history!(st::IterationState, cfg::FixedPointConfig)
+    push!(st.history_x, st.x)
+    push!(st.history_fx, st.fx)
+    return nothing
 end
 
 function update_history_window!(
@@ -77,13 +66,7 @@ function update_history_window!(
     st::IterationState,
     do_accel::Bool,
 )
-    sync_poly_history!(method, st, do_accel)
-    push_history!(st)
-    enforce_history_window!(st, cfg)
+    sync_poly_history!(method, st, cfg, do_accel)
+    push_history!(st, cfg)
     return nothing
-end
-
-push_history!(st_local::IterationState) = begin
-    push!(st_local.history_x, st_local.x)
-    push!(st_local.history_fx, st_local.fx)
 end

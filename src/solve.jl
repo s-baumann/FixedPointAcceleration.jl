@@ -15,13 +15,14 @@ function solve(
     method::AbstractAccelerationMethod=Simple(),
     cfg::FixedPointConfig=FixedPointConfig(),
 ) where {E}
-    st = init_state(x0, f)
+    cap = history_capacity(cfg)
+    st = init_state(x0, f, cap)
     ws = init_workspace(E, st, method)
 
     rnorm = cfg.metric(st.x, st.fx)
     _maybe_report(cfg, method, 0, rnorm)
     if rnorm <= cfg.threshold
-        return FixedPointSolution(st.x, rnorm, 0, :Converged, method, st.history_x)
+        return FixedPointSolution(st.x, rnorm, 0, :Converged, method, collect(st.history_x))
     end
 
     return _run_iterations!(st, method, cfg, ws, rnorm)
@@ -36,7 +37,8 @@ function solve!(
 ) where {E}
     fx = similar(x)
     f!(fx, x)
-    st = init_state!(x, fx, f!)
+    cap = history_capacity(cfg)
+    st = init_state!(x, fx, f!, cap)
 
     ws = init_workspace(E, st, method)
     rnorm = cfg.metric(st.x, st.fx)
@@ -44,7 +46,7 @@ function solve!(
     _maybe_report(cfg, method, 0, rnorm)
 
     if rnorm <= cfg.threshold
-        return FixedPointSolution(st.x, rnorm, 0, :Converged, method, st.history_x)
+        return FixedPointSolution(st.x, rnorm, 0, :Converged, method, collect(st.history_x))
     end
 
     return _run_iterations!(st, method, cfg, ws, rnorm)
@@ -62,14 +64,20 @@ function _run_iterations!(
         status, new_rnorm, tracker = step!(st, method, cfg, ws, iter, tracker, rnorm)
 
         if status === :FunctionSizeMismatch
-            return FixedPointSolution(st.x, rnorm, iter - 1, status, method, st.history_x)
+            return FixedPointSolution(
+                st.x, rnorm, iter - 1, status, method, collect(st.history_x)
+            )
         elseif status === :Continue
             rnorm = new_rnorm
         else
-            return FixedPointSolution(st.x, new_rnorm, iter, status, method, st.history_x)
+            return FixedPointSolution(
+                st.x, new_rnorm, iter, status, method, collect(st.history_x)
+            )
         end
     end
-    return FixedPointSolution(st.x, rnorm, cfg.max_iters, :MaxIters, method, st.history_x)
+    return FixedPointSolution(
+        st.x, rnorm, cfg.max_iters, :MaxIters, method, collect(st.history_x)
+    )
 end
 
 function _maybe_report(cfg::FixedPointConfig, method, iter::Int, rnorm)
