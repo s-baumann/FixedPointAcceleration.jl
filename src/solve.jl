@@ -16,19 +16,21 @@ function solve(
     cfg::FixedPointConfig=FixedPointConfig(),
 ) where {E}
     st = init_state(x0, f)
-    ws = _maybe_workspace(E, st, method)
-    metric = cfg.metric
-    rnorm = metric(st.x, st.fx)
+    ws = init_workspace(E, st, method)
+
+    rnorm = cfg.metric(st.x, st.fx)
     _maybe_report(cfg, method, 0, rnorm)
     if rnorm <= cfg.threshold
         return FixedPointSolution(st.x, rnorm, 0, :Converged, method, st.history_x)
     end
+
     prev_best = Ref(rnorm)
     prev_best_iter = Ref(0)
     for iter in 1:cfg.max_iters
         status, new_rnorm = _step!(
-            f, st, method, cfg, ws, metric, iter, prev_best, prev_best_iter, rnorm
+            f, st, method, cfg, ws, iter, prev_best, prev_best_iter, rnorm
         )
+
         if status === :FunctionSizeMismatch
             return FixedPointSolution(st.x, rnorm, iter - 1, status, method, st.history_x)
         elseif status === :Converged || status === :Diverged || status === :Stalled
@@ -51,7 +53,7 @@ function solve!(
     f!(fx, x)
     st = IterationState{E}(x, fx)
 
-    ws = _maybe_workspace(E, st, method)
+    ws = init_workspace(E, st, method)
     rnorm = cfg.metric(st.x, st.fx)
 
     _maybe_report(cfg, method, 0, rnorm)

@@ -17,17 +17,22 @@ function init_workspace(::Type{T}, n::Int, m::Int) where {T}
     return Workspace(residuals, delta_resids, delta_outputs, coeffs, proposed)
 end
 
-function _maybe_workspace(
-    ::Type{T}, st::IterationState{T}, method::AbstractAccelerationMethod
+"""Return nothing by default for methods that do not need a workspace."""
+function init_workspace(
+    ::Type{T}, st::IterationState{T}, ::AbstractAccelerationMethod
 ) where {T}
-    if method isa Anderson
-        return init_workspace(T, length(st.x), method.m)
-    elseif method isa MPE || method isa RRE || method isa VEA || method isa SEA
-        # polynomial methods need dynamic width; start with small workspace sized to current history
-        return init_workspace(T, length(st.x), max(length(st.history_x), 3))
-    else
-        return nothing
-    end
+    return nothing
+end
+
+function init_workspace(::Type{T}, st::IterationState{T}, method::Anderson) where {T}
+    return init_workspace(T, length(st.x), method.m)
+end
+
+function init_workspace(
+    ::Type{T}, st::IterationState{T}, ::Union{MPE,RRE,VEA,SEA}
+) where {T}
+    # polynomial methods need dynamic width; start with small workspace sized to current history
+    return init_workspace(T, length(st.x), max(length(st.history_x), 3))
 end
 
 function _enforce_history_window!(st::IterationState, cfg::FixedPointConfig)

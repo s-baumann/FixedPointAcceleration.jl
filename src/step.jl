@@ -10,7 +10,6 @@ function _step!(
     method::AbstractAccelerationMethod,
     cfg::FixedPointConfig,
     ws,
-    metric::Function,
     iter::Int,
     prev_best::Base.RefValue{R},
     prev_best_iter::Base.RefValue{Int},
@@ -27,7 +26,7 @@ function _step!(
     st.residual = fx_pre .- st.x
 
     do_accel = _should_accelerate(method, st)
-    proposed = if (method isa Simple || !do_accel)
+    proposed = if !do_accel
         fx_pre
     else
         _accelerated_proposal(method, st, cfg, ws)
@@ -46,7 +45,7 @@ function _step!(
     push!(st.history_fx, copy(fx_new))
     _enforce_history_window!(st, cfg)
 
-    rnorm = metric(x_new, fx_new)
+    rnorm = cfg.metric(x_new, fx_new)
     _maybe_report(cfg, method, iter, rnorm)
     if rnorm <= cfg.threshold
         return :Converged, rnorm
