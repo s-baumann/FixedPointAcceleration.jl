@@ -42,7 +42,7 @@ function nonlinear_system!(suite)
         ("Simple", Simple()),
         ("Anderson", Anderson()),
         ("Aitken", Aitken()),
-        ("MPE", MPE( )),
+        ("MPE", MPE()),
         ("RRE", RRE()),
         ("VEA", VEA()),
         ("SEA", SEA()),
