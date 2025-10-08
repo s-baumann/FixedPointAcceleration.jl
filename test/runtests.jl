@@ -13,6 +13,9 @@ end
 @testitem "SimpleVectorFunction" begin
     include("SimpleVectorFunction.jl")
 end
+@testitem "autodiff" begin
+    include("Autodiff.jl")
+end
 @testitem "new_core" begin
     include("test_new_core.jl")
 end
