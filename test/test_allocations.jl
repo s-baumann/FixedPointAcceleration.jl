@@ -1,6 +1,4 @@
-module test_allocations
-
-using Test
+using Test, FixedPointAcceleration
 using FixedPointAcceleration: solve, FixedPointConfig, Anderson, Simple, MPE, RRE, VEA, SEA
 using LinearAlgebra: norm
 
@@ -107,5 +105,3 @@ end
     alloc_second = @allocated solve(f, x0; method=Simple(), cfg=cfg)
     @test alloc_second < 120_000
 end
-
-end # module test_allocations

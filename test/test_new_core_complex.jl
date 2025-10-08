@@ -1,6 +1,5 @@
-module test_new_core_complex
 
-using Test
+using Test, FixedPointAcceleration
 using FixedPointAcceleration:
     solve, solve!, FixedPointConfig, Simple, Anderson, Aitken, MPE, RRE, VEA, SEA
 using LinearAlgebra: norm
@@ -115,5 +114,3 @@ end
     sea = solve(f, x0; method=SEA(period=6), cfg=cfg);
     _assert_close("SEA", sea)
 end
-
-end # module test_new_core_complex

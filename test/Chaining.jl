@@ -1,8 +1,6 @@
-module test_Chaining
+using Test, FixedPointAcceleration
 
-using Test
 @testset "Test Chaining" begin
-    using FixedPointAcceleration
     func1(x) = cos.(x)
     Inputs = 1.1
     # We should not have any slowdown from starting in simple for two. Then SEA for 3. Then Simple. Then VEA until the end.
@@ -32,5 +30,4 @@ using Test
     fp_nochain = fixed_point(func2, Inputs, RRE(), opts_100)
     @test fp_chain.iterations == fp_nochain.iterations
     @test all(abs.(fp_nochain.inputs .- fp_chain.inputs) .< 1e-14)
-end
 end

@@ -1,6 +1,4 @@
-module test_new_core
-
-using Test
+using Test, FixedPointAcceleration
 using FixedPointAcceleration:
     solve, solve!, FixedPointConfig, Anderson, Simple, Aitken, MPE, RRE, VEA, SEA
 using LinearAlgebra: norm
@@ -97,5 +95,3 @@ end
     @test sol_sea.fixed_point ≈ sol_simple.fixed_point atol=1e-8
     @test sol_sea.iterations <= sol_simple.iterations
 end
-
-end # module test_new_core

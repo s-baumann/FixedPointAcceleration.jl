@@ -1,6 +1,4 @@
-module test_CommonIncrements
-
-using Test
+using FixedPointAcceleration, Test
 @testset "Test Common Increments" begin
     using FixedPointAcceleration
     function funcfunc(x::Array{Float64,1})
@@ -76,6 +74,4 @@ using Test
         FixedPointOptions(quiet_errors=true, replace_invalids=:ReplaceElements),
     )
     @test fp_MPE.termination_condition == :ReachedConvergenceThreshold
-end
-
 end

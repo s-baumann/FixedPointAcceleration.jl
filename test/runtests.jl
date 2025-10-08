@@ -1,16 +1,32 @@
 using FixedPointAcceleration
 using Test
 
-@testset "FixedPointAcceleration.jl" begin
-    @testset "quality assurance" include("Aqua.jl")
+using TestItems
 
-    @testset "SimpleScalarFunction" include("SimpleScalarFunction.jl")
-    @testset "SimpleVectorFunction" include("SimpleVectorFunction.jl")
 
-    @testset "new_core" include("test_new_core.jl")
-    @testset "new_core_complex" include("test_new_core_complex.jl")
-    @testset "allocations" include("test_allocations.jl")
+@testitem "quality assurance" begin
+    include("Aqua.jl")
 end
+
+@testitem "SimpleScalarFunction" begin
+    include("SimpleScalarFunction.jl")
+end
+@testitem "SimpleVectorFunction" begin
+    include("SimpleVectorFunction.jl")
+end
+@testitem "new_core" begin
+    include("test_new_core.jl")
+end
+@testitem "new_core_complex" begin
+    include("test_new_core_complex.jl")
+end
+@testitem "allocations" begin
+    include("test_allocations.jl")
+end
+
+using TestItemRunner
+
+@run_package_tests()
 
 # @testset "ComplexNumberTests" include("ComplexNumberTests.jl")
 # @testset "parity_old_new" include("test_parity_old_new.jl")

@@ -1,6 +1,4 @@
-module test_simple_vector
-
-using Test
+using Test, FixedPointAcceleration
 using FixedPointAcceleration.OldImplementation:
     fixed_point,
     Simple as LegacySimple,
@@ -116,6 +114,4 @@ using FixedPointAcceleration.OldImplementation:
             @test maximum(abs.(sol.fixed_point .- legacy_simple_vec2)) < val_atol
         end
     end
-end
-
 end

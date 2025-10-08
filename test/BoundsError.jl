@@ -1,8 +1,6 @@
-module test_BoundsError
+using FixedPointAcceleration, Test
 
-using Test
 @testset "Test bounds" begin
-    using FixedPointAcceleration
     # Testing Error Evaluating Function
     simple_vector_function(x) = [0.5*sqrt(x[1] + x[2]), 1.5*x[1] + 0.5*x[2]]
     Inputs = [0.3, 900]
@@ -75,6 +73,4 @@ using Test
     Inputs = [4.0, 1.0]
     fp = fixed_point(funcfunc5, Inputs, Anderson(), opts_quiet)
     @test fp.failed_evaluation.error == :FunctionIsNotTypeStable
-end
-
 end
