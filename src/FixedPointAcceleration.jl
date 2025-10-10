@@ -1,6 +1,5 @@
 module FixedPointAcceleration
     using LinearAlgebra: cond, pinv
-    using GLM: fit, LinearModel
     using Dates: now
     include("0_Structs_And_Enums.jl")
     include("1_MainFunctions.jl")

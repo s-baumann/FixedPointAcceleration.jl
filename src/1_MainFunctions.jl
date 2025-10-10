@@ -1,5 +1,5 @@
 """
-    execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool = false, quiet_errors::Bool = true) where T<:Real
+    execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool = false, quiet_errors::Bool = true) where T<:Number
 This function creates a function that executes the function for which a fixed point is sought. It is a helper function that is not exported.
 ### Inputs
  * `Func` - The function input to fixed_point
@@ -20,7 +20,7 @@ This function creates a function that executes the function for which a fixed po
     execute_function_safely(Func,NaN)
     execute_function_safely(Func,Inf)
 """
-function execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool = false, quiet_errors::Bool = true) where T<:Real
+function execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool = false, quiet_errors::Bool = true) where T<:Number
     # Check input
     if sum(isnan.(x)) > 0
         return FunctionEvaluationResult(x, missing, :InputNAsDetected)
@@ -142,39 +142,43 @@ end
 function fixed_point(func::Function, Inputs::Array{T, 1};
                     Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0), Dampening_With_Input::Bool = false,
-                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false) where T<:Real
-    Inputs2 = Array{Float64, 2}(undef,size(Inputs)[1],1)
-    Inputs2[:,1] = Inputs
+                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false) where T<:Number
+    matrix_type = promote_type(T, Float64)
+    Inputs2 = Array{matrix_type, 2}(undef, size(Inputs)[1], 1)
+    Inputs2[:,1] = convert.(matrix_type, Inputs)
     return fixed_point(func, Inputs2; Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
                        MaxIter = MaxIter, MaxM = MaxM, ExtrapolationPeriod = ExtrapolationPeriod, Dampening = Dampening, Dampening_With_Input = Dampening_With_Input, PrintReports = PrintReports, ReportingSigFig = ReportingSigFig,
                        ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold, quiet_errors = quiet_errors)
 end
-function fixed_point(func::Function, Inputs::Real;
+function fixed_point(func::Function, Inputs::Number;
                     Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0), Dampening_With_Input::Bool = false,
                     PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false)
-    Inputs2 = Array{typeof(Inputs), 2}(undef,1,1)
-    Inputs2[1,1] = Inputs
+    matrix_type = promote_type(typeof(Inputs), Float64)
+    Inputs2 = Array{matrix_type, 2}(undef,1,1)
+    Inputs2[1,1] = convert(matrix_type, Inputs)
     return fixed_point(func, Inputs2; Algorithm = Algorithm, ConvergenceMetric = ConvergenceMetric, ConvergenceMetricThreshold = ConvergenceMetricThreshold,
                        MaxIter = MaxIter, MaxM = MaxM, ExtrapolationPeriod = ExtrapolationPeriod, Dampening = Dampening, Dampening_With_Input = Dampening_With_Input, PrintReports = PrintReports, ReportingSigFig = ReportingSigFig,
                        ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold, quiet_errors = quiet_errors)
 end
-function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{<:Real,2} = Array{T,2}(undef,size(Inputs)[1],0),
+function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{S,2} = Array{T,2}(undef,size(Inputs)[1],0),
                     Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0), Dampening_With_Input::Bool = false,
-                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false, other_outputs::Union{Missing,NamedTuple} = missing) where T<:Real
+                    PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false, other_outputs::Union{Missing,NamedTuple} = missing) where {T<:Number,S<:Number}
     # This code first tests if the input point is a fixed point. Then if it is not a while loop runs to try to find a fixed point.
     if (ConditionNumberThreshold < 1) error("ConditionNumberThreshold must be at least 1.")  end
     SimpleStartIndex = Integer(size(Outputs)[2])
     if isempty(Outputs)
         if size(Inputs)[2] > 1
-            @warn("If you do not give outputs to the function then you can only give one vector of inputs (in a 2d array) to the fixed_pointFunction. So for a function that takes an N dimensional array you should input a Array{Float64}(N,1) array.  As you have input an array of size Array{Float64}(N,k) with k > 1 we have discarded everything but the last column to turn it into a Array{Float64}(N,1) array.\n")
+            etype = eltype(Inputs)
+            @warn("If you do not give outputs to the function then you can only give one vector of inputs (in a 2d array) to the fixed_pointFunction. So for a function that takes an N dimensional array you should input an Array{$etype}(N,1) array. As you have input an array of size Array{$etype}(N,k) with k > 1 we have discarded everything but the last column to turn it into an Array{$etype}(N,1) array.")
             Inputs = Inputs[:,size(Inputs)[2]]
             Inputs = reshape(Inputs, length(Inputs), 1)
         end
     else
         if size(Inputs) != size(Outputs)
-            @warn("If you input a matrix of outputs as well as a matrix of inputs then inputs and outputs must be the same shape. As they differ in this case the last column of the inputs matrix has been taken as the starting point and everything else discarded.")
+            etype = eltype(Inputs)
+            @warn("If you input a matrix of outputs as well as a matrix of inputs then inputs and outputs must be the same shape. As they differ in this case the last column of the inputs matrix has been taken as the starting point and everything else discarded for inputs of element type $etype.")
             Inputs  = Inputs[:,size(Inputs)[2]]
             Inputs = reshape(Inputs, length(Inputs), 1)
             Outputs = Array{T,2}(undef,size(Inputs)[1],0)
@@ -203,9 +207,12 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{<:Real,
     end
     # First running through the last column of Inputs to test if we already have a fixed point.
     iter = Integer(size(Outputs)[2])
-    ConvergenceVector = Array{output_type,1}(undef,iter)
-    for i in 1:iter
-        ConvergenceVector[i] = ConvergenceMetric(Inputs[:,i], Outputs[:,i])
+    first_convergence = float(ConvergenceMetric(Inputs[:,1], Outputs[:,1]))
+    convergence_type = typeof(first_convergence)
+    ConvergenceVector = Vector{convergence_type}(undef, iter)
+    ConvergenceVector[1] = first_convergence
+    for i in 2:iter
+        ConvergenceVector[i] = float(ConvergenceMetric(Inputs[:,i], Outputs[:,i]))
     end
     if ConvergenceVector[iter] < ConvergenceMetricThreshold
         if (PrintReports)
@@ -236,8 +243,8 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{<:Real,
         Inputs  = hcat(Inputs, ExecutedFunction.Input_)
         Outputs = hcat(Outputs, convert(Array{output_type,1}, ExecutedFunction.Output_))
         # Checking and recording convergence
-        Convergence = ConvergenceMetric(ExecutedFunction.Input_, ExecutedFunction.Output_)
-        ConvergenceVector =  vcat(ConvergenceVector, Convergence)
+    Convergence = float(ConvergenceMetric(ExecutedFunction.Input_, ExecutedFunction.Output_))
+    push!(ConvergenceVector, Convergence)
         # Output of report and going to next iteration.
         if (PrintReports) println("Algorithm: ", lpad(Algorithm,8)   , ". Iteration: ", lpad(iter,5), ". Convergence: ", lpad(round(Convergence, sigdigits=ReportingSigFig),ReportingSigFig+4), ". Time: ", now()) end
         iter  = iter + 1
@@ -249,7 +256,7 @@ end
 """
     fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArray{T,2}, Algorithm::Symbol = :Anderson;
                                MaxM::Integer = 10, SimpleStartIndex::Integer = 1, ExtrapolationPeriod::Integer = 1, Dampening::S = AbstractFloat(1), Dampening_With_Input::Bool = false,
-                               ConditionNumberThreshold::R = AbstractFloat(1000), PrintReports::Bool = false, ReplaceInvalids::InvalidReplacement = :NoAction) where R<:Real where S<:Real where T<:Real
+                               ConditionNumberThreshold::R = AbstractFloat(1000), PrintReports::Bool = false, ReplaceInvalids::InvalidReplacement = :NoAction) where R<:Real where S<:Real where T<:Number
 
 This function takes the previous inputs and outputs from the fixed_point function and determines what vector to try next in seeking a fixed point.
 ### Inputs
@@ -275,10 +282,12 @@ This function takes the previous inputs and outputs from the fixed_point functio
 """
 function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArray{T,2}, Algorithm::Symbol = :Anderson;
                                MaxM::Integer = 10, SimpleStartIndex::Integer = 1, ExtrapolationPeriod::Integer = 1, Dampening::S = AbstractFloat(1), Dampening_With_Input::Bool = false,
-                               ConditionNumberThreshold::R = AbstractFloat(1000), PrintReports::Bool = false, ReplaceInvalids::Symbol = :NoAction) where R<:Real where S<:Real where T<:Real
+                               ConditionNumberThreshold::R = AbstractFloat(1000), PrintReports::Bool = false, ReplaceInvalids::Symbol = :NoAction) where R<:Real where S<:Real where T<:Number
     CompletedIters = size(Outputs)[2]
     simple_iterate = Outputs[:,CompletedIters]
-    proposed_input = repeat([NaN], size(simple_iterate)[1])
+    proposed_input = similar(simple_iterate)
+    nan_simple = oftype(zero(eltype(simple_iterate)), NaN)
+    fill!(proposed_input, nan_simple)
     if Algorithm == :Simple
          proposed_input = simple_iterate
     elseif Algorithm == :Anderson
@@ -296,9 +305,11 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
             DeltaResids     = Resid[:,2:(M+1)]   .- Resid[:,1:M]
             LastResid       = Resid[:,M+1]
             LastOutput      = recent_Outputs[:,M+1]
-            Coeffs          = repeat([NaN], size(DeltaOutputs)[2])
+            coeff_nan = oftype(zero(eltype(DeltaOutputs)), NaN)
+            Coeffs          = Vector{eltype(DeltaOutputs)}(undef, size(DeltaOutputs)[2])
+            fill!(Coeffs, coeff_nan)
             ConditionNumber = NaN
-            while sum(isnan.(Coeffs)) > 0
+            while any(isnan.(Coeffs))
                 if isempty(DeltaResids)
                     # This happens if there is convergence by constant increments and thus the
                     #  most recent DeltaResids is all zeros. So we end up dropping all DeltaResids and get an error here.
@@ -307,14 +318,19 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
                 ConditionNumber = cond(DeltaResids)
                 if ConditionNumber > ConditionNumberThreshold
                     M = M-1
+                    if M < 1
+                        Coeffs = Vector{eltype(DeltaOutputs)}(undef, 0)
+                        break
+                    end
                     DeltaOutputs= DeltaOutputs[:, 2:(M+1)]
                     DeltaResids = DeltaResids[ :, 2:(M+1)]
-                    Coeffs      = repeat([NaN], size(DeltaOutputs)[2])
+                    coeff_nan = oftype(zero(eltype(DeltaOutputs)), NaN)
+                    Coeffs      = Vector{eltype(DeltaOutputs)}(undef, size(DeltaOutputs)[2])
+                    fill!(Coeffs, coeff_nan)
                     continue
                 end
-                Fit = fit(LinearModel,  hcat(DeltaResids), LastResid)
-                Coeffs = Fit.pp.beta0
-                if sum(isnan.(Coeffs)) > 0
+                Coeffs = DeltaResids \ LastResid
+                if any(isnan.(Coeffs))
                     M = M-1
                     if (M < 1.5)
                         # This happens occasionally in test cases where the iteration is very close to a fixed point.
@@ -323,11 +339,15 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
                     end
                     DeltaOutputs = DeltaOutputs[:, 2:(M+1)]
                     DeltaResids  = DeltaResids[ :, 2:(M+1)]
+                    coeff_nan = oftype(zero(eltype(DeltaOutputs)), NaN)
+                    Coeffs      = Vector{eltype(DeltaOutputs)}(undef, size(DeltaOutputs)[2])
+                    fill!(Coeffs, coeff_nan)
                 end
             end
             if isempty(Coeffs)
                 if (PrintReports) print("Condition number is ", lpad("NaN", 5),". Used:",  lpad(0, 3)," lags. ") end
-                proposed_input = repeat([NaN], VectorLength)
+                proposed_input = similar(simple_iterate)
+                fill!(proposed_input, nan_simple)
             else
                 if (PrintReports) print("Condition number is ", lpad(round(ConditionNumber, sigdigits = 2), 5),". Used:",  lpad(M+1, 3)," lags. ") end
                 proposed_input = LastOutput .- (Dampening .* vec(DeltaOutputs * Coeffs))
@@ -403,7 +423,7 @@ This function performs Minimal Polynomial extrapolation (MPE) or Reduced Rank Ex
 ### Returns
  * A `Vector` containing the extrapolated vector.
 """
-function PolynomialExtrapolation(Iterates::AbstractArray{R,2}, Algorithm::Symbol) where R<:Real
+function PolynomialExtrapolation(Iterates::AbstractArray{R,2}, Algorithm::Symbol) where R<:Number
     if (Algorithm == :MPE)
         TotalColumnsOfIterates = size(Iterates)[2]
         OldDifferences         = Iterates[:,2:(TotalColumnsOfIterates-1)] .- Iterates[:,1:(TotalColumnsOfIterates-2)]
@@ -435,7 +455,7 @@ This is a helper function for EpsilonExtrapolation
 ### Returns
  *  A `Vector` with the extrapolated vector.
 """
-function EpsilonExtrapolation(Iterates::AbstractArray{R,2}, Algorithm::Symbol) where R<:Real
+function EpsilonExtrapolation(Iterates::AbstractArray{R,2}, Algorithm::Symbol) where R<:Number
     # The function cannot do anything to a one column input so will return input unchanged.
     if (size(Iterates)[2] == 1) return Iterates end
     if (size(Iterates)[2] % 2 == 0) Iterates = Iterates[:,2:size(Iterates)[2]] end
@@ -443,7 +463,7 @@ function EpsilonExtrapolation(Iterates::AbstractArray{R,2}, Algorithm::Symbol) w
     Mat = Iterates
     RowsOfMatrix    = size(Mat)[1]
     TotalColumnsOfMatrix = size(Mat)[2]
-    PreviousMatrix = zeros(RowsOfMatrix,(TotalColumnsOfMatrix-1))
+    PreviousMatrix = zeros(eltype(Mat), RowsOfMatrix,(TotalColumnsOfMatrix-1))
     for MatrixColumn in reverse(2:TotalColumnsOfMatrix)
         DiffMatrix = Mat[:,2:MatrixColumn] .- Mat[:,1:(MatrixColumn-1)]
         NewMatrix = PreviousMatrix + EpsilonExtrapolationVectorOfInverses(DiffMatrix, Algorithm)
@@ -466,7 +486,7 @@ This is a helper function for EpsilonExtrapolation
 ### Returns
  * A `Vector` of the result of inverting each (column) vector in a mmatrix.
 """
-function EpsilonExtrapolationVectorOfInverses(DifferenceMatrix::AbstractArray{T,2}, Algorithm::Symbol) where T<:Real
+function EpsilonExtrapolationVectorOfInverses(DifferenceMatrix::AbstractArray{T,2}, Algorithm::Symbol) where T<:Number
     if (size(DifferenceMatrix)[1] == 1) | (Algorithm == :SEA)
         return 1 ./ DifferenceMatrix
     else
@@ -488,7 +508,7 @@ This function takes the previous inputs and outputs and assembles a matrix with 
 ### Returns
  * A matrix of inputs and outputs excluding jumps.
 """
-function put_together_without_jumps(Inputs::AbstractArray{T,2}, Outputs::AbstractArray{T,2}, AgreementThreshold::Float64 = 1e-10) where T<:Real
+function put_together_without_jumps(Inputs::AbstractArray{T,2}, Outputs::AbstractArray{T,2}, AgreementThreshold::Float64 = 1e-10) where T<:Number
   if (any(size(Inputs) != size(Outputs))) error("Inputs and Outputs matrices are not comformable.") end
   size_of_dims = size(Inputs)
 

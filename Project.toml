@@ -5,13 +5,11 @@ version = "1.0.2"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [compat]
 Aqua = "0.8"
 Dates = "<0.0.1, 1"
-GLM = "^1"
 LinearAlgebra = "<0.0.1, 1"
 Test = "<0.0.1, 1"
 julia = "^1.4"
