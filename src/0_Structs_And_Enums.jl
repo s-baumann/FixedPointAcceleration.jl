@@ -17,7 +17,7 @@ struct FunctionEvaluationResult{T<:Number,R}
         if R === Missing
             return new{T,T}(Input, Output, Other_Output_, Error_)
         elseif R <: Number
-            return new{T,R}(Input, convert(Array{Union{Missing,R},1}, Output), Other_Output_, Error_)
+            return new{T,R}(Input, Output, Other_Output_, Error_)
         else
             return new{T,nonmissingtype(R)}(Input, Output, Other_Output_, Error_)
         end

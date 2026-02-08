@@ -22,26 +22,25 @@ This function creates a function that executes the function for which a fixed po
 """
 function execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool = false, quiet_errors::Bool = true) where T<:Number
     # Check input
-    if sum(isnan.(x)) > 0
+    if any(isnan, x)
         return FunctionEvaluationResult(x, missing, :InputNAsDetected)
-    elseif sum(isinf.(x)) > 0
+    elseif any(isinf, x)
         return FunctionEvaluationResult(x, missing, :InputInfsDetected)
     end
     # Run function.
-    lenx = length(x)
-    tf_result = Array{T,1}(undef,lenx)
     tf_full_result = missing
     if quiet_errors
         try
-            tf_full_result =  Func(deepcopy(x))
+            tf_full_result =  Func(copy(x))
         catch
             return FunctionEvaluationResult(x, missing, :ErrorExecutingFunction)
         end
     else
-        tf_full_result =  Func(deepcopy(x))
+        tf_full_result =  Func(copy(x))
     end
 
     side_effect_to_report = missing
+    tf_result = missing
     # Now we if tf_full_result is an array then it is the normal case.
     if isa(tf_full_result,Vector)
         tf_result = tf_full_result
@@ -52,11 +51,11 @@ function execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool
         error("This function returned a $(typeof(tf_full_result)). The Fixedpoint function can only return a vector or a tuple of which the first entry is the vector for which a fixedpoint is sought and the second is a namedtuple (the contents of which are output for the user but are not used in fixed point acceleration).")
     end
     # Check Output and return.
-    if sum(ismissing.(tf_result)) > 0
+    if any(ismissing, tf_result)
         return FunctionEvaluationResult(x, tf_result, :OutputMissingsDetected      , side_effect_to_report)
-    elseif sum(isnan.(tf_result)) > 0
+    elseif any(isnan, tf_result)
         return FunctionEvaluationResult(x, tf_result, :OutputNAsDetected           , side_effect_to_report)
-    elseif sum(isinf.(tf_result)) > 0
+    elseif any(isinf, tf_result)
         return FunctionEvaluationResult(x, tf_result, :OutputInfsDetected          , side_effect_to_report)
     elseif (length(tf_result) != length(x))
         return FunctionEvaluationResult(x, tf_result, :LengthOfOutputNotSameAsInput, side_effect_to_report)
@@ -65,6 +64,15 @@ function execute_function_safely(Func::Function, x::Array{T,1}; type_check::Bool
     else
         return FunctionEvaluationResult(x, tf_result, :NoError                     , side_effect_to_report)
     end
+end
+
+function _default_convergence_metric(input, output)
+    m = zero(real(eltype(input)))
+    @inbounds for i in eachindex(input, output)
+        d = abs(output[i] - input[i])
+        m = ifelse(d > m, d, m)
+    end
+    return m
 end
 
 """
@@ -129,7 +137,7 @@ A function for finding the fixed point of another function
     F = fixed_point(Func, Inputs; Algorithm = :Anderson, MaxM = 4, ReportingSigFig = 13)
 """
 function fixed_point(func::Function, previous_FixedPointResults::FixedPointResults;
-                    Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
+                    Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = _default_convergence_metric,
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0), Dampening_With_Input::Bool = false,
                     PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false)
     Inputs = previous_FixedPointResults.Inputs_
@@ -140,7 +148,7 @@ function fixed_point(func::Function, previous_FixedPointResults::FixedPointResul
                        ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold, quiet_errors = quiet_errors, other_outputs = side_products)
 end
 function fixed_point(func::Function, Inputs::Array{T, 1};
-                    Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
+                    Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = _default_convergence_metric,
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0), Dampening_With_Input::Bool = false,
                     PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false) where T<:Number
     matrix_type = promote_type(T, Float64)
@@ -151,7 +159,7 @@ function fixed_point(func::Function, Inputs::Array{T, 1};
                        ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold, quiet_errors = quiet_errors)
 end
 function fixed_point(func::Function, Inputs::Number;
-                    Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
+                    Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = _default_convergence_metric,
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0), Dampening_With_Input::Bool = false,
                     PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false)
     matrix_type = promote_type(typeof(Inputs), Float64)
@@ -162,7 +170,7 @@ function fixed_point(func::Function, Inputs::Number;
                        ReplaceInvalids = ReplaceInvalids, ConditionNumberThreshold = ConditionNumberThreshold, quiet_errors = quiet_errors)
 end
 function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{S,2} = Array{T,2}(undef,size(Inputs)[1],0),
-                    Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = supnorm(input, output) = maximum(abs.(output .- input)),
+                    Algorithm::Symbol = :Anderson,  ConvergenceMetric::Function  = _default_convergence_metric,
                     ConvergenceMetricThreshold::Real = 1e-10, MaxIter::Integer = Integer(1000), MaxM::Integer = Integer(10), ExtrapolationPeriod::Integer = Integer(7), Dampening::Real = AbstractFloat(1.0), Dampening_With_Input::Bool = false,
                     PrintReports::Bool = false, ReportingSigFig::Integer = Integer(10), ReplaceInvalids::Symbol = :NoAction, ConditionNumberThreshold::Real = 1e3, quiet_errors::Bool = false, other_outputs::Union{Missing,NamedTuple} = missing) where {T<:Number,S<:Number}
     # This code first tests if the input point is a fixed point. Then if it is not a while loop runs to try to find a fixed point.
@@ -226,6 +234,7 @@ function fixed_point(func::Function, Inputs::Array{T, 2}; Outputs::Array{S,2} = 
         println("                                          Algorithm: ", lpad(Algorithm, 8)   , ". Iteration: ", lpad(iter, 5),". Convergence: ", lpad(round(Convergence, sigdigits=ReportingSigFig),ReportingSigFig+4), ". Time: ", now())
     end
     iter = iter + 1
+    sizehint!(ConvergenceVector, MaxIter)
     while (Convergence > ConvergenceMetricThreshold) & (iter <= MaxIter)
         # Generating new input and output.
         NewInputFunctionReturn = fixed_point_new_input(Inputs, Outputs, Algorithm; MaxM = MaxM,
@@ -285,15 +294,12 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
                                ConditionNumberThreshold::R = AbstractFloat(1000), PrintReports::Bool = false, ReplaceInvalids::Symbol = :NoAction) where R<:Real where S<:Real where T<:Number
     CompletedIters = size(Outputs)[2]
     simple_iterate = Outputs[:,CompletedIters]
-    proposed_input = similar(simple_iterate)
-    nan_simple = oftype(zero(eltype(simple_iterate)), NaN)
-    fill!(proposed_input, nan_simple)
+    proposed_input = simple_iterate
     if Algorithm == :Simple
-         proposed_input = simple_iterate
+         # proposed_input already set to simple_iterate
     elseif Algorithm == :Anderson
         if CompletedIters < 2
             if (PrintReports) print("                           Used:",  lpad(0, 3)," lags. ") end
-            proposed_input = simple_iterate
         else
             VectorLength   = size(Outputs)[1]
             M = min(MaxM-1,CompletedIters-1,VectorLength)
@@ -309,7 +315,7 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
             Coeffs          = Vector{eltype(DeltaOutputs)}(undef, size(DeltaOutputs)[2])
             fill!(Coeffs, coeff_nan)
             ConditionNumber = NaN
-            while any(isnan.(Coeffs))
+            while any(isnan, Coeffs)
                 if isempty(DeltaResids)
                     # This happens if there is convergence by constant increments and thus the
                     #  most recent DeltaResids is all zeros. So we end up dropping all DeltaResids and get an error here.
@@ -330,7 +336,7 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
                     continue
                 end
                 Coeffs = DeltaResids \ LastResid
-                if any(isnan.(Coeffs))
+                if any(isnan, Coeffs)
                     M = M-1
                     if (M < 1.5)
                         # This happens occasionally in test cases where the iteration is very close to a fixed point.
@@ -346,8 +352,8 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
             end
             if isempty(Coeffs)
                 if (PrintReports) print("Condition number is ", lpad("NaN", 5),". Used:",  lpad(0, 3)," lags. ") end
-                proposed_input = similar(simple_iterate)
-                fill!(proposed_input, nan_simple)
+                nan_val = oftype(zero(eltype(simple_iterate)), NaN)
+                proposed_input = fill(nan_val, length(simple_iterate))
             else
                 if (PrintReports) print("Condition number is ", lpad(round(ConditionNumber, sigdigits = 2), 5),". Used:",  lpad(M+1, 3)," lags. ") end
                 proposed_input = LastOutput .- (Dampening .* vec(DeltaOutputs * Coeffs))
@@ -404,15 +410,21 @@ function fixed_point_new_input(Inputs::AbstractArray{T,2}, Outputs::AbstractArra
         error("The algorithm you tried to input is not valid. Choose from :Simple, :Anderson, :Aitken, :Newton, :MPE, :RRE, :VEA or :SEA. Note capitalisation must match.")
     end
     # Now the replacement strategies
-    dodgy_entries = isnan.(proposed_input) .| ismissing.(proposed_input) .| isinf.(proposed_input)
-    if sum(dodgy_entries) != 0
+    if any(v -> isnan(v) || ismissing(v) || isinf(v), proposed_input)
         if ReplaceInvalids == :ReplaceElements
-            proposed_input[dodgy_entries] = simple_iterate[dodgy_entries]
+            for i in eachindex(proposed_input)
+                if isnan(proposed_input[i]) || ismissing(proposed_input[i]) || isinf(proposed_input[i])
+                    proposed_input[i] = simple_iterate[i]
+                end
+            end
         elseif ReplaceInvalids == :ReplaceVector
             proposed_input = simple_iterate
         end
     end
-    return @. (Dampening .* proposed_input) .+ ((1-Dampening) .* (Dampening_With_Input ? Inputs[:,end] : simple_iterate))
+    if isone(Dampening)
+        return proposed_input
+    end
+    return @. (Dampening * proposed_input) + ((1-Dampening) * (Dampening_With_Input ? Inputs[:,end] : simple_iterate))
 end
 
 """
